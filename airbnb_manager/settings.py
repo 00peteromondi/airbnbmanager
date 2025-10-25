@@ -154,8 +154,17 @@ LOGIN_URL = 'core:home'
 LOGIN_REDIRECT_URL = 'hosts:dashboard'
 LOGOUT_REDIRECT_URL = 'core:home'
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Additional locations of static files
+STATICFILES_DIRS = [
+    BASE_DIR / 'airbnb_manager' / 'static',
+    BASE_DIR / 'static',  # Add this if you have a root static folder
+]
+
+# The directory where collectstatic will collect static files for deployment
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise configuration for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
