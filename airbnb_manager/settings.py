@@ -153,3 +153,9 @@ ADMIN_URL = os.getenv('ADMIN_URL', 'custom-admin-path/')
 LOGIN_URL = 'core:home'
 LOGIN_REDIRECT_URL = 'hosts:dashboard'
 LOGOUT_REDIRECT_URL = 'core:home'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
