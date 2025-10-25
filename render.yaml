@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: airbnbmanager
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn airbnb_manager.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
