@@ -1,0 +1,162 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Image Carousel -->
+            <div
+                id="propertyCarousel"
+                class="carousel slide mb-4"
+                data-bs-ride="carousel"
+            >
+                <div class="carousel-inner">
+                    {% for image in property.images.all %}
+                    <div
+                        class="carousel-item {% if forloop.first %}active{% endif %}"
+                    >
+                        <img
+                            src="{{ image.image.url }}"
+                            class="d-block w-100 rounded"
+                            alt="{{ image.caption|default:property.name }}"
+                        />
+                    </div>
+                    {% empty %}
+                    <div class="carousel-item active">
+                        <div
+                            class="bg-light border rounded d-flex align-items-center justify-content-center"
+                            style="height: 400px"
+                        >
+                            <span class="text-muted">No images available</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button
+                    class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#propertyCarousel"
+                    data-bs-slide="prev"
+                >
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button
+                    class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#propertyCarousel"
+                    data-bs-slide="next"
+                >
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+
+            <!-- Property Details -->
+            <h1>{{ property.name }}</h1>
+            <p class="lead">
+                {{ property.property_type|title }} · {{ property.address }}
+            </p>
+
+            <div class="d-flex gap-3 mb-4">
+                <div>
+                    <i class="bi bi-people fs-4"></i>
+                    <div>{{ property.max_guests }} guests</div>
+                </div>
+                <div>
+                    <i class="bi bi-door-closed fs-4"></i>
+                    <div>{{ property.bedrooms }} bedrooms</div>
+                </div>
+                <div>
+                    <i class="bi bi-clock fs-4"></i>
+                    <div>
+                        Check-in: {{ property.check_in_time|time:"g:i A" }}
+                    </div>
+                </div>
+            </div>
+
+            <h3>Description</h3>
+            <p class="text-muted">{{ property.description }}</p>
+
+            <h3>Amenities</h3>
+            <div class="row">
+                {% for amenity in property.amenities_list %}
+                <div class="col-md-4 mb-2">
+                    <i class="bi bi-check-circle text-success"></i> {{ amenity
+                    }}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-muted">No amenities listed</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Booking Details</h3>
+                </div>
+                <div class="card-body">
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-3"
+                    >
+                        <h4 class="mb-0">${{ property.price_per_night }}</h4>
+                        <span>per night</span>
+                    </div>
+
+                    <form
+                        method="post"
+                        action="{% url 'booking_create' property.id %}"
+                    >
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Dates</label>
+                            <div class="input-group">
+                                <input
+                                    type="date"
+                                    name="check_in_date"
+                                    class="form-control"
+                                    required
+                                />
+                                <span class="input-group-text">to</span>
+                                <input
+                                    type="date"
+                                    name="check_out_date"
+                                    class="form-control"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Guests</label>
+                            <select
+                                name="num_guests"
+                                class="form-select"
+                                required
+                            >
+                                {% for i in guest_range %}
+                                <option value="{{ i }}">
+                                    {{ i }} guest{{ i|pluralize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Special Requests</label>
+                            <textarea
+                                name="special_requests"
+                                class="form-control"
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Request to Book
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

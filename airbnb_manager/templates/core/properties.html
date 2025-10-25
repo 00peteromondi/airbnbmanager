@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Aurban Rentals | Our Properties{% endblock %}
+
+{% block content %}
+<!-- Properties Page Content Start -->
+<div class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Page Header -->
+        <div class="text-center mb-12 fade-in-section">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Find Your Perfect Stay</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Explore our curated collection of urban rentals. Your next adventure is just a search away.</p>
+        </div>
+
+        <!-- Filter and Search Bar -->
+        <form method="GET" action="{% url 'core:properties_list' %}">
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-12 fade-in-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 items-end">
+                    <!-- Location -->
+                    <div class="col-span-full md:col-span-2">
+                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Where to?</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            </div>
+                            <input type="text" id="location" name="location" placeholder="e.g., Nairobi, Kenya" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ location|default:'' }}">
+                        </div>
+                    </div>
+                    <!-- Check-in Date -->
+                    <div>
+                        <label for="check-in" class="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+                        <input type="date" id="check-in" name="check-in" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" value="{{ check_in|default:'' }}">
+                    </div>
+                    <!-- Check-out Date -->
+                    <div>
+                        <label for="check-out" class="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+                        <input type="date" id="check-out" name="check-out" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" value="{{ check_out|default:'' }}">
+                    </div>
+                    <!-- Guests -->
+                    <div>
+                        <label for="guests" class="block text-sm font-medium text-gray-700 mb-1">Guests</label>
+                        <select id="guests" name="guests" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            <option {% if guests == 'All Guests' %}selected{% endif %}>All Guests</option>
+                            <option {% if guests == '1 Guest' %}selected{% endif %}>1 Guest</option>
+                            <option {% if guests == '2 Guests' %}selected{% endif %}>2 Guests</option>
+                            <option {% if guests == '3 Guests' %}selected{% endif %}>3 Guests</option>
+                            <option {% if guests == '4+ Guests' %}selected{% endif %}>4+ Guests</option>
+                        </select>
+                    </div>
+                    <!-- Property Type -->
+                    <div>
+                        <label for="property-type" class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                        <select id="property-type" name="property-type" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            <option {% if property_type == 'All Types' %}selected{% endif %}>All Types</option>
+                            <option {% if property_type == 'Apartment' %}selected{% endif %}>Apartment</option>
+                            <option {% if property_type == 'Villa' %}selected{% endif %}>Villa</option>
+                            <option {% if property_type == 'Loft' %}selected{% endif %}>Loft</option>
+                            <option {% if property_type == 'Studio' %}selected{% endif %}>Studio</option>
+                        </select>
+                    </div>
+                    <!-- Search Button -->
+                    <div class="col-span-full md:col-span-2 xl:col-span-1 flex items-end">
+                        <button type="submit" class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center space-x-2">
+                            <span><i class="fas fa-search"></i></span>
+                            <span>Search</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Property Listings Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for listing in properties %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden property-card fade-in-section">
+                <!-- Assuming you have an image URL field or a placeholder -->
+                <img class="h-56 w-full object-cover" src="https://placehold.co/600x400/E5E7EB/4B5563?text=Property" alt="{{ listing.name }}">
+                <div class="p-6">
+                    <!-- Displaying the property type dynamically -->
+                    <div class="uppercase tracking-wide text-sm text-red-500 font-semibold">{{ listing.property_type }}</div>
+                    <a href="#" class="block mt-1 text-lg leading-tight font-bold text-black hover:underline">{{ listing.name }}</a>
+                    <p class="mt-2 text-gray-500">{{ listing.city }}</p>
+                    <div class="mt-4 flex items-center text-gray-600">
+                        <!-- Displaying the new fields from the model -->
+                        <span class="flex items-center mr-4"><i class="fas fa-bed mr-2"></i> {{ listing.beds }} Beds</span>
+                        <span class="flex items-center mr-4"><i class="fas fa-bath mr-2"></i> {{ listing.baths }} Baths</span>
+                        <span class="flex items-center"><i class="fas fa-ruler-combined mr-2"></i> {{ listing.sqft }} sqft</span>
+                    </div>
+                     <div class="mt-4 flex justify-between items-center">
+                        <p class="text-xl font-bold text-gray-900">${{ listing.price }}<span class="text-sm font-normal text-gray-500">/night</span></p>
+                        <a href="#" class="px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 transition duration-300 flex items-center space-x-2">
+                            <i class="fas fa-info-circle"></i>
+                            <span>View Details</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20">
+                <i class="fas fa-search-dollar text-8xl text-gray-400 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">No properties found</h2>
+                <p class="text-lg text-gray-600">Try adjusting your search filters to find a perfect match.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-16 flex justify-center items-center space-x-1 fade-in-section">
+            {% if page_obj.has_previous %}
+                <a href="?page=1&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
+                    &laquo; First
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
+                    Previous
+                </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 font-bold bg-red-500 text-white rounded-lg">{{ page_obj.number }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
+                    Next
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
+                    Last &raquo;
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Properties Page Content End -->
+{% endblock %}

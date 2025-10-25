@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Aurban Rentals | Become a Host{% endblock title %}
+
+{% block custom_css %}
+    <style>
+        /* Existing CSS from original template for fade-in animations */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            will-change: opacity, transform;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* New bounce animation for the hero button */
+        @keyframes bounce-in {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hero-cta-button:hover {
+            animation: bounce-in 1s ease-in-out;
+        }
+
+        /* New CSS for FAQ Accordion */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        }
+
+        .accordion-content.open {
+            max-height: 500px; /* A large enough value to accommodate content */
+            padding-top: 1.5rem;
+        }
+        
+        .accordion-header .chevron-icon {
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .accordion-header.open .chevron-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+{% endblock custom_css %}
+
+{% block content %}
+    <main>
+        <!-- Host Page Content Start -->
+        <div class="bg-gray-100 min-h-screen">
+            <!-- Hero Section -->
+            <div class="relative bg-cover bg-center h-[60vh] md:h-[70vh] flex items-center justify-center text-white" style="background-image: url('{% static 'images/hosts.png' %}');">
+                <div class="absolute inset-0 bg-black opacity-60"></div>
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 fade-in-section">
+                    <h1 class="text-4xl md:text-6xl font-extrabold leading-tight tracking-tighter mb-4">
+                        Earn Extra Income. Host on Aurban Rentals.
+                    </h1>
+                    <p class="text-lg md:text-xl max-w-3xl mx-auto mb-8">
+                        Share your space with travelers and become a part of our thriving host community. We make it simple, safe, and rewarding.
+                    </p>
+                    <a href="{% url 'hosts:login' %}" class="hero-cta-button inline-block bg-red-500 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-red-600 transition duration-300 transform hover:scale-105 shadow-xl">
+                        Start Hosting Today
+                    </a>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <section class="py-16 fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-12">Why Host with Us?</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+                            <div class="text-5xl text-red-500 mb-4">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Maximize Your Earnings</h3>
+                            <p class="text-gray-600">
+                                Our platform helps you set the perfect price and get discovered by millions of potential guests, ensuring your property is never empty.
+                            </p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+                            <div class="text-5xl text-red-500 mb-4">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Safe & Secure</h3>
+                            <p class="text-gray-600">
+                                We offer robust security features, guest screening, and dedicated support to give you peace of mind with every booking.
+                            </p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+                            <div class="text-5xl text-red-500 mb-4">
+                                <i class="fas fa-concierge-bell"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Easy to Manage</h3>
+                            <p class="text-gray-600">
+                                From automated payments to an intuitive dashboard, our tools simplify the hosting process, so you can focus on your guests.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Host Testimonials Section (NEW) -->
+            <section class="py-16 bg-white fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-12">Hear From Our Hosts</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Testimonial 1 -->
+                        <div class="bg-gray-100 p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                            <img src="https://placehold.co/80x80/000/fff?text=AJ" alt="Host Profile" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-red-500">
+                            <p class="text-gray-700 italic mb-4">
+                                "Hosting with Aurban Rentals has been an amazing experience. The platform is incredibly easy to use, and I've earned more than I ever expected!"
+                            </p>
+                            <p class="font-bold text-gray-900">- Alex J., Host since 2023</p>
+                        </div>
+                        <!-- Testimonial 2 -->
+                        <div class="bg-gray-100 p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                            <img src="https://placehold.co/80x80/000/fff?text=MJ" alt="Host Profile" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-red-500">
+                            <p class="text-gray-700 italic mb-4">
+                                "The security features gave me peace of mind. I feel confident and supported, knowing my property is in good hands with Aurban Rentals."
+                            </p>
+                            <p class="font-bold text-gray-900">- Maria K., Host since 2022</p>
+                        </div>
+                        <!-- Testimonial 3 -->
+                        <div class="bg-gray-100 p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                            <img src="https://placehold.co/80x80/000/fff?text=SR" alt="Host Profile" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-red-500">
+                            <p class="text-gray-700 italic mb-4">
+                                "I love the community of hosts. We share tips and advice, and the Aurban Rentals team is always there to help. Highly recommend!"
+                            </p>
+                            <p class="font-bold text-gray-900">- Sam R., Host since 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section class="py-16 bg-white fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">How It Works: 3 Simple Steps</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                        <div class="relative flex flex-col items-center">
+                            <div class="bg-red-500 text-white w-20 h-20 flex items-center justify-center rounded-full text-3xl font-bold mb-6 shadow-xl">
+                                1
+                            </div>
+                            <h3 class="text-2xl font-semibold mb-2">List Your Space</h3>
+                            <p class="text-gray-600 max-w-xs">
+                                Create a free listing with high-quality photos and details about your property.
+                            </p>
+                            <div class="absolute top-10 right-0 md:left-2/3 hidden md:block">
+                                <i class="fas fa-chevron-right text-4xl text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="relative flex flex-col items-center">
+                            <div class="bg-red-500 text-white w-20 h-20 flex items-center justify-center rounded-full text-3xl font-bold mb-6 shadow-xl">
+                                2
+                            </div>
+                            <h3 class="text-2xl font-semibold mb-2">Set Your Price</h3>
+                            <p class="text-gray-600 max-w-xs">
+                                Use our smart pricing tool to help you set the best nightly rate for your rental.
+                            </p>
+                            <div class="absolute top-10 right-0 md:left-2/3 hidden md:block">
+                                <i class="fas fa-chevron-right text-4xl text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="bg-red-500 text-white w-20 h-20 flex items-center justify-center rounded-full text-3xl font-bold mb-6 shadow-xl">
+                                3
+                            </div>
+                            <h3 class="text-2xl font-semibold mb-2">Welcome Guests</h3>
+                            <p class="text-gray-600 max-w-xs">
+                                Receive bookings and start earning. It's that simple to become a host with us!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Host Dashboard Preview (NEW) -->
+            <section class="py-16 fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Your Hosting Journey, Simplified.</h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+                        Our intuitive dashboard gives you everything you need to manage your bookings, communicate with guests, and track your earnings—all in one place.
+                    </p>
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden p-4 md:p-8 transform transition-transform duration-500 hover:scale-105">
+                        <img src="https://placehold.co/1200x700/D1D5DB/4B5563?text=Host+Dashboard+Preview" alt="Aurban Rentals Host Dashboard Preview" class="w-full rounded-2xl border border-gray-200">
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Section (NEW) -->
+            <section class="py-16 bg-white fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
+                    <div class="max-w-4xl mx-auto space-y-4">
+                        <!-- FAQ Item 1 -->
+                        <div class="bg-gray-100 rounded-lg shadow-md overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center p-6 text-left focus:outline-none">
+                                <span class="text-lg font-semibold text-gray-800">What are the requirements to become a host?</span>
+                                <i class="fas fa-chevron-down text-red-500 chevron-icon"></i>
+                            </button>
+                            <div class="accordion-content px-6 text-gray-600">
+                                <p>To become a host, your property must meet our quality and safety standards. This includes being clean, well-maintained, and accurately represented in your listing photos and description.</p>
+                            </div>
+                        </div>
+                        <!-- FAQ Item 2 -->
+                        <div class="bg-gray-100 rounded-lg shadow-md overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center p-6 text-left focus:outline-none">
+                                <span class="text-lg font-semibold text-gray-800">How do I get paid?</span>
+                                <i class="fas fa-chevron-down text-red-500 chevron-icon"></i>
+                            </button>
+                            <div class="accordion-content px-6 text-gray-600">
+                                <p>Payments are securely processed through our platform. You can choose to receive your payouts via direct bank transfer or other supported payment methods. Payouts are typically sent 24 hours after your guest checks in.</p>
+                            </div>
+                        </div>
+                        <!-- FAQ Item 3 -->
+                        <div class="bg-gray-100 rounded-lg shadow-md overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center p-6 text-left focus:outline-none">
+                                <span class="text-lg font-semibold text-gray-800">Is my property protected?</span>
+                                <i class="fas fa-chevron-down text-red-500 chevron-icon"></i>
+                            </button>
+                            <div class="accordion-content px-6 text-gray-600">
+                                <p>Yes, we offer host protection plans that cover damages caused by guests and provide a safety net for your peace of mind. For more details, please see our Terms of Service.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call to Action Section -->
+            <section class="py-16 fade-in-section">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="bg-gray-800 text-white rounded-2xl p-12 text-center shadow-lg">
+                        <h2 class="text-3xl md:text-5xl font-bold mb-4">Ready to Start Your Journey?</h2>
+                        <p class="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+                            Join thousands of hosts worldwide and share your unique space with a global community of travelers.
+                        </p>
+                        <a href="{% url 'core:become_a_host_now' %}" class="inline-block bg-red-500 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-red-600 transition duration-300 transform hover:scale-105 shadow-xl">
+                            Become a Host Now
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- Host Page Content End -->
+    </main>
+{% endblock content %}
+
+{% block custom_js %}
+<script>    
+    // Intersection Observer for scroll-in animations
+    document.addEventListener("DOMContentLoaded", function() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        }, {
+            threshold: 0.2
+        });
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            observer.observe(section);
+        });
+    });
+    
+    // FAQ Accordion Logic
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const isOpen = header.classList.contains('open');
+
+            // Close all other open accordions
+            accordionHeaders.forEach(otherHeader => {
+                if (otherHeader !== header && otherHeader.classList.contains('open')) {
+                    otherHeader.classList.remove('open');
+                    otherHeader.nextElementSibling.classList.remove('open');
+                }
+            });
+
+            // Toggle the clicked accordion
+            if (isOpen) {
+                header.classList.remove('open');
+                content.classList.remove('open');
+            } else {
+                header.classList.add('open');
+                content.classList.add('open');
+            }
+        });
+    });
+
+</script>
+{% endblock custom_js %}

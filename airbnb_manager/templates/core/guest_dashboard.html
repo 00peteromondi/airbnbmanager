@@ -1,0 +1,82 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Guest Dashboard</h1>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Stays</h5>
+                    {% if upcoming_bookings %}
+                    <ul class="list-group">
+                        {% for booking in upcoming_bookings %}
+                        <li class="list-group-item">
+                            <strong>{{ booking.property.name }}</strong><br />
+                            {{ booking.check_in_date }} to {{
+                            booking.check_out_date }}<br />
+                            Status:
+                            <span class="badge bg-{{ booking.status_badge }}"
+                                >{{ booking.get_status_display }}</span
+                            >
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No upcoming stays</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Bookings</h5>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Dates</th>
+                                <th>Guests</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in recent_bookings %}
+                            <tr>
+                                <td>{{ booking.property.name }}</td>
+                                <td>
+                                    {{ booking.check_in_date|date:"M d" }} - {{
+                                    booking.check_out_date|date:"M d" }}
+                                </td>
+                                <td>{{ booking.num_guests }}</td>
+                                <td>${{ booking.total_price }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ booking.status_badge }}"
+                                        >{{ booking.get_status_display }}</span
+                                    >
+                                </td>
+                                <td>
+                                    <a
+                                        href="{% url 'booking_detail' booking.id %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        >View</a
+                                    >
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6">No bookings yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

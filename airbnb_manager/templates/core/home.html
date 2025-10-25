@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Aurban Rentals | Your Next Urban Escape{% endblock %}
+
+{% block content %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .carousel-container::-webkit-scrollbar {
+            display: none;
+        }
+        .carousel-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hero-bg-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            z-index: 0;
+            transition: opacity 1s ease-in-out;
+            opacity: 0;
+        }
+        .hero-bg-img.active {
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .hero-bg-img {
+                object-position: top;
+            }
+        }
+    </style>
+
+    <!-- Hero Section -->
+    <section id="hero-section" class="h-[90vh] flex flex-col items-center justify-center relative text-center fade-in-section overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+        <div id="hero-content" class="z-20 text-center text-white px-6 flex flex-col items-center justify-center w-full h-full"></div>
+    </section>
+
+    <!-- Featured Urban Escapes -->
+    <section class="py-16 bg-gray-50 fade-in-section">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-semibold text-center mb-12">Featured Urban Escapes</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Featured Card 1 -->
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/hero-1.jpg' %}" alt="Modern Downtown Loft" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-2xl mb-2 text-gray-800">Modern Downtown Loft</h3>
+                        <p class="font-normal text-gray-600 mb-4">Sleek, stylish, and steps away from the city's best attractions. Perfect for a weekend trip.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-red-500 font-semibold text-xl">KES 15,000 / night</span>
+                            <div class="flex items-center text-yellow-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                                <span class="ml-1 text-sm text-gray-600">4.9 (210 reviews)</span>
+                            </div>
+                        </div>
+                        <a href="#" class="w-full inline-flex justify-center items-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-gray-900 hover:bg-gray-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span>View Details</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Featured Card 2 -->
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/historic_townhouse.jpg' %}" alt="Historic Townhouse" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-2xl mb-2 text-gray-800">Historic District Townhouse</h3>
+                        <p class="font-normal text-gray-600 mb-4">Charming, spacious, and full of character. Experience the city's rich history firsthand.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-red-500 font-semibold text-xl">KES 20,000 / night</span>
+                            <div class="flex items-center text-yellow-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                                <span class="ml-1 text-sm text-gray-600">4.7 (155 reviews)</span>
+                            </div>
+                        </div>
+                        <a href="#" class="w-full inline-flex justify-center items-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-gray-900 hover:bg-gray-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span>View Details</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Featured Card 3 -->
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/penthouse.jpg' %}" alt="Skyline Penthouse" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-2xl mb-2 text-gray-800">Penthouse with a View</h3>
+                        <p class="font-normal text-gray-600 mb-4">Wake up to panoramic city views from this luxurious penthouse apartment.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-red-500 font-semibold text-xl">KES 35,000 / night</span>
+                            <div class="flex items-center text-yellow-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                                <span class="ml-1 text-sm text-gray-600">5.0 (87 reviews)</span>
+                            </div>
+                        </div>
+                        <a href="#" class="w-full inline-flex justify-center items-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-gray-900 hover:bg-gray-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span>View Details</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Discover by Category -->
+    <section class="py-16 bg-gray-100 fade-in-section">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-center mb-12">Discover by Category</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Rural Getaways Card -->
+                <div class="group block bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/rural.png' %}" alt="Rural homes" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">Rural Getaways</h3>
+                        <p class="text-gray-600 text-sm mb-4">Escape to the peaceful countryside.</p>
+                        <a href="#" class="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-green-600 hover:bg-green-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 8v12h18V8z"/><path d="M9 22v-4h6v4"/><path d="M3 8v12h18V8"/></svg>
+                            <span>Explore</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Unique Stays Card -->
+                <div class="group block bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/unique.jpg' %}" alt="Unique stays" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">Unique Stays</h3>
+                        <p class="text-gray-600 text-sm mb-4">Find a one-of-a-kind home for your unique stays.</p>
+                        <a href="#" class="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-purple-600 hover:bg-purple-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            <span>Explore</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Family Friendly Card -->
+                <div class="group block bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/family.jpg' %}" alt="Family trips" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">Family Friendly</h3>
+                        <p class="text-gray-600 text-sm mb-4">Homes for that are friendly for the whole family.</p>
+                        <a href="#" class="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3z"/><path d="M8 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3z"/><path d="M12 15c-2.33 0-6.19 1.04-8 3.5v2h16v-2c-1.81-2.46-5.67-3.5-8-3.5z"/></svg>
+                            <span>Explore</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Long-Term Rentals Card -->
+                <div class="group block bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                    <img src="{% static 'images/longterm.jpg' %}" alt="Long-term rentals" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">Long-Term Rentals</h3>
+                        <p class="text-gray-600 text-sm mb-4">Stay a month or longer feeling at home.</p>
+                        <a href="#" class="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white font-semibold bg-yellow-600 hover:bg-yellow-700 transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/><polyline points="12 9 12 12 14 14"/></svg>
+                            <span>Explore</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiet Escape Section -->
+    <section class="py-24 bg-gray-50 fade-in-section">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div class="grid md:grid-cols-2 gap-0 items-center">
+                    <div class="relative overflow-hidden h-96 md:h-full">
+                        <img src="{% static 'images/quiet.jpg' %}" alt="Quiet escape" class="w-full h-full object-cover transform transition-transform duration-500 hover:scale-105">
+                    </div>
+                    <div class="p-8 md:p-12 lg:p-16">
+                        <h2 class="text-4xl font-bold mb-4 text-gray-900">Find Your Quiet Escape</h2>
+                        <p class="text-lg font-normal text-gray-700 mb-8">Escape the noise and retreat to a peaceful sanctuary. Our secluded cabins and countryside homes are the perfect place to unwind and reconnect with nature.</p>
+                        <a href="#" class="inline-flex items-center justify-center space-x-2 px-8 py-4 rounded-lg text-white font-semibold bg-gray-900 hover:bg-red-600 transition-all duration-300 transform hover:-translate-y-1 shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span>View Properties</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experiences from Our Community (Auto-cycling Carousel) -->
+    <section class="py-16 bg-gray-50 fade-in-section">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-semibold text-center mb-12">Experiences from Our Community</h2>
+            <div class="relative overflow-hidden">
+                <div id="experience-carousel" class="flex transition-transform duration-500 ease-in-out carousel-container" style="will-change: transform;">
+                    {% for i in "12345678" %}
+                    <div class="flex-none w-full md:w-1/2 lg:w-1/4 p-4">
+                        <div class="relative group rounded-xl shadow-xl overflow-hidden">
+                            <img src="{% static 'images/experience_'|add:i|add:'.jpg' %}" alt="Experience {{ i }}" class="w-full h-80 object-cover transform transition-transform duration-500 group-hover:scale-110" loading="lazy" width="320" height="320">
+                            <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <p class="text-white font-medium text-center italic">
+                                    {% if i == "1" %}"The most peaceful week of my life. The views were breathtaking!" - Sarah M.{% endif %}
+                                    {% if i == "2" %}"Our kids loved the nearby park. A great stay for the whole family." - Mark T.{% endif %}
+                                    {% if i == "3" %}"A romantic getaway we'll never forget. The beach home was a dream." - Emily P.{% endif %}
+                                    {% if i == "4" %}"The perfect base for exploring the local culture and cuisine." - Alex C.{% endif %}
+                                    {% if i == "5" %}"I felt like a true local. The neighborhood was amazing!" - David K.{% endif %}
+                                    {% if i == "6" %}"Perfect for our group hiking trip. The cabin was cozy and well-equipped." - Jessica L.{% endif %}
+                                    {% if i == "7" %}"The kids absolutely loved the pool! A brilliant family holiday." - Mike S.{% endif %}
+                                    {% if i == "8" %}"The rooftop view was stunning. An unforgettable anniversary trip." - Olivia N.{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials with avatars -->
+    <section class="py-16 bg-gray-100 fade-in-section">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-center mb-12">What Our Guests Say</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-8 transform hover:scale-105 transition-transform duration-300">
+                    <div class="flex items-center mb-4">
+                        <img src="{% static 'images/avatar_jane.jpg' %}" alt="Jane Doe avatar" class="rounded-full w-12 h-12 mr-4 border-2 border-red-500">
+                        <div class="font-semibold text-red-500">Jane Doe</div>
+                    </div>
+                    <p class="text-gray-700 italic">"Absolutely incredible! The home was even more beautiful than the pictures, and the host was fantastic. A perfect urban escape."</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-8 transform hover:scale-105 transition-transform duration-300">
+                    <div class="flex items-center mb-4">
+                        <img src="{% static 'images/avatar_john.jpg' %}" alt="John Smith avatar" class="rounded-full w-12 h-12 mr-4 border-2 border-red-500">
+                        <div class="font-semibold text-red-500">John Smith</div>
+                    </div>
+                    <p class="text-gray-700 italic">"The perfect base for our family adventure. The house was spotless, and the location was ideal for exploring the local area."</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-8 transform hover:scale-105 transition-transform duration-300">
+                    <div class="flex items-center mb-4">
+                        <img src="{% static 'images/avatar_alex.jpg' %}" alt="Alex Chen avatar" class="rounded-full w-12 h-12 mr-4 border-2 border-red-500">
+                        <div class="font-semibold text-red-500">Alex Chen</div>
+                    </div>
+                    <p class="text-gray-700 italic">"A serene and inspiring retreat. I loved the unique design and the peaceful surroundings. Will definitely be back."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ratings Overview -->
+    <section class="py-16 bg-white fade-in-section">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-center mb-12">Overall Ratings</h2>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                <div class="text-center">
+                    <div class="text-6xl font-bold text-red-500">4.8</div>
+                    <div class="flex justify-center my-2 text-yellow-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.01L12 2z"/></svg>
+                    </div>
+                    <p class="text-gray-600">Based on 1,245 reviews</p>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div class="flex items-center mb-2">
+                        <span class="w-12 text-sm text-gray-600">5 star</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 90%;"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">90%</span>
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <span class="w-12 text-sm text-gray-600">4 star</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 7%;"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">7%</span>
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <span class="w-12 text-sm text-gray-600">3 star</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 2%;"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">2%</span>
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <span class="w-12 text-sm text-gray-600">2 star</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 1%;"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">1%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm text-gray-600">1 star</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Hero images and content with icons
+    const heroSlides = [
+        {
+            image: "{% static 'images/hero-1.jpg' %}",
+            title: "Your next adventure is just a click away.",
+            subtitle: "Find your perfect space, wherever you go.",
+            buttons: [
+                { text: "Explore Cities", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`, color: "bg-red-500 hover:bg-red-600" },
+                { text: "Rural Getaways", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 8v12h18V8z"/><path d="M9 22v-4h6v4"/><path d="M3 8v12h18V8"/></svg>`, color: "bg-gray-800 hover:bg-gray-700" },
+                { text: "Beach Escapes", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v1"/><path d="M12 22v1"/><path d="M4.9 4.9l.7.7"/><path d="M18.4 18.4l.7.7"/><path d="M2 12h1"/><path d="M21 12h1"/><path d="M4.9 19.1l.7-.7"/><path d="M18.4 5.6l.7-.7"/></svg>`, color: "bg-teal-500 hover:bg-teal-600" }
+            ]
+        },
+        {
+            image: "{% static 'images/rural.png' %}",
+            title: "Escape the ordinary, embrace the extraordinary.",
+            subtitle: "Discover unique homes for every journey.",
+            buttons: [
+                { text: "Luxury Stays", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19L5 12l7-7 7 7-7 7z"/><path d="M5 12h14"/></svg>`, color: "bg-purple-600 hover:bg-purple-700" },
+                { text: "Family Fun", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.2 17.8L12 22 4.8 19.8A10 10 0 0 1 12 2Z"/><path d="M9 13a3 3 0 1 0 0-6 3 3 0 0 0 0-6z"/></svg>`, color: "bg-orange-500 hover:bg-orange-600" },
+                { text: "Cozy Cabins", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 19h-2a2 2 0 0 1-2-2v-3H9v3a2 2 0 0 1-2 2H5"/><path d="M15 15h2a2 2 0 0 0 2-2v-4l-7-7-7 7v4a2 2 0 0 0 2 2h2"/></svg>`, color: "bg-amber-700 hover:bg-amber-800" }
+            ]
+        },
+        {
+            image: "{% static 'images/urban.png' %}",
+            title: "Live like a local, not a tourist.",
+            subtitle: "Experience authentic stays in unique neighborhoods.",
+            buttons: [
+                { text: "Foodie Tours", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.5c-3.1 0-5.6-2.5-5.6-5.6 0-3.2 2.5-5.8 5.6-5.8 3.1 0 5.6 2.6 5.6 5.8 0 3.1-2.5 5.6-5.6 5.6z"/><path d="M12 16.5c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5z"/><path d="M12 11.5v-10"/><path d="M22 15.5h-5"/><path d="M2 15.5h5"/></svg>`, color: "bg-lime-600 hover:bg-lime-700" },
+                { text: "Art & Culture", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M22 12c-2.7 0-4.4 2.1-4.9 3.9"/><path d="M22 12c-2.7 0-4.4 2.1-4.9 3.9"/><path d="M12 2a10 10 0 0 0-10 10"/></svg>`, color: "bg-blue-600 hover:bg-blue-700" },
+                { text: "Nightlife", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1-9-9 9 9 0 0 1 9-9 9 9 0 0 1 9 9 9 9 0 0 1-9 9z"/><path d="M12 17.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>`, color: "bg-indigo-600 hover:bg-indigo-700" }
+            ]
+        }
+    ];
+
+    let currentHero = 0;
+    let heroTimeout = null;
+
+    function showHeroSlide(index) {
+        const heroSection = document.getElementById('hero-section');
+        const heroContent = document.getElementById('hero-content');
+
+        // Remove old images
+        document.querySelectorAll('.hero-bg-img').forEach(img => img.remove());
+
+        // Create and show new image
+        const img = document.createElement('img');
+        img.src = heroSlides[index].image;
+        img.alt = heroSlides[index].title;
+        img.className = 'hero-bg-img active';
+        heroSection.prepend(img);
+
+        // Set hero text content
+        heroContent.innerHTML = `
+            <div class="animate-fadeInUp-and-fade-out">
+                <h1 class="text-5xl md:text-7xl font-bold mb-4 drop-shadow-lg">${heroSlides[index].title}</h1>
+                <p class="text-lg md:text-xl font-light mb-8">${heroSlides[index].subtitle}</p>
+                <div class="z-10 mt-12 flex flex-wrap justify-center gap-4">
+                    ${heroSlides[index].buttons.map(btn => `
+                        <a href="#" class="flex items-center space-x-2 px-6 py-3 rounded-full text-white font-semibold transition-all duration-300 transform hover:-translate-y-1 ${btn.color}">
+                            ${btn.icon}
+                            <span>${btn.text}</span>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Animation keyframes for hero text
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes fadeInUpAndOut {
+            0% { opacity: 0; transform: translateY(20px);}
+            10% { opacity: 1; transform: translateY(0);}
+            90% { opacity: 1; transform: translateY(0);}
+            100% { opacity: 0; transform: translateY(-20px);}
+        }
+        .animate-fadeInUp-and-fade-out {
+            animation: fadeInUpAndOut 7s ease-in-out forwards;
+        }
+    `;
+    document.head.appendChild(style);
+
+    function cycleHeroSlides() {
+        currentHero = (currentHero + 1) % heroSlides.length;
+        showHeroSlide(currentHero);
+        heroTimeout = setTimeout(cycleHeroSlides, 7000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        showHeroSlide(currentHero);
+        heroTimeout = setTimeout(cycleHeroSlides, 7000);
+    });
+
+    // Intersection Observer for fade-in animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+
+    document.querySelectorAll('.fade-in-section').forEach(section => {
+        observer.observe(section);
+    });
+
+    // Carousel auto-cycling for the "Experiences from Our Community" section
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = document.getElementById('experience-carousel');
+        if (carousel) {
+            const totalCards = 8;
+            let currentCard = 0;
+
+            function getCardWidth() {
+                const card = carousel.firstElementChild;
+                if (!card) return 0;
+                const cardRect = card.getBoundingClientRect();
+                return cardRect.width + parseFloat(window.getComputedStyle(card).marginLeft) + parseFloat(window.getComputedStyle(card).marginRight);
+            }
+
+            function getCardsPerPage() {
+                if (window.innerWidth >= 1024) {
+                    return 4;
+                } else if (window.innerWidth >= 768) {
+                    return 2;
+                }
+                return 1;
+            }
+
+            function animateCarousel() {
+                const cardsPerPage = getCardsPerPage();
+                currentCard = (currentCard + 1);
+
+                if (currentCard >= totalCards - (cardsPerPage - 1)) {
+                    carousel.style.transition = `transform 0.5s ease-in-out`;
+                    carousel.style.transform = `translateX(-${getCardWidth() * (totalCards)}px)`;
+
+                    setTimeout(() => {
+                        carousel.style.transition = `none`;
+                        carousel.style.transform = `translateX(0)`;
+                        currentCard = 0;
+                    }, 500);
+                } else {
+                    const cardWidth = getCardWidth();
+                    const offset = cardWidth * currentCard;
+                    carousel.style.transition = `transform 0.5s ease-in-out`;
+                    carousel.style.transform = `translateX(-${offset}px)`;
+                }
+            }
+
+            setInterval(animateCarousel, 50000);
+        }
+    });
+</script>
+{% endblock %}

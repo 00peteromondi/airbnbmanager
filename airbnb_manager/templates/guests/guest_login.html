@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Guest Log In | Aurban Rentals{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[calc(100vh-100px)] px-4 py-12 sm:px-6 lg:px-8">
+    <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-200 max-w-md w-full transform transition-all duration-300 hover:scale-[1.01]">
+        <div class="flex flex-col items-center text-center mb-10">
+            <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4 animate-fade-in-up">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+            </div>
+            <h2 class="text-4xl font-extrabold text-gray-900 leading-tight">Welcome Back, Guest</h2>
+            <p class="mt-2 text-lg text-gray-500">Log in to manage your bookings and find new places.</p>
+        </div>
+
+        <form method="POST" action="{% url 'guests:guest_login' %}" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" name="username" id="id_username" class="form-input" required>
+            </div>
+            <div>
+                <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password" id="id_password" class="form-input" required>
+            </div>
+            <button type="submit" class="w-full button-primary">Log In</button>
+        </form>
+
+        <p class="mt-8 text-center text-gray-600">
+            Don't have an account? <a href="{% url 'guests:guest_signup' %}" class="font-medium text-red-500 hover:text-red-700">Sign Up</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+

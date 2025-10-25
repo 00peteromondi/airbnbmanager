@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Booking Update</title>
+    </head>
+    <body>
+        <h2>Booking Status Update</h2>
+        <p>
+            Your booking for <strong>{{ booking.property.name }}</strong> has
+            been updated.
+        </p>
+
+        <h3>Booking Details</h3>
+        <ul>
+            <li><strong>Status:</strong> {{ booking.get_status_display }}</li>
+            <li>
+                <strong>Dates:</strong> {{ booking.check_in_date }} to {{
+                booking.check_out_date }}
+            </li>
+            <li><strong>Guests:</strong> {{ booking.num_guests }}</li>
+            <li><strong>Total:</strong> ${{ booking.total_price }}</li>
+        </ul>
+
+        <p>View your booking details:</p>
+        <a
+            href="http://{{ domain }}{% url 'booking_detail' booking.id %}"
+            class="btn btn-primary"
+        >
+            View Booking Details
+        </a>
+
+        <p>Best regards,<br />AirBnB Manager Team</p>
+    </body>
+</html>

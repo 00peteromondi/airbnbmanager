@@ -1,0 +1,445 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aurban Rentals | Vertical Journey{% endblock %}</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for social media icons (version 6.5.2 for modern icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Alpine.js CDN for simple interactivity -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Import Google Fonts - Montserrat for the brand logo, Inter for body text */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600;700&display=swap');
+
+        /* Apply fonts using CSS classes */
+        .brand-logo {
+            font-family: 'Montserrat', sans-serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Responsive Navbar Animation */
+        #mobile-menu {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Hamburger icon to 'X' animation */
+        .hamburger-icon span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: #374151; /* gray-700 */
+            transition: all 0.3s ease-in-out;
+        }
+
+        .hamburger-icon span:not(:last-child) {
+            margin-bottom: 5px;
+        }
+
+        .hamburger-icon.open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger-icon.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-icon.open span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Existing CSS from original template */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            will-change: opacity, transform;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .preloader-text {
+            opacity: 0;
+            animation: text-fade-in-out 3s ease-in-out forwards;
+        }
+
+        @keyframes text-fade-in-out {
+            0% { opacity: 0; transform: translateY(20px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .hero-section {
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease-in-out;
+        }
+
+        .hero-text-container h1, .hero-text-container p {
+            opacity: 0;
+            animation: text-fade-in 1s ease-in-out forwards;
+        }
+
+        @keyframes text-fade-in {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-text-container p {
+            animation-delay: 0.3s;
+        }
+
+        /* --- New styles for alert/message animation --- */
+        @keyframes slide-in-down {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slide-out-up {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-100%); opacity: 0; }
+        }
+        .animate-slide-in-down {
+            animation: slide-in-down 0.5s ease-out forwards;
+        }
+        .animate-slide-out-up {
+            animation: slide-out-up 0.5s ease-in forwards;
+        }
+    </style>
+</head>
+<body class="antialiased bg-gray-50 text-gray-800">
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="spinner"></div>
+        <div id="preloader-text-container" class="text-white text-lg mt-4 text-center px-4">
+            <!-- Text will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white p-4 md:p-6 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Brand Logo with new font -->
+            <a href="{% url 'core:home' %}" class="brand-logo text-3xl font-bold text-red-500">Aurban Rentals</a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-4">
+                <!-- Search Form with icon inside -->
+                <form class="flex-grow max-w-xl relative">
+                    <input type="text" placeholder="Search destinations..." class="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <button type="submit" class="absolute right-0 inset-y-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </button>
+                </form>
+
+                <!-- Navigation Links with Icons -->
+                <div class="flex items-center space-x-6">
+                    <a href="{% url 'core:properties_list' %}" class="text-gray-600 hover:text-red-500 flex items-center space-x-2 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-red-500 transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span>Properties</span>
+                    </a>
+                    <a href="{% url 'core:hosts' %}" class="text-gray-600 hover:text-red-500 flex items-center space-x-2 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-red-500 transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.2 17.8L12 22 4.8 19.8A10 10 0 0 1 12 2Z"/><path d="m8 6 4-2 4 2"/><path d="m14 10-2 2-2-2"/><path d="m10 14h4"/><path d="m12 18v-4"/></svg>
+                        <span>Host</span>
+                    </a>
+                </div>
+
+                <!-- Login Dropdown Menu with hosts and guests links -->
+                <div class="relative inline-block text-left" x-data="{ open: false }" @click.away="open = false">
+                    <div>
+                        <button type="button" @click="open = !open" class="inline-flex justify-center w-full px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                            Log In
+                            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                        <div class="py-1" role="none">
+                            <!-- Dropdown menu item for Hosts Login -->
+                            <a href="{% url 'hosts:login' %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2" role="menuitem" tabindex="-1">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.2 17.8L12 22 4.8 19.8A10 10 0 0 1 12 2Z"/><path d="m8 6 4-2 4 2"/><path d="m14 10-2 2-2-2"/><path d="m10 14h4"/><path d="m12 18v-4"/></svg>
+                                <span>Hosts Login</span>
+                            </a>
+                            <!-- Dropdown menu item for Guests Login -->
+                            <a href="{% url 'guests:guest_login' %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2" role="menuitem" tabindex="-1">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <span>Guests Login</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="focus:outline-none">
+                    <div class="hamburger-icon space-y-1">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobile-menu" class="fixed top-0 left-0 w-3/4 h-full bg-white shadow-xl z-50 transform -translate-x-full md:hidden">
+            <div class="p-6">
+                <!-- Close Button -->
+                <button id="close-menu-button" class="absolute top-4 right-4 focus:outline-none">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <!-- Mobile Logo -->
+                <a href="{% url 'core:home' %}" class="brand-logo text-3xl font-bold text-red-500 block mb-8">Aurban Rentals</a>
+
+                <!-- Mobile Search Form with icon inside -->
+                <form class="mb-8 relative">
+                    <input type="text" placeholder="Search destinations..." class="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <button type="submit" class="absolute right-0 inset-y-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </button>
+                </form>
+
+                <!-- Mobile Navigation Links -->
+                <nav class="flex flex-col space-y-4">
+                    <a href="{% url 'core:properties_list' %}" class="text-gray-800 hover:text-red-500 flex items-center space-x-3 group text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:text-red-500 transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span>Properties</span>
+                    </a>
+                    <a href="{% url 'core:hosts' %}" class="text-gray-800 hover:text-red-500 flex items-center space-x-3 group text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:text-red-500 transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.2 17.8L12 22 4.8 19.8A10 10 0 0 1 12 2Z"/><path d="m8 6 4-2 4 2"/><path d="m14 10-2 2-2-2"/><path d="m10 14h4"/><path d="m12 18v-4"/></svg>
+                        <span>Host</span>
+                    </a>
+                    <!-- Mobile Login Links -->
+                    <a href="{% url 'hosts:login' %}" class="block w-full text-left px-3 py-2 text-lg text-gray-800 hover:text-red-500 hover:bg-gray-100 rounded-lg transition duration-300">Hosts Login</a>
+                    <a href="{% url 'guests:guest_login' %}" class="block w-full text-left px-3 py-2 text-lg text-gray-800 hover:text-red-500 hover:bg-gray-100 rounded-lg transition duration-300">Guests Login</a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Overlay (Click to close) -->
+        <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
+    </header>
+
+    <main>
+        <!-- Django Messages section - inserted here -->
+        {% if messages %}
+            <div id="messages-container" class="fixed top-20 left-1/2 -translate-x-1/2 w-11/12 md:w-1/2 z-[60] flex flex-col space-y-3">
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <div id="message-{{ forloop.counter }}" class="relative p-4 pr-10 rounded-lg shadow-md flex items-center text-white bg-green-500 animate-slide-in-down" role="alert" data-message-id="{{ forloop.counter }}">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span class="font-medium text-lg">{{ message }}</span>
+                            <button class="absolute top-2 right-2 text-white opacity-80 hover:opacity-100 transition-opacity duration-200" onclick="dismissMessage(this)">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    {% elif message.tags == 'error' %}
+                        <div id="message-{{ forloop.counter }}" class="relative p-4 pr-10 rounded-lg shadow-md flex items-center text-white bg-red-500 animate-slide-in-down" role="alert" data-message-id="{{ forloop.counter }}">
+                            <i class="fas fa-times-circle mr-3"></i>
+                            <span class="font-medium text-lg">{{ message }}</span>
+                            <button class="absolute top-2 right-2 text-white opacity-80 hover:opacity-100 transition-opacity duration-200" onclick="dismissMessage(this)">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    {% elif message.tags == 'warning' %}
+                        <div id="message-{{ forloop.counter }}" class="relative p-4 pr-10 rounded-lg shadow-md flex items-center text-white bg-yellow-500 animate-slide-in-down" role="alert" data-message-id="{{ forloop.counter }}">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            <span class="font-medium text-lg">{{ message }}</span>
+                            <button class="absolute top-2 right-2 text-white opacity-80 hover:opacity-100 transition-opacity duration-200" onclick="dismissMessage(this)">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div id="message-{{ forloop.counter }}" class="relative p-4 pr-10 rounded-lg shadow-md flex items-center text-white bg-blue-500 animate-slide-in-down" role="alert" data-message-id="{{ forloop.counter }}">
+                            <i class="fas fa-info-circle mr-3"></i>
+                            <span class="font-medium text-lg">{{ message }}</span>
+                            <button class="absolute top-2 right-2 text-white opacity-80 hover:opacity-100 transition-opacity duration-200" onclick="dismissMessage(this)">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        <!-- Child templates will fill this block -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 fade-in-section">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
+                <!-- Branding Section -->
+                <div>
+                    <h3 class="brand-logo text-3xl font-bold text-red-500">Aurban Rentals</h3>
+                    <p class="mt-4 text-gray-400 text-sm">
+                        Your vertical journey to the perfect urban stay.
+                    </p>
+                </div>
+
+                <!-- Properties Links -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Properties</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-building"></i> <span>Apartments</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-home"></i> <span>Villas</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-warehouse"></i> <span>Lofts</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-door-open"></i> <span>Studios</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Company Links -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Company</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-info-circle"></i> <span>About Us</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-briefcase"></i> <span>Careers</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-newspaper"></i> <span>Blog</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-bullhorn"></i> <span>Press</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Trip Resources Links - New section -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Trip Resources</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="https://www.tripadvisor.com" target="_blank" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-plane"></i> <span>TripAdvisor</span></a></li>
+                        <li><a href="https://www.lonelyplanet.com" target="_blank" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-book"></i> <span>Lonely Planet</span></a></li>
+                        <li><a href="https://www.skyscanner.com" target="_blank" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-ticket-alt"></i> <span>Skyscanner</span></a></li>
+                        <li><a href="https://www.rome2rio.com" target="_blank" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-route"></i> <span>Rome2rio</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Support Links -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-headset"></i> <span>Contact Us</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-question-circle"></i> <span>FAQ</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-file-contract"></i> <span>Terms of Service</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-2 hover:text-red-500 transition-colors duration-300"><i class="fas fa-user-shield"></i> <span>Privacy Policy</span></a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Social Media Icons in a new, styled container -->
+            <div class="mt-12 md:mt-16 text-center bg-gray-900 rounded-2xl p-8">
+                <h4 class="font-bold text-2xl mb-4 text-white">Connect with Us</h4>
+                <div class="flex justify-center items-center space-x-8">
+                    <a href="#" class="text-blue-600 hover:scale-110 transition-transform duration-300 text-3xl"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-200 hover:scale-110 transition-transform duration-300 text-3xl"><i class="fab fa-x-twitter"></i></a>
+                    <a href="#" class="text-pink-600 hover:scale-110 transition-transform duration-300 text-3xl"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-blue-500 hover:scale-110 transition-transform duration-300 text-3xl"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="text-white hover:scale-110 transition-transform duration-300 text-3xl"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Newsletter Subscription with Map -->
+            <div class="mt-12 md:mt-16">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
+                    <!-- Map Placeholder - Larger section -->
+                    <div class="md:col-span-3 bg-gray-900 rounded-2xl p-8 text-white h-full flex flex-col justify-center items-center">
+                        <h4 class="font-bold text-2xl mb-2 text-white text-center flex items-center justify-center space-x-2">
+                           <i class="fas fa-map-marker-alt"></i><span>Find Us on the Map</span>
+                        </h4>
+                        <p class="text-gray-400 text-center">Explore our locations and discover your next stay.</p>
+                        <div class="mt-4 w-full h-64 bg-gray-700 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-500 text-lg">Map Placeholder</span>
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Form - Smaller section -->
+                    <div class="md:col-span-2 text-center md:text-left">
+                        <h4 class="font-bold text-2xl mb-2 text-white flex items-center space-x-2">
+                           <i class="fas fa-envelope-open-text"></i><span>Subscribe to Our Newsletter</span>
+                        </h4>
+                        <p class="text-gray-400">Get updates on new properties, special offers, and travel tips delivered straight to your inbox.</p>
+                        <form id="newsletter-form" class="mt-6 flex flex-col items-center md:items-start">
+                            <!-- New alert message for form validation -->
+                            <div id="newsletter-alert" class="w-full mb-4 px-4 py-3 bg-red-800 text-white rounded-lg hidden items-center space-x-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span id="alert-message"></span>
+                            </div>
+                            <input type="email" id="email-input" placeholder="Your email address" class="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <button type="submit" id="subscribe-button" class="mt-4 w-full px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center">
+                                <i id="subscribe-icon" class="fas fa-paper-plane"></i>
+                                <svg id="loader-spinner" class="animate-spin h-5 w-5 text-white ml-2 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Separator -->
+            <hr class="border-gray-700 my-8">
+
+            <!-- Copyright Notice -->
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; 2025 Aurban Rentals. All rights reserved. Made with ❤️ in Kenya.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Contact Us button -->
+    <a href="#" id="contact-button" class="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 transform scale-0 z-40 hover:bg-red-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </a>
+
+    <script src="{% static 'core/js/core.js' %}"></script>
+    
+    {% block extra_scripts %}
+    <!-- Page-specific scripts can be added here -->
+    {% endblock %}
+</body>
+</html>

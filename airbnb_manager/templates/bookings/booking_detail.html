@@ -1,0 +1,178 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Booking #{{ booking.id }}</h1>
+        <span class="badge bg-{{ booking.status_badge }} fs-6"
+            >{{ booking.get_status_display }}</span
+        >
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">{{ booking.property.name }}</h3>
+                    <p class="text-muted">{{ booking.property.address }}</p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5>Check-in</h5>
+                            <p>
+                                {{ booking.check_in_date }} at {{
+                                booking.property.check_in_time|time:"g:i A" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Check-out</h5>
+                            <p>
+                                {{ booking.check_out_date }} at {{
+                                booking.property.check_out_time|time:"g:i A" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-4 mb-3">
+                        <div>
+                            <h5>Guests</h5>
+                            <p>
+                                {{ booking.num_guests }} guest{{
+                                booking.num_guests|pluralize }}
+                            </p>
+                        </div>
+                        <div>
+                            <h5>Total Price</h5>
+                            <p>
+                                ${{ booking.total_price }} ({{ booking.nights }}
+                                night{{ booking.nights|pluralize }})
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if booking.special_requests %}
+                    <div class="mb-3">
+                        <h5>Special Requests</h5>
+                        <p>{{ booking.special_requests }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if booking.admin_notes and user == booking.property.owner %}
+            <div class="card mb-4">
+                <div class="card-header">Owner Notes</div>
+                <div class="card-body">
+                    <p>{{ booking.admin_notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Guest Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div
+                            class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px"
+                        >
+                            {{ booking.guest.first_name|first }}{{
+                            booking.guest.last_name|first }}
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">
+                                {{ booking.guest.get_full_name }}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                {{ booking.guest.email }}
+                            </p>
+                            {% if booking.guest.phone_number %}
+                            <p class="text-muted">
+                                {{ booking.guest.phone_number }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if user == booking.property.owner and booking.status == 'pending'
+            %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Manage Booking</h5>
+                </div>
+                <div class="card-body">
+                    <form
+                        method="post"
+                        action="{% url 'booking_update' booking.id %}"
+                    >
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option
+                                    value="pending"
+                                    {%
+                                    if
+                                    booking.status=""
+                                    ="pending"
+                                    %}selected{%
+                                    endif
+                                    %}
+                                >
+                                    Pending
+                                </option>
+                                <option
+                                    value="confirmed"
+                                    {%
+                                    if
+                                    booking.status=""
+                                    ="confirmed"
+                                    %}selected{%
+                                    endif
+                                    %}
+                                >
+                                    Confirm Booking
+                                </option>
+                                <option
+                                    value="cancelled"
+                                    {%
+                                    if
+                                    booking.status=""
+                                    ="cancelled"
+                                    %}selected{%
+                                    endif
+                                    %}
+                                >
+                                    Cancel Booking
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"
+                                >Notes (internal only)</label
+                            >
+                            <textarea
+                                name="admin_notes"
+                                class="form-control"
+                                rows="3"
+                            >
+{{ booking.admin_notes }}</textarea
+                            >
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Update Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

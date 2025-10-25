@@ -1,0 +1,163 @@
+{% extends 'hosts/base.html' %}
+{% load static %}
+
+{% block title %}{{ listing.name }} | Aurban Host{% endblock %}
+
+{% block content_header %}{{ listing.name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Replicating the core styling principles from the Add Listing page */
+    .form-field-container .form-label {
+        margin-bottom: 5px;
+    }
+    .form-input, .form-textarea, .form-select {
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f3f4f6;
+    }
+    .form-input, .form-textarea, .form-select {
+        @apply w-full p-3 md:p-4 border border-gray-300 rounded-xl shadow-sm transition-all duration-300 focus:ring-red-500 focus:border-red-500 focus:ring-2 focus:outline-none;
+    }
+    .form-input:hover, .form-textarea:hover, .form-select:hover {
+        @apply border-red-400;
+    }
+    .form-textarea {
+        @apply min-h-[150px] resize-y;
+    }
+    .icon {
+        @apply mr-2 w-5 h-5 text-red-500;
+    }
+    .button-primary {
+        @apply bg-red-500 text-white font-semibold py-3 px-8 rounded-xl border border-red-500 hover:bg-red-600 hover:border-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg;
+    }
+    .button-secondary {
+        @apply bg-gray-200 text-gray-800 font-semibold py-3 px-8 rounded-xl border border-gray-400 hover:bg-gray-300 transition-all duration-300 transform hover:scale-105 shadow-lg;
+    }
+
+    /* Animations from the original file */
+    @keyframes fadeInU {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+        animation: fadeInU 0.8s ease-out;
+    }
+    @keyframes bounceIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        60% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+    .animate-bounce-in {
+        animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    }
+</style>
+
+<div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-200 max-w-5xl mx-auto transform transition-all duration-300 hover:scale-[1.01]">
+    <!-- Page Header with Illustration -->
+    <div class="flex flex-col items-center text-center mb-10">
+        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4 animate-fade-in-up">
+            <div data-lucide="home" class="w-12 h-12 text-red-500 transform animate-bounce-in"></div>
+        </div>
+        <h2 class="text-4xl font-extrabold text-gray-900 leading-tight">Property Details</h2>
+        <p class="mt-2 text-lg text-gray-500 max-w-md">Detailed information about {{ listing.name }}.</p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Listing Image Section -->
+        <div class="rounded-2xl overflow-hidden shadow-lg animate-fade-in-up">
+            <img src="https://placehold.co/1024x768/e2e8f0/64748b?text=Listing+Image"
+                 alt="{{ listing.name }} image"
+                 class="w-full h-auto object-cover">
+        </div>
+
+        <!-- Listing Details & Actions -->
+        <div class="flex flex-col justify-between space-y-6">
+            <!-- Details Block -->
+            <div class="space-y-6">
+                <h3 class="text-3xl font-bold text-gray-900 leading-tight">{{ listing.name }}</h3>
+                <p class="text-2xl font-bold text-red-500">${{ listing.price }} <span class="font-normal text-gray-500 text-xl">/ night</span></p>
+
+                <hr class="border-t border-gray-200">
+                
+                <p class="text-gray-700 leading-relaxed">{{ listing.description }}</p>
+
+                <!-- Key Facts Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="building" class="icon w-6 h-6"></div>
+                        <span class="font-medium">Property Type:</span> {{ listing.property_type }}
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="map-pin" class="icon w-6 h-6"></div>
+                        <span class="font-medium">City:</span> {{ listing.city }}
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="bed" class="icon w-6 h-6"></div>
+                        <span class="font-medium">Beds:</span> {{ listing.beds }}
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="bath" class="icon w-6 h-6"></div>
+                        <span class="font-medium">Baths:</span> {{ listing.baths }}
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="ruler" class="icon w-6 h-6"></div>
+                        <span class="font-medium">Sqft:</span> {{ listing.sqft }}
+                    </div>
+                    <!-- Status display with dynamic badges -->
+                    <div class="flex items-center space-x-3 text-gray-700">
+                        <div data-lucide="info" class="icon w-6 h-6"></div>
+                        <span class="font-medium">Status:</span>
+                        {% if listing.status == 'Active' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                <div data-lucide="check-circle" class="w-3 h-3 mr-1"></div>
+                                Active
+                            </span>
+                        {% elif listing.status == 'Inactive' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                <div data-lucide="pause-circle" class="w-3 h-3 mr-1"></div>
+                                Inactive
+                            </span>
+                        {#
+                        // The 'Booked' status would be dynamically determined based on the listing's current bookings.
+                        // For now, this is commented out as requested.
+                        // To enable, uncomment this block and ensure your Django view provides the correct 'Booked' status.
+                        //
+                        // elif listing.status == 'Booked' %}
+                        //     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                        //         <div data-lucide="calendar-check" class="w-3 h-3 mr-1"></div>
+                        //         Booked
+                        //     </span>
+                        #}
+                        {% else %}
+                             <!-- Default badge for any other status -->
+                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                {{ listing.status }}
+                             </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-8 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                <a href="{% url 'hosts:edit_listing' listing.id %}"
+                   class="button-primary group flex-1 text-center">
+                   <span class="flex items-center justify-center space-x-2">
+                        <div data-lucide="edit" class="w-5 h-5 transition-transform duration-300 group-hover:rotate-90"></div>
+                        <span>Edit Listing</span>
+                    </span>
+                </a>
+                <a href="{% url 'hosts:my_listings' %}"
+                   class="button-secondary group flex-1 text-center">
+                   <span class="flex items-center justify-center space-x-2">
+                        <div data-lucide="arrow-left" class="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1"></div>
+                        <span>Back to Listings</span>
+                    </span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

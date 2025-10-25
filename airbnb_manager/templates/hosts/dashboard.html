@@ -1,0 +1,152 @@
+{% extends 'hosts/base.html' %}
+
+{% block title %}Dashboard | Aurban Host{% endblock %}
+
+{% block content_header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-10">
+    
+    <!-- Welcome and Quick Actions section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Welcome Card -->
+        <div class="lg:col-span-2 bg-gradient-to-br from-red-500 to-red-600 text-white p-8 rounded-3xl shadow-xl flex items-center justify-between">
+            <div>
+                <h3 class="text-4xl font-extrabold mb-2 leading-tight">Welcome back, {{ user.username|default:'Host' }}!</h3>
+                <p class="text-red-200 text-lg">Here's your latest overview. Ready to host today?</p>
+            </div>
+            <div data-lucide="building" class="h-24 w-24 text-red-400 opacity-50 hidden sm:block"></div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <a href="{% url 'hosts:add_listing' %}" class="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 group">
+                    <div data-lucide="plus-circle" class="h-8 w-8 mb-2 text-gray-500 group-hover:text-red-600 transition-colors duration-200"></div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-red-600">Add Listing</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 group">
+                    <div data-lucide="messages-square" class="h-8 w-8 mb-2 text-gray-500 group-hover:text-blue-600 transition-colors duration-200"></div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-blue-600">Inbox</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 hover:bg-green-50 hover:text-green-600 transition-colors duration-200 group">
+                    <div data-lucide="calendar-plus" class="h-8 w-8 mb-2 text-gray-500 group-hover:text-green-600 transition-colors duration-200"></div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-green-600">Calendar</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 group">
+                    <div data-lucide="bar-chart-2" class="h-8 w-8 mb-2 text-gray-500 group-hover:text-purple-600 transition-colors duration-200"></div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-purple-600">Analytics</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats cards section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Card 1: Total Listings -->
+        <div class="relative bg-white p-6 rounded-3xl shadow-xl border border-gray-200 overflow-hidden group">
+            <div class="absolute inset-0 bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex flex-col">
+                <div class="p-3 bg-red-500 text-white rounded-xl shadow-lg self-start transition-transform duration-300 group-hover:scale-110">
+                    <div data-lucide="home" class="h-8 w-8"></div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-lg text-gray-500 font-medium">Total Listings</div>
+                    <div class="text-4xl font-bold text-gray-900 mt-1">{{ listings|length }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card 2: Upcoming Bookings -->
+        <div class="relative bg-white p-6 rounded-3xl shadow-xl border border-gray-200 overflow-hidden group">
+            <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex flex-col">
+                <div class="p-3 bg-blue-500 text-white rounded-xl shadow-lg self-start transition-transform duration-300 group-hover:scale-110">
+                    <div data-lucide="calendar-check" class="h-8 w-8"></div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-lg text-gray-500 font-medium">Upcoming Bookings</div>
+                    <div class="text-4xl font-bold text-gray-900 mt-1">24</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card 3: Earnings this Month -->
+        <div class="relative bg-white p-6 rounded-3xl shadow-xl border border-gray-200 overflow-hidden group">
+            <div class="absolute inset-0 bg-green-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex flex-col">
+                <div class="p-3 bg-green-500 text-white rounded-xl shadow-lg self-start transition-transform duration-300 group-hover:scale-110">
+                    <div data-lucide="dollar-sign" class="h-8 w-8"></div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-lg text-gray-500 font-medium">Earnings this Month</div>
+                    <div class="text-4xl font-bold text-gray-900 mt-1">$4,500</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card 4: New Messages -->
+        <div class="relative bg-white p-6 rounded-3xl shadow-xl border border-gray-200 overflow-hidden group">
+            <div class="absolute inset-0 bg-yellow-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex flex-col">
+                <div class="p-3 bg-yellow-500 text-white rounded-xl shadow-lg self-start transition-transform duration-300 group-hover:scale-110">
+                    <div data-lucide="message-square" class="h-8 w-8"></div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-lg text-gray-500 font-medium">New Messages</div>
+                    <div class="text-4xl font-bold text-gray-900 mt-1">7</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Listings section -->
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <h3 class="text-3xl font-bold text-gray-900 mb-4 md:mb-0">My Listings</h3>
+            <a href="{% url 'hosts:add_listing' %}" class="flex items-center space-x-2 bg-red-500 text-white font-medium py-3 px-6 rounded-xl hover:bg-red-600 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                <div data-lucide="plus" class="h-5 w-5"></div>
+                <span>Add New Listing</span>
+            </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            {% if listings %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100 rounded-t-xl">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Property</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
+                        <th scope="col" class="relative px-6 py-4"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for listing in listings %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-base font-medium text-gray-900">{{ listing.name }}</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full 
+                                {% if listing.status == 'Active' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ listing.status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-base text-gray-500">{{ listing.city }}</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-base text-gray-500 font-medium">${{ listing.price }} / night</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <a href="{% url 'hosts:edit_listing' listing.pk %}" class="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200">Edit</a>
+                            <a href="{% url 'hosts:delete_listing' listing.pk %}" class="text-red-600 hover:text-red-900 font-medium transition-colors duration-200">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="px-6 py-8 text-lg text-center text-gray-500">You have no listings yet. Get started by adding a new one!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

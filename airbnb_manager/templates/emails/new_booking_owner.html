@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+    <head>
+        <title>New Booking Request</title>
+    </head>
+    <body>
+        <h2>New Booking Request</h2>
+        <p>
+            You have a new booking request for your property:
+            <strong>{{ booking.property.name }}</strong>
+        </p>
+
+        <h3>Booking Details</h3>
+        <ul>
+            <li>
+                <strong>Guest:</strong> {{ booking.guest.get_full_name }} ({{
+                booking.guest.email }})
+            </li>
+            <li>
+                <strong>Dates:</strong> {{ booking.check_in_date }} to {{
+                booking.check_out_date }}
+            </li>
+            <li><strong>Guests:</strong> {{ booking.num_guests }}</li>
+            <li><strong>Total:</strong> ${{ booking.total_price }}</li>
+            {% if booking.special_requests %}
+            <li>
+                <strong>Special Requests:</strong> {{ booking.special_requests
+                }}
+            </li>
+            {% endif %}
+        </ul>
+
+        <p>Please log in to your dashboard to review this booking request:</p>
+        <a
+            href="http://{{ domain }}{% url 'owner_bookings' %}"
+            class="btn btn-primary"
+        >
+            View Booking Requests
+        </a>
+
+        <p>Best regards,<br />AirBnB Manager Team</p>
+    </body>
+</html>

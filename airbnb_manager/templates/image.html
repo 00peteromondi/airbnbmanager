@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airbnb Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="container mx-auto max-w-2xl bg-white rounded-xl shadow-2xl p-6 sm:p-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-gray-800">Airbnb Image Generator</h1>
+        <p class="text-center text-gray-600 mb-8">Enter your own words or use the default suggestions to generate a unique image for your Airbnb listing. Click "Generate Image" to see the result!</p>
+
+        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+            <input type="text" id="prompt-input" value="A beautiful, high-end cabin with a luxury feel, surrounded by nature, with a family enjoying the amenities, in a cozy and inviting atmosphere." class="flex-grow w-full sm:w-auto p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200" placeholder="Enter your image prompt here...">
+            <button id="generate-btn" class="w-full sm:w-auto px-6 py-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200">
+                Generate Image
+            </button>
+        </div>
+
+        <div id="loading-spinner" class="hidden flex justify-center items-center h-64">
+            <svg class="animate-spin h-10 w-10 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+
+        <div id="image-container" class="hidden mt-8 text-center">
+            <img id="generated-image" src="" alt="Generated image" class="w-full rounded-lg shadow-xl border border-gray-200 mb-4">
+            <a id="download-link" href="#" download="airbnb_image.png" class="inline-block px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200">
+                Download Image
+            </a>
+        </div>
+
+        <div id="error-message" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded-lg text-center">
+            An error occurred. Please try again.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generate-btn');
+            const promptInput = document.getElementById('prompt-input');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const imageContainer = document.getElementById('image-container');
+            const generatedImage = document.getElementById('generated-image');
+            const errorMessage = document.getElementById('error-message');
+            const downloadLink = document.getElementById('download-link');
+            
+            // Exponential backoff logic for retries
+            const maxRetries = 5;
+            const initialDelay = 1000; // 1 second
+
+            async function generateImage(prompt, retryCount = 0) {
+                loadingSpinner.classList.remove('hidden');
+                imageContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+
+                const payload = {
+                    instances: {
+                        prompt: prompt,
+                    },
+                    parameters: {
+                        negativePrompt: "low quality, bad lighting, blurry, out of frame, out of focus, duplicate, ugly, distorted, grainy, extra limbs, bad anatomy, bad composition",
+                        sampleCount: 1
+                    }
+                };
+                const apiKey = "AIzaSyDrwgfrH5zPiBGev-kMx-0M7L0gCggdino"; // Your API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429 && retryCount < maxRetries) {
+                            const delay = initialDelay * Math.pow(2, retryCount);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return generateImage(prompt, retryCount + 1);
+                        }
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        const base64Data = result.predictions[0].bytesBase64Encoded;
+                        const imageUrl = `data:image/png;base64,${base64Data}`;
+                        generatedImage.src = imageUrl;
+                        downloadLink.href = imageUrl; // Set the download link's href
+                        image-container.classList.remove('hidden');
+                    } else {
+                        throw new Error('Image data not found in the response.');
+                    }
+
+                } catch (error) {
+                    console.error("Image generation failed:", error);
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                }
+            }
+
+            generateBtn.addEventListener('click', () => {
+                const prompt = promptInput.value;
+                if (prompt) {
+                    generateImage(prompt);
+                } else {
+                    errorMessage.textContent = "Please enter a prompt to generate an image.";
+                    errorMessage.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

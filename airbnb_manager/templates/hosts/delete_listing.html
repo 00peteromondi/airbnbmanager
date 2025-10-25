@@ -1,0 +1,23 @@
+{% extends 'hosts/base.html' %}
+
+{% block title %}Delete Listing | Aurban Host{% endblock %}
+
+{% block content_header %}Delete {{ listing.name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200 max-w-xl mx-auto text-center">
+    <div data-lucide="alert-triangle" class="h-16 w-16 text-red-500 mx-auto mb-4"></div>
+    <h3 class="text-3xl font-bold text-gray-900 mb-2">Are you sure?</h3>
+    <p class="text-lg text-gray-600 mb-6">This action cannot be undone. All data for "{{ listing.name }}" will be permanently deleted.</p>
+    
+    <form method="post" class="mt-6 flex justify-center space-x-4">
+        {% csrf_token %}
+        <a href="{% url 'hosts:dashboard' %}" class="flex items-center space-x-2 bg-gray-200 text-gray-700 font-medium py-3 px-8 rounded-xl hover:bg-gray-300 transition-all duration-200 shadow-lg">
+            Cancel
+        </a>
+        <button type="submit" class="bg-red-500 text-white font-medium py-3 px-8 rounded-xl hover:bg-red-600 transition-all duration-200 transform hover:scale-105 shadow-lg">
+            Confirm Delete
+        </button>
+    </form>
+</div>
+{% endblock %}
