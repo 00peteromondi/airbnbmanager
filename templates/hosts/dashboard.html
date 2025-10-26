@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Host Dashboard - Aurban Rentals{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Host Dashboard</h1>
+        <p class="text-gray-600 mt-2">Manage your properties and bookings</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Properties</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ listings.count }}</p>
+            <p class="text-gray-600 text-sm">Active listings</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Bookings</h3>
+            <p class="text-3xl font-bold text-green-600">0</p>
+            <p class="text-gray-600 text-sm">This month</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Revenue</h3>
+            <p class="text-3xl font-bold text-purple-600">KES 0</p>
+            <p class="text-gray-600 text-sm">Total earnings</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Rating</h3>
+            <p class="text-3xl font-bold text-yellow-600">5.0</p>
+            <p class="text-gray-600 text-sm">Average rating</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'hosts:add_listing' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors">
+                <i class="fas fa-plus text-green-600 text-xl mr-3"></i>
+                <span class="font-medium">Add Listing</span>
+            </a>
+            
+            <a href="{% url 'hosts:my_listings' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <i class="fas fa-list text-blue-600 text-xl mr-3"></i>
+                <span class="font-medium">My Listings</span>
+            </a>
+            
+            <a href="{% url 'users:profile' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                <i class="fas fa-user text-purple-600 text-xl mr-3"></i>
+                <span class="font-medium">Profile</span>
+            </a>
+            
+            {% if user.role == 'both' %}
+            <a href="{% url 'users:switch_role' 'guest' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition-colors">
+                <i class="fas fa-sync-alt text-red-600 text-xl mr-3"></i>
+                <span class="font-medium">Switch to Guest</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

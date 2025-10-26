@@ -1,54 +1,74 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from .models import Booking
 
+
+@receiver(pre_save, sender=Booking)
+def track_booking_changes(sender, instance, **kwargs):
+    """Track previous booking status before saving so we can compare in post_save."""
+    if instance.pk:
+        try:
+            instance._old_status = Booking.objects.get(pk=instance.pk).status
+        except Booking.DoesNotExist:
+            instance._old_status = None
+
+
 @receiver(post_save, sender=Booking)
-def send_booking_notification(sender, instance, created, **kwargs):
+def handle_booking_notifications(sender, instance, created, **kwargs):
+    """Single handler for booking notifications (creation and status updates)."""
     if created:
-        # Notify property owner
-        subject = f"New Booking Request for {instance.property.name}"
-        context = {'booking': instance}
-        message = render_to_string('emails/new_booking_owner.txt', context)
-        html_message = render_to_string('emails/new_booking_owner.html', context)
+        send_booking_request_email(instance)
+    else:
+        old_status = getattr(instance, '_old_status', None)
+        if old_status and old_status != instance.status:
+            send_booking_status_update(instance)
 
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [instance.property.owner.email],
-            html_message=html_message,
-            fail_silently=False,
-        )
 
-        # Notify guest
-        guest_subject = f"Booking Request Submitted: {instance.property.name}"
-        guest_message = render_to_string('emails/new_booking_guest.txt', context)
-        guest_html_message = render_to_string('emails/new_booking_guest.html', context)
+def send_booking_request_email(booking):
+    """Send booking request emails to host and guest"""
+    subject_host = f"New Booking Request - {booking.property.name}"
+    context = {'booking': booking}
+    html_message_host = render_to_string('emails/booking_request_host.html', context)
+    plain_message_host = render_to_string('emails/booking_request_host.txt', context)
 
-        send_mail(
-            guest_subject,
-            guest_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [instance.guest.email],
-            html_message=guest_html_message,
-            fail_silently=False,
-        )
+    send_mail(
+        subject_host,
+        plain_message_host,
+        settings.DEFAULT_FROM_EMAIL,
+        [booking.property.owner.email],
+        html_message=html_message_host,
+        fail_silently=False,
+    )
 
-    elif not created and 'status' in instance.get_dirty_fields():
-        # Notify guest of status change
-        subject = f"Booking Update: {instance.property.name}"
-        context = {'booking': instance}
-        message = render_to_string('emails/booking_status_update.txt', context)
-        html_message = render_to_string('emails/booking_status_update.html', context)
+    subject_guest = f"Booking Request Submitted - {booking.property.name}"
+    html_message_guest = render_to_string('emails/booking_request_guest.html', context)
+    plain_message_guest = render_to_string('emails/booking_request_guest.txt', context)
 
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [instance.guest.email],
-            html_message=html_message,
-            fail_silently=False,
-        )
+    send_mail(
+        subject_guest,
+        plain_message_guest,
+        settings.DEFAULT_FROM_EMAIL,
+        [booking.guest.email],
+        html_message=html_message_guest,
+        fail_silently=False,
+    )
+
+
+def send_booking_status_update(booking):
+    """Send status update to guest"""
+    subject = f"Booking Status Update - {booking.property.name}"
+    context = {'booking': booking}
+    html_message = render_to_string('emails/booking_status_update.html', context)
+    plain_message = render_to_string('emails/booking_status_update.txt', context)
+
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [booking.guest.email],
+        html_message=html_message,
+        fail_silently=False,
+    )

@@ -1,194 +1,193 @@
+from django.http import HttpResponseForbidden
+from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import HostRegistrationForm, ListingForm
-from .models import Listing
+from core.mixins import LogoutRequiredMixin, HostRequiredMixin, LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import View, CreateView, UpdateView
+from .forms import HostRegistrationForm
+from properties.forms import PropertyForm, PropertyImageFormSet
+from properties.models import Property, PropertyImage
+from bookings.models import Booking
 from django.contrib.auth.forms import AuthenticationForm
-from django.http import HttpResponseForbidden
-from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.db.models import Sum, Count
+from django.utils import timezone
 
-
-def register_host(request):
-    if request.method == 'POST':
+class HostRegistrationView(LogoutRequiredMixin, View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('hosts:dashboard')
+        form = HostRegistrationForm()
+        return render(request, 'hosts/register.html', {'form': form})
+    
+    def post(self, request):
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('hosts:dashboard')
         form = HostRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             messages.success(request, "Registration successful! Welcome to Aurban.")
-            return redirect('hosts:dashboard')
+            return redirect('users:role_selection')
         messages.error(request, "Registration failed. Invalid information.")
-    else:
-        form = HostRegistrationForm()
-    return render(request, 'hosts/register.html', {'form': form})
+        return render(request, 'hosts/register.html', {'form': form})
 
-
-
-def login_host(request):
-    """
-    Handles the host login process.
-
-    This function processes both GET and POST requests.
-    - On GET, it displays an empty login form.
-    - On POST, it attempts to authenticate and log in the user.
-    """
-    if request.method == 'POST':
-        # Create an instance of the AuthenticationForm with the request data.
-        # This form handles validation of the username and password fields.
-        form = AuthenticationForm(request, data=request.POST)
-        
-        # Check if the form data is valid.
-        if form.is_valid():
-            # The form is valid, now use the cleaned data to authenticate the user.
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            
-            # The authenticate function checks the credentials against the database.
-            # It returns a User object on success, and None on failure.
-            user = authenticate(request, username=username, password=password)
-            
-            if user is not None:
-                # The user was found and authenticated.
-                # The login function creates the user's session.
-                login(request, user)
-                
-                # Send a success message to the user.
-                messages.success(request, f"Welcome back, {username}!")
-                
-                # Redirect the user to the dashboard.
-                return redirect('hosts:dashboard')
-            else:
-                # The user was not authenticated.
-                # This could be due to an incorrect username or password.
-                messages.error(request, "Invalid username or password.")
-        else:
-            # The form itself was invalid (e.g., fields were left empty).
-            # The AuthenticationForm will automatically add errors to itself.
-            messages.error(request, "Invalid username or password. Please check your details.")
-    else:
-        # For a GET request, create an empty form to display.
-        form = AuthenticationForm()
-        
-    # Render the login page, passing the form and any messages.
-    return render(request, 'hosts/login.html', {'form': form})
-
-# View for host logout
+@login_required
 def logout_host(request):
     logout(request)
     messages.info(request, "Logged out successfully.")
-    return redirect('hosts:login')
-
+    return redirect('core:home')
 
 @login_required
 def dashboard(request):
-    """
-    Displays the host dashboard with a list of all their properties.
-    """
-    listings = Listing.objects.filter(host=request.user).order_by('-created_at')
+    if not (request.user.role in ['host', 'both']):
+        messages.error(request, "Access denied. This page is for hosts only.")
+        return redirect('core:home')
+    
+    if (request.user.role == 'both' and 
+        request.session.get('active_role') == 'guest'):
+        messages.info(request, "Please switch to host mode to access the host dashboard.")
+        return redirect('guests:guest_dashboard')
+    
+    properties = Property.objects.filter(owner=request.user).order_by('-created_at')
+    
+    # Get booking statistics
+    bookings = Booking.objects.filter(property__owner=request.user)
+    total_bookings = bookings.count()
+    pending_bookings = bookings.filter(status='pending').count()
+    confirmed_bookings = bookings.filter(status='confirmed').count()
+    revenue = bookings.filter(status__in=['confirmed', 'completed']).aggregate(
+        total_revenue=Sum('total_price')
+    )['total_revenue'] or 0
+    
     context = {
-        'listings': listings,
+        'properties': properties,
+        'total_properties': properties.count(),
+        'total_bookings': total_bookings,
+        'pending_bookings': pending_bookings,
+        'confirmed_bookings': confirmed_bookings,
+        'revenue': revenue,
     }
     return render(request, 'hosts/dashboard.html', context)
 
 @login_required
 def add_listing(request):
-    """
-    Handles creating a new listing.
-    """
     if request.method == 'POST':
-        form = ListingForm(request.POST)
+        form = PropertyForm(request.POST)
         if form.is_valid():
-            listing = form.save(commit=False)
-            listing.host = request.user
-            listing.save()
-            messages.success(request, 'New listing added successfully!')
-            return redirect('hosts:dashboard')
+            property = form.save(commit=False)
+            property.owner = request.user
+            property.save()
+
+            # Handle image uploads (use prefix 'images' so JS matches the management_form ids)
+            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+            if image_formset.is_valid():
+                image_formset.save()
+                messages.success(request, 'Property listed successfully with images!')
+                return redirect('hosts:dashboard')
+            else:
+                # If image formset is invalid, delete the property and show error
+                property.delete()
+                messages.error(request, 'Error uploading images. Please try again.')
+        else:
+            # Ensure image_formset exists so the template can render it with form errors
+            # We don't have a saved Property instance in this branch, so provide an empty formset
+            image_formset = PropertyImageFormSet(request.POST or None, request.FILES or None, prefix='images')
+            messages.error(request, 'Please correct the errors below.')
     else:
-        form = ListingForm()
+        form = PropertyForm()
+        image_formset = PropertyImageFormSet(prefix='images')
     
     context = {
         'form': form,
+        'image_formset': image_formset,
     }
     return render(request, 'hosts/add_listing.html', context)
 
-
 @login_required
-def edit_listing(request, listing_id):
-    """
-    Handles the logic for the edit listing page.
-    This view retrieves an existing listing and allows a user to update it.
-    """
+def edit_listing(request, property_id):
+    property = get_object_or_404(Property, id=property_id, owner=request.user)
     
-    # Use get_object_or_404 to fetch the listing.
-    # This will return a 404 page if the ID doesn't exist.
-    listing = get_object_or_404(Listing, id=listing_id)
-    
-    # Check if the form has been submitted
     if request.method == 'POST':
-        # Create a form instance and populate it with data from the request
-        # and the existing listing instance.
-        form = ListingForm(request.POST, instance=listing)
-        
-        # Validate the form
+        form = PropertyForm(request.POST, instance=property)
         if form.is_valid():
-            # Save the updated listing to the database
             form.save()
-            
-            # Redirect to the listing's detail page or another success page
-            # after a successful update.
-            return redirect(reverse('hosts:view_listing', args=[listing.id]))
+
+            # Handle image uploads
+            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+            if image_formset.is_valid():
+                image_formset.save()
+                messages.success(request, 'Property updated successfully!')
+                return redirect('hosts:view_listing', property_id=property.id)
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
-        # If the request is a GET, create a new form instance
-        # pre-populated with the data from the listing.
-        form = ListingForm(instance=listing)
+        form = PropertyForm(instance=property)
+        image_formset = PropertyImageFormSet(instance=property, prefix='images')
     
-    # Pass both the form and the listing object to the template context.
-    # This is the crucial step that was likely missing.
     context = {
         'form': form,
-        'listing': listing,
+        'property': property,
+        'image_formset': image_formset,
     }
-    
     return render(request, 'hosts/edit_listing.html', context)
 
 @login_required
-def view_listing(request, listing_id):
-    """
-    Displays the details of a specific listing.
-    """
-    listing = get_object_or_404(Listing, id=listing_id, host=request.user)
+def view_listing(request, property_id):
+    property = get_object_or_404(Property, id=property_id, owner=request.user)
     context = {
-        'listing': listing,
+        'property': property,
     }
     return render(request, 'hosts/view_listing.html', context)
 
 @login_required
-def delete_listing(request, pk):
-    """
-    Handles deleting a listing.
-    """
-    listing = get_object_or_404(Listing, pk=pk)
+def delete_listing(request, property_id):
+    property = get_object_or_404(Property, id=property_id, owner=request.user)
     
-    # Security check: ensure the current user is the owner of the listing
-    if listing.host != request.user:
-        return HttpResponseForbidden()
-
     if request.method == 'POST':
-        listing.delete()
-        messages.success(request, 'Listing deleted successfully!')
+        property.delete()
+        messages.success(request, 'Property deleted successfully!')
         return redirect('hosts:dashboard')
     
     context = {
-        'listing': listing,
+        'property': property,
     }
     return render(request, 'hosts/delete_listing.html', context)
 
-# View to list all listings for the current hosts
 @login_required
 def my_listings(request):
-    listings = request.user.listings.all()
-    context = {'listings': listings}
+    properties = Property.objects.filter(owner=request.user)
+    context = {'properties': properties}
     return render(request, 'hosts/my_listings.html', context)
 
-
-
+@login_required
+def property_bookings(request):
+    """View all bookings for host's properties"""
+    if not (request.user.role in ['host', 'both']):
+        messages.error(request, "Access denied. This page is for hosts only.")
+        return redirect('core:home')
+    
+    properties = Property.objects.filter(owner=request.user)
+    bookings = Booking.objects.filter(property__in=properties).select_related(
+        'property', 'guest'
+    ).order_by('-created_at')
+    
+    # Booking statistics
+    stats = {
+        'total_bookings': bookings.count(),
+        'pending_bookings': bookings.filter(status='pending').count(),
+        'confirmed_bookings': bookings.filter(status='confirmed').count(),
+        'cancelled_bookings': bookings.filter(status='cancelled').count(),
+        'completed_bookings': bookings.filter(status='completed').count(),
+    }
+    
+    context = {
+        'bookings': bookings,
+        'stats': stats,
+        'properties': properties,
+    }
+    return render(request, 'hosts/property_bookings.html', context)

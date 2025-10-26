@@ -1,0 +1,236 @@
+{% extends 'auth_base.html' %}
+{% load static %}
+{% load cloudinary %}
+
+{% block title %}Guest Login - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 450px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ef4444, #f97316, #eab308);
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        outline: none;
+    }
+    
+    .social-login-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .social-login-btn:hover {
+        border-color: #ef4444;
+        transform: translateY(-1px);
+    }
+    
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #6b7280;
+        margin: 1.5rem 0;
+    }
+    
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .divider span {
+        padding: 0 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user text-red-600 text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p class="text-gray-600">Sign in to your guest account</p>
+        </div>
+
+        <!-- Social Login -->
+        <div class="space-y-3 mb-6">
+            <button class="social-login-btn">
+                <i class="fab fa-google text-red-600 mr-3"></i>
+                Continue with Google
+            </button>
+            <button class="social-login-btn">
+                <i class="fab fa-facebook text-blue-600 mr-3"></i>
+                Continue with Facebook
+            </button>
+        </div>
+
+        <div class="divider">
+            <span>Or continue with email</span>
+        </div>
+
+        <!-- Login Form -->
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                    <span class="text-red-800 font-medium">Invalid credentials</span>
+                </div>
+                <p class="text-red-600 text-sm mt-1">Please check your username and password.</p>
+            </div>
+            {% endif %}
+
+            <!-- Username/Email -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Username or Email
+                </label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.username }}
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                </label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.password }}
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePassword()">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input type="checkbox" id="remember_me" name="remember_me" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                        Remember me
+                    </label>
+                </div>
+                <a href="#" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                    Forgot password?
+                </a>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Sign In
+            </button>
+        </form>
+
+        <!-- Sign Up Link -->
+        <div class="text-center mt-6 pt-6 border-t border-gray-200">
+            <p class="text-gray-600">
+                Don't have an account? 
+                <a href="{% url 'guests:guest_signup' %}" class="text-red-600 hover:text-red-700 font-medium">
+                    Sign up as Guest
+                </a>
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Want to host your property? 
+                <a href="{% url 'hosts:register' %}" class="text-green-600 hover:text-green-700">
+                    Become a Host
+                </a>
+            </p>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center">
+                <i class="fas fa-shield-alt text-blue-500 mr-2"></i>
+                <span class="text-sm text-blue-700">Your login is secure and encrypted</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+        const icon = document.querySelector('.fa-eye').parentNode.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    // Add focus styles dynamically
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-red-500', 'ring-opacity-20');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-red-500', 'ring-opacity-20');
+            });
+        });
+    });
+</script>
+{% endblock %}

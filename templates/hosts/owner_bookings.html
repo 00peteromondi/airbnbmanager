@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load cloudinary %}
+
+{% block title %}Manage Bookings - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .booking-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .booking-card.pending {
+        border-left-color: #f59e0b;
+        background: linear-gradient(to right, #fffbeb, white);
+    }
+    
+    .booking-card.confirmed {
+        border-left-color: #10b981;
+        background: linear-gradient(to right, #ecfdf5, white);
+    }
+    
+    .booking-card.cancelled {
+        border-left-color: #ef4444;
+        background: linear-gradient(to right, #fef2f2, white);
+    }
+    
+    .booking-card.completed {
+        border-left-color: #6b7280;
+        background: linear-gradient(to right, #f9fafb, white);
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-confirmed {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-completed {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-confirm {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .btn-confirm:hover {
+        background-color: #059669;
+    }
+    
+    .btn-cancel {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #dc2626;
+    }
+    
+    .btn-neutral {
+        background-color: #6b7280;
+        color: white;
+    }
+    
+    .btn-neutral:hover {
+        background-color: #4b5563;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-btn.active {
+        background-color: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .guest-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Manage Bookings</h1>
+        <p class="text-gray-600 mt-2">View and manage all bookings for your properties</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_bookings }}</p>
+                    <p class="text-sm text-gray-600">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-clock text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.pending_bookings }}</p>
+                    <p class="text-sm text-gray-600">Pending</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-check-circle text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.confirmed_bookings }}</p>
+                    <p class="text-sm text-gray-600">Confirmed</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.cancelled_bookings }}</p>
+                    <p class="text-sm text-gray-600">Cancelled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="flex flex-wrap gap-2">
+            <button class="filter-btn active" data-filter="all">All Bookings</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="confirmed">Confirmed</button>
+            <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+    </div>
+
+    <!-- Bookings List -->
+    <div class="space-y-6">
+        {% for booking in bookings %}
+        <div class="booking-card bg-white rounded-lg shadow-sm border border-gray-200 p-6 {{ booking.status }}" data-status="{{ booking.status }}">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                <!-- Booking Info -->
+                <div class="flex-1 mb-4 lg:mb-0">
+                    <div class="flex items-start space-x-4">
+                        <!-- Property Image -->
+                        {% if booking.property.images.first %}
+                            {% cloudinary booking.property.images.first.image width=100 height=80 crop="fill" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" %}
+                        {% else %}
+                            <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-home text-gray-400 text-xl"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="flex-1">
+                            <!-- Property & Guest Info -->
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ booking.property.name }}</h3>
+                                    <p class="text-gray-600 text-sm mt-1">
+                                        <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                        {{ booking.property.city }}, {{ booking.property.country }}
+                                    </p>
+                                    
+                                    <!-- Guest Information -->
+                                    <div class="flex items-center mt-3">
+                                        {% if booking.guest.profile_picture %}
+                                            {% cloudinary booking.guest.profile_picture width=40 height=40 crop="fill" class="guest-avatar mr-3" %}
+                                        {% else %}
+                                            <div class="guest-avatar bg-gray-300 flex items-center justify-center mr-3">
+                                                <i class="fas fa-user text-gray-600"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="font-medium text-gray-900">{{ booking.guest.get_display_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ booking.guest.email }}</div>
+                                            {% if booking.guest.phone_number %}
+                                            <div class="text-sm text-gray-500">{{ booking.guest.phone_number }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Status & Actions -->
+                                <div class="mt-3 sm:mt-0 sm:ml-4 flex sm:flex-col sm:items-end space-x-2 sm:space-x-0 sm:space-y-2">
+                                    <span class="status-badge status-{{ booking.status }}">
+                                        {{ booking.status }}
+                                    </span>
+                                    
+                                    {% if booking.status == 'pending' %}
+                                    <div class="flex space-x-2 sm:flex-col sm:space-x-0 sm:space-y-2">
+                                        <form method="post" action="{% url 'bookings:update_booking_status' booking.id 'confirmed' %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="action-btn btn-confirm">
+                                                <i class="fas fa-check mr-1"></i>Confirm
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'bookings:update_booking_status' booking.id 'cancelled' %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="action-btn btn-cancel" 
+                                                    onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                <i class="fas fa-times mr-1"></i>Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Booking Dates & Details -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-sm">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-calendar-day text-blue-500 mr-2 w-5"></i>
+                                    <span><strong>Check-in:</strong> {{ booking.check_in_date }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-calendar-check text-green-500 mr-2 w-5"></i>
+                                    <span><strong>Check-out:</strong> {{ booking.check_out_date }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-users text-purple-500 mr-2 w-5"></i>
+                                    <span><strong>Guests:</strong> {{ booking.num_guests }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Price -->
+                            <div class="mt-3">
+                                <span class="text-2xl font-bold text-gray-900">KES {{ booking.total_price|intcomma }}</span>
+                                <span class="text-gray-600 text-sm ml-2">total amount</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Requests & Admin Notes -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                {% if booking.special_requests %}
+                <div class="mb-3">
+                    <h4 class="text-sm font-medium text-gray-900 mb-1">Guest Requests:</h4>
+                    <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{{ booking.special_requests }}</p>
+                </div>
+                {% endif %}
+                
+                <!-- Admin Notes Form -->
+                <form method="post" action="{% url 'bookings:update_booking_notes' booking.id %}" class="flex items-start space-x-2">
+                    {% csrf_token %}
+                    <div class="flex-1">
+                        <label for="admin_notes_{{ booking.id }}" class="text-sm font-medium text-gray-700 mb-1 block">
+                            Admin Notes:
+                        </label>
+                        <textarea name="admin_notes" id="admin_notes_{{ booking.id }}" 
+                                  class="w-full border border-gray-300 rounded-lg p-2 text-sm" 
+                                  rows="2" placeholder="Add private notes about this booking...">{{ booking.admin_notes|default:'' }}</textarea>
+                    </div>
+                    <button type="submit" class="action-btn btn-neutral mt-6">
+                        <i class="fas fa-save mr-1"></i>Save
+                    </button>
+                </form>
+            </div>
+
+            <!-- Timeline -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span>Booked: {{ booking.created_at|date:"M d, Y g:i A" }}</span>
+                    {% if booking.updated_at != booking.created_at %}
+                    <span>Updated: {{ booking.updated_at|date:"M d, Y g:i A" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No bookings yet</h3>
+            <p class="text-gray-500 mb-6">You haven't received any bookings for your properties.</p>
+            <a href="{% url 'hosts:add_listing' %}" 
+               class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>
+                Add New Listing
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md">
+                {{ num }}
+            </span>
+            {% else %}
+            <a href="?page={{ num }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                {{ num }}
+            </a>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const bookingCards = document.querySelectorAll('.booking-card[data-status]');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Filter bookings
+                bookingCards.forEach(card => {
+                    if (filter === 'all' || card.getAttribute('data-status') === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Auto-save admin notes
+        const noteForms = document.querySelectorAll('form[action*="update_booking_notes"]');
+        noteForms.forEach(form => {
+            const textarea = form.querySelector('textarea');
+            let saveTimeout;
+            
+            textarea.addEventListener('input', function() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    form.submit();
+                }, 2000); // Save after 2 seconds of inactivity
+            });
+        });
+        
+        // Status update confirmation
+        const statusForms = document.querySelectorAll('form[action*="update_booking_status"]');
+        statusForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const action = this.getAttribute('action');
+                if (action.includes('cancelled')) {
+                    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

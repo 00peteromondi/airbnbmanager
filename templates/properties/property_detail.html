@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ property.name }} - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .property-detail-container {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .property-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .carousel-container {
+        position: relative;
+        height: 400px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .carousel-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .carousel-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .feature-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .amenity-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    
+    .amenity-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+    
+    .booking-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .price-breakdown {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .price-row.total {
+        border-bottom: none;
+        border-top: 2px solid #e2e8f0;
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+    
+    .host-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="property-detail-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li>
+                    <a href="{% url 'core:properties_list' %}" class="text-gray-500 hover:text-gray-700">Properties</a>
+                </li>
+                <li>
+                    <span class="text-gray-400">/</span>
+                </li>
+                <li>
+                    <span class="text-gray-700 font-medium">{{ property.name }}</span>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Property Details -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Image Carousel -->
+                <div class="property-card">
+                    <div class="carousel-container">
+                        {% if property.images.all %}
+                            <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    {% for image in property.images.all %}
+                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                        <img src="{{ image.image.url }}" class="carousel-image" alt="{{ image.caption|default:property.name }}">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon bg-black/30 rounded-full p-4"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon bg-black/30 rounded-full p-4"></span>
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="carousel-placeholder">
+                                <div class="text-center text-white">
+                                    <i class="fas fa-home text-6xl mb-4"></i>
+                                    <p class="text-xl font-semibold">No images available</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Property Header -->
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6">
+                            <div class="flex-1">
+                                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ property.name }}</h1>
+                                <div class="flex items-center text-gray-600 mb-4">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                    <span>{{ property.address }}, {{ property.city }}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="feature-badge">{{ property.property_type|title }}</span>
+                                    <span class="feature-badge">{{ property.bedrooms }} bedroom{{ property.bedrooms|pluralize }}</span>
+                                    <span class="feature-badge">{{ property.bathrooms }} bathroom{{ property.bathrooms|pluralize }}</span>
+                                    <span class="feature-badge">Up to {{ property.max_guests }} guests</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 sm:mt-0">
+                                <div class="text-3xl font-bold text-gray-900">
+                                    Ksh{{ property.price_per_night|intcomma }}
+                                    <span class="text-lg font-normal text-gray-600">/ night</span>
+                                </div>
+                                <div class="flex items-center text-yellow-500 mt-1">
+                                    <i class="fas fa-star"></i>
+                                    <span class="ml-1 text-gray-700">{{ property.average_rating|default:"4.5" }}</span>
+                                    <span class="text-gray-500 text-sm ml-1">({{ property.review_set.count }} reviews)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property Description -->
+                        <div class="mb-8">
+                            <h2 class="section-title">Description</h2>
+                            <p class="text-gray-700 leading-relaxed text-lg">{{ property.description }}</p>
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="mb-8">
+                            <h2 class="section-title">Amenities</h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {% for amenity in property.amenities %}
+                                <div class="amenity-item">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-gray-700 capitalize">{{ amenity }}</span>
+                                </div>
+                                {% empty %}
+                                <div class="col-span-full text-center py-8">
+                                    <i class="fas fa-concierge-bell text-gray-400 text-4xl mb-4"></i>
+                                    <p class="text-gray-500">No amenities listed</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Host Information -->
+                        <div class="border-t border-gray-200 pt-8">
+                            <h2 class="section-title">Hosted by {{ property.owner.get_display_name }}</h2>
+                            <div class="flex items-center space-x-4">
+                                {% if property.owner.profile_picture %}
+                                    <img src="{{ property.owner.profile_picture.url }}" alt="{{ property.owner.get_display_name }}" class="host-avatar">
+                                {% else %}
+                                    <div class="host-avatar bg-gray-300 flex items-center justify-center">
+                                        <i class="fas fa-user text-gray-600 text-2xl"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">{{ property.owner.get_display_name }}</h3>
+                                    <p class="text-gray-600">Joined {{ property.owner.date_joined|date:"F Y" }}</p>
+                                    <div class="flex items-center mt-2">
+                                        <span class="text-yellow-500 mr-1">
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                        <span class="text-gray-700">
+                                            {{ property.owner.host_rating|default:"4.8" }} 
+                                            ({{ property.owner.host_review_count|default:"24" }} reviews)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                {% if property.review_set.exists %}
+                <div class="property-card p-6">
+                    <h2 class="section-title">Guest Reviews</h2>
+                    <div class="space-y-6">
+                        {% for review in property.review_set.all %}
+                        <div class="border-b border-gray-200 pb-6 last:border-b-0">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-user text-gray-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">{{ review.user.get_display_name }}</h4>
+                                    <div class="flex items-center">
+                                        <div class="flex text-yellow-500">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:"F Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700">{{ review.comment }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Booking Card -->
+            <div class="lg:col-span-1">
+                <div class="booking-card p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Book Your Stay</h3>
+                    
+                    <form method="post" action="{% url 'bookings:create_booking' property.id %}" id="booking-form">
+                        {% csrf_token %}
+                        
+                        <!-- Date Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Select Dates</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <input type="date" name="check_in_date" 
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           required>
+                                    <p class="text-xs text-gray-500 mt-1">Check-in</p>
+                                </div>
+                                <div>
+                                    <input type="date" name="check_out_date" 
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           required>
+                                    <p class="text-xs text-gray-500 mt-1">Check-out</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guest Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Number of Guests</label>
+                            <select name="num_guests" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                {% for i in guest_range %}
+                                <option value="{{ i }}">{{ i }} guest{{ i|pluralize }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Special Requests</label>
+                            <textarea name="special_requests" 
+                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      rows="3"
+                                      placeholder="Any special requirements or requests..."></textarea>
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="price-breakdown mb-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Price Breakdown</h4>
+                            <div class="price-row">
+                                <span>Ksh{{ property.price_per_night|intcomma }} × <span id="nights-count">0</span> nights</span>
+                                <span>Ksh <span id="subtotal">0</span></span>
+                            </div>
+                            <div class="price-row">
+                                <span>Service fee</span>
+                                <span>Ksh <span id="service-fee">0</span></span>
+                            </div>
+                            <div class="price-row total">
+                                <span>Total</span>
+                                <span>Ksh <span id="total-price">0</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Book Button -->
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            <i class="fas fa-calendar-check mr-2"></i>
+                            Request to Book
+                        </button>
+
+                        <!-- Security Note -->
+                        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="flex items-center text-blue-700">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                <span class="text-sm">Your booking is protected by our secure payment system</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkInInput = document.querySelector('input[name="check_in_date"]');
+        const checkOutInput = document.querySelector('input[name="check_out_date"]');
+        const nightsCount = document.getElementById('nights-count');
+        const subtotal = document.getElementById('subtotal');
+        const serviceFee = document.getElementById('service-fee');
+        const totalPrice = document.getElementById('total-price');
+        
+        const pricePerNight = {{ property.price_per_night }};
+        
+        // Set minimum dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const formatDate = (date) => date.toISOString().split('T')[0];
+        
+        checkInInput.min = formatDate(tomorrow);
+        checkOutInput.min = formatDate(tomorrow);
+        
+        function calculatePrice() {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            
+            if (checkIn && checkOut && checkOut > checkIn) {
+                const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                const calculatedSubtotal = pricePerNight * nights;
+                const calculatedServiceFee = calculatedSubtotal * 0.1; // 10% service fee
+                const calculatedTotal = calculatedSubtotal + calculatedServiceFee;
+                
+                nightsCount.textContent = nights;
+                subtotal.textContent = calculatedSubtotal.toLocaleString();
+                serviceFee.textContent = calculatedServiceFee.toLocaleString();
+                totalPrice.textContent = calculatedTotal.toLocaleString();
+            } else {
+                nightsCount.textContent = '0';
+                subtotal.textContent = '0';
+                serviceFee.textContent = '0';
+                totalPrice.textContent = '0';
+            }
+        }
+        
+        checkInInput.addEventListener('change', calculatePrice);
+        checkOutInput.addEventListener('change', calculatePrice);
+        
+        // Initialize price calculation
+        calculatePrice();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aurban Rentals | Your Next Urban Escape{% endblock %}</title>
+    
+    {% load static %}
+    {% load cloudinary %}
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="font-sans antialiased">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg relative z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'core:home' %}" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gray-900">Aurban Rentals</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    {% if user.is_authenticated %}
+                        <!-- Authenticated User Navigation -->
+                        {% if user.role == 'host' or user.role == 'both' %}
+                            <!-- Host Navigation -->
+                            <a href="{% url 'hosts:dashboard' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-tachometer-alt mr-1"></i>Host Dashboard
+                            </a>
+                            <a href="{% url 'hosts:my_listings' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-list mr-1"></i>My Listings
+                            </a>
+                            <a href="{% url 'hosts:add_listing' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-plus mr-1"></i>Add Listing
+                            </a>
+                        {% endif %}
+
+                        {% if user.role == 'guest' or user.role == 'both' %}
+                            <!-- Guest Navigation -->
+                            <a href="{% url 'guests:guest_dashboard' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-user mr-1"></i>Guest Dashboard
+                            </a>
+                            <a href="{% url 'guests:guest_properties' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-search mr-1"></i>Find Stays
+                            </a>
+                            <a href="{% url 'bookings:booking_list' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-calendar mr-1"></i>My Bookings
+                            </a>
+                        {% endif %}
+
+                        <!-- Common Navigation for All Authenticated Users -->
+                        <a href="{% url 'core:properties_list' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                            <i class="fas fa-building mr-1"></i>All Properties
+                        </a>
+
+                    {% else %}
+                        <!-- Public Navigation -->
+                        <a href="{% url 'core:properties_list' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                            <i class="fas fa-search mr-1"></i>Find Stays
+                        </a>
+                        <a href="{% url 'core:hosts' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                            <i class="fas fa-home mr-1"></i>Become a Host
+                        </a>
+                        <a href="#how-it-works" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                            <i class="fas fa-info-circle mr-1"></i>How It Works
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- User Menu / Auth Links -->
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <!-- Role Switcher for Users with Both Roles -->
+                        {% if user.role == 'both' %}
+                            <div class="relative group">
+                                <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>
+                                        {% if request.session.active_role == 'host' %}
+                                            Host Mode
+                                        {% else %}
+                                            Guest Mode
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                                    <a href="{% url 'users:switch_role' 'host' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.session.active_role == 'host' %}bg-red-50 text-red-600{% endif %}">
+                                        <i class="fas fa-home mr-2"></i>Switch to Host
+                                    </a>
+                                    <a href="{% url 'users:switch_role' 'guest' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.session.active_role != 'host' %}bg-red-50 text-red-600{% endif %}">
+                                        <i class="fas fa-user mr-2"></i>Switch to Guest
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- User Dropdown Menu -->
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors">
+                                {% if user.profile_picture %}
+                                    {% cloudinary user.profile_picture class="w-8 h-8 rounded-full object-cover" %}
+                                {% else %}
+                                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-gray-600 text-sm"></i>
+                                    </div>
+                                {% endif %}
+                                <span class="hidden md:block">{{ user.get_display_name }}</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                                <!-- User Info -->
+                                <div class="px-4 py-2 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-900">{{ user.get_display_name }}</p>
+                                    <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    <p class="text-xs text-gray-500 capitalize">{{ user.get_role_display }}</p>
+                                    <!-- Role Switcher for Users with Both Roles -->
+                                    {% if user.role == 'both' %}
+                                    <div class="relative group" id="role-switcher">
+                                        <button class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                            <i class="fas fa-sync-alt text-red-600"></i>
+                                            <span id="current-role-display">
+                                                {% if request.session.active_role == 'host' %}
+                                                    Host Mode
+                                                {% else %}
+                                                    Guest Mode
+                                                {% endif %}
+                                            </span>
+                                            <i class="fas fa-chevron-down text-xs"></i>
+                                        </button>
+                                        
+                                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 border border-gray-200">
+                                            <a href="{% url 'users:switch_role' 'host' %}" 
+                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors role-switch-option {% if request.session.active_role == 'host' %}bg-red-50 text-red-600 font-medium{% endif %}">
+                                                <i class="fas fa-home mr-2 {% if request.session.active_role == 'host' %}text-red-600{% else %}text-gray-400{% endif %}"></i>
+                                                Switch to Host
+                                            </a>
+                                            <a href="{% url 'users:switch_role' 'guest' %}" 
+                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors role-switch-option {% if request.session.active_role != 'host' %}bg-red-50 text-red-600 font-medium{% endif %}">
+                                                <i class="fas fa-user mr-2 {% if request.session.active_role != 'host' %}text-red-600{% else %}text-gray-400{% endif %}"></i>
+                                                Switch to Guest
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-200 pt-4">
+                                        <a href="{% url 'guests:guest_login' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                                        </a>
+                                        <div class="space-y-2 mt-2">
+                                            <a href="{% url 'guests:guest_signup' %}" class="block text-blue-600 font-medium py-2">
+                                                <i class="fas fa-user mr-2"></i>Sign up as Guest
+                                            </a>
+                                            <a href="{% url 'hosts:register' %}" class="block text-green-600 font-medium py-2">
+                                                <i class="fas fa-home mr-2"></i>Sign up as Host
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <!-- Mobile Public Menu -->
+
+                                </div>
+                                
+                                <!-- Menu Links -->
+                                <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user mr-2"></i>Profile
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i>Settings
+                                </a>
+                                
+                                <div class="border-t border-gray-100 mt-2 pt-2">
+                                    <form method="post" action="{% url 'users:logout' %}" class="block w-full">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Public Auth Links -->
+                        <div class="flex items-center space-x-4">
+                            <a href="{% url 'guests:guest_login' %}" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Login
+                            </a>
+                            
+                            <!-- Registration Dropdown -->
+                            <div class="relative group">
+                                <button class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center">
+                                    <i class="fas fa-user-plus mr-1"></i>Sign Up
+                                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                                    <a href="{% url 'guests:guest_signup' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-2 text-blue-600"></i>Sign up as Guest
+                                    </a>
+                                    <a href="{% url 'hosts:register' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-home mr-2 text-green-600"></i>Sign up as Host
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="mobile-menu-button text-gray-700 hover:text-red-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-menu hidden md:hidden bg-white border-t border-gray-200">
+            <div class="px-4 py-4 space-y-4">
+                             <!-- Role Switcher for Users with Both Roles -->
+                
+                {% if user.is_authenticated %}
+                    <!-- Mobile Authenticated Menu -->
+                    {% if user.role == 'host' or user.role == 'both' %}
+                        <a href="{% url 'hosts:dashboard' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Host Dashboard
+                        </a>
+                        <a href="{% url 'hosts:my_listings' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-list mr-2"></i>My Listings
+                        </a>
+                        <a href="{% url 'hosts:add_listing' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-plus mr-2"></i>Add Listing
+                        </a>
+                    {% endif %}
+
+                    {% if user.role == 'guest' or user.role == 'both' %}
+                        <a href="{% url 'guests:guest_dashboard' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-user mr-2"></i>Guest Dashboard
+                        </a>
+                        <a href="{% url 'guests:guest_properties' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-search mr-2"></i>Find Stays
+                        </a>
+                        <a href="{% url 'bookings:booking_list' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-calendar mr-2"></i>My Bookings
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'core:properties_list' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                        <i class="fas fa-building mr-2"></i>All Properties
+                    </a>
+
+                    <!-- Mobile User Links -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <a href="{% url 'users:profile' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-user mr-2"></i>Profile
+                        </a>
+                        <a href="#" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+           
+                        <form method="post" action="{% url 'users:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-left text-gray-700 hover:text-red-600 font-medium py-2">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </form>
+                    </div>
+
+                {% else %}
+                    <!-- Mobile Public Menu -->
+                    <a href="{% url 'core:properties_list' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                        <i class="fas fa-search mr-2"></i>Find Stays
+                    </a>
+                    <a href="{% url 'core:hosts' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                        <i class="fas fa-home mr-2"></i>Become a Host
+                    </a>
+                    <a href="#how-it-works" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                        <i class="fas fa-info-circle mr-2"></i>How It Works
+                    </a>
+                    <div class="border-t border-gray-200 pt-4">
+                        <a href="{% url 'guests:guest_login' %}" class="block text-gray-700 hover:text-red-600 font-medium py-2">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </a>
+                        <a href="{% url 'guests:guest_signup' %}" class="block text-red-600 font-medium py-2">
+                            <i class="fas fa-user-plus mr-2"></i>Sign Up
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages/Alerts -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} rounded-lg p-4 mb-4 border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+            <div class="flex items-center">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle mr-3"></i>
+                {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle mr-3"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                {% else %}
+                    <i class="fas fa-info-circle mr-3"></i>
+                {% endif %}
+                <span>{{ message }}</span>
+                <button type="button" class="ml-auto text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}
+        <!-- Content will be injected here by child templates -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg class="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="text-xl font-bold">Aurban Rentals</span>
+                    </div>
+                    <p class="text-gray-400 mb-4 max-w-md">
+                        Discover unique accommodations and experiences around the world. 
+                        Whether you're traveling or hosting, Aurban makes it easy and enjoyable.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="{% url 'core:home' %}" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="{% url 'core:properties_list' %}" class="hover:text-white transition-colors">Find Stays</a></li>
+                        <li><a href="{% url 'core:hosts' %}" class="hover:text-white transition-colors">Become a Host</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div>
+                    <h3 class="font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Safety Information</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Cancellation Options</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Support</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Trust & Safety</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">
+                    &copy; 2024 Aurban Rentals. All rights reserved.
+                </p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+
+            // Close alerts when close button is clicked
+            document.querySelectorAll('.alert button').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.alert').remove();
+                });
+            });
+        });
+
+        // Dropdown menu close when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdowns = document.querySelectorAll('.relative.group');
+            dropdowns.forEach(dropdown => {
+                if (!dropdown.contains(event.target)) {
+                    const menu = dropdown.querySelector('.absolute');
+                    if (menu) {
+                        menu.classList.add('opacity-0', 'invisible');
+                    }
+                }
+            });
+        });
+    </script>
+
+    {% block extra_scripts %}
+    <script>
+    // Enhanced Role Switching
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSwitcher = document.getElementById('role-switcher');
+        if (roleSwitcher) {
+            // Add click handlers for role switch options
+            const roleOptions = document.querySelectorAll('.role-switch-option');
+            roleOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    const role = this.getAttribute('href').split('/').filter(Boolean).pop();
+                    
+                    // Show loading state
+                    const currentDisplay = document.getElementById('current-role-display');
+                    const originalText = currentDisplay.textContent;
+                    currentDisplay.textContent = 'Switching...';
+                    
+                    // Add visual feedback
+                    this.classList.add('bg-blue-50');
+                    
+                    // The page will reload after the redirect, so no need for AJAX
+                });
+            });
+            
+            // Keep dropdown open when hovering
+            roleSwitcher.addEventListener('mouseenter', function() {
+                const dropdown = this.querySelector('.absolute');
+                dropdown.classList.remove('opacity-0', 'invisible');
+                dropdown.classList.add('opacity-100', 'visible');
+            });
+            
+            roleSwitcher.addEventListener('mouseleave', function() {
+                const dropdown = this.querySelector('.absolute');
+                dropdown.classList.remove('opacity-100', 'visible');
+                dropdown.classList.add('opacity-0', 'invisible');
+            });
+        }
+        
+        // Display current role in console for debugging
+        console.log('Current active role:', '{{ request.session.active_role|default:"guest" }}');
+        console.log('User role:', '{{ user.role }}');
+    });
+    </script>
+    {% endblock %}
+</body>
+</html>

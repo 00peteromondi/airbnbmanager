@@ -2,9 +2,16 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Property
 from bookings.models import Booking
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+
 
 from bookings.forms import BookingForm
+from django.db.models import Sum
+from django.utils import timezone
+from django.db.models import Q
+from datetime import datetime
+from bookings.utils import check_property_availability, get_available_properties
+from django.contrib.auth.decorators import login_required
 
 class PropertyListView(ListView):
     model = Property
@@ -40,6 +47,8 @@ class PropertyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class PropertyDetailView(DetailView):
     model = Property
+    context_object_name = 'property'
+    pk_url_kwarg = 'property_id'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -47,8 +56,15 @@ class PropertyDetailView(DetailView):
             'property': self.object,
             'num_guests': 1
         })
+        # Add guest range for the select dropdown
+        context['guest_range'] = range(1, self.object.max_guests + 1)
+        
+        # Add amenities in a format that's easy to display
+        context['amenities_display'] = [
+            (amenity, dict(Property.AMENITY_CHOICES).get(amenity, amenity))
+            for amenity in self.object.amenities
+        ]
         return context
-
 
 from django.db.models import Q
 from datetime import datetime
@@ -117,3 +133,33 @@ def property_search(request):
     }
 
     return render(request, 'properties/property_list.html', context)
+
+# hosts/views.py
+@login_required
+def dashboard(request):
+    if not request.user.is_host:
+        return redirect('hosts:become_host')
+    
+    properties = Property.objects.filter(owner=request.user)
+    total_properties = properties.count()
+    
+    # Get booking statistics
+    bookings = Booking.objects.filter(property__owner=request.user)
+    total_bookings = bookings.count()
+    pending_bookings = bookings.filter(status='pending').count()
+    revenue = bookings.filter(status__in=['completed', 'checked_out']).aggregate(
+        total_revenue=Sum('total_price')
+    )['total_revenue'] or 0
+    
+    # Recent bookings
+    recent_bookings = bookings.order_by('-created_at')[:5]
+    
+    context = {
+        'total_properties': total_properties,
+        'total_bookings': total_bookings,
+        'pending_bookings': pending_bookings,
+        'revenue': revenue,
+        'recent_bookings': recent_bookings,
+        'properties': properties,
+    }
+    return render(request, 'hosts/dashboard.html', context)

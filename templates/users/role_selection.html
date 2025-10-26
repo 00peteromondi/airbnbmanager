@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Choose Your Role - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    .role-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .role-card:hover {
+        transform: translateY(-8px);
+        border-color: #4F46E5;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .role-card.selected {
+        border-color: #4F46E5;
+        background-color: #f0f9ff;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .feature-list li {
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .feature-list li:before {
+        content: "✓";
+        color: #10B981;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-white mb-4">
+                Welcome to Aurban Rentals! 🎉
+            </h1>
+            <p class="text-xl text-white opacity-90 max-w-2xl mx-auto">
+                Let's personalize your experience. Choose how you'd like to use our platform.
+            </p>
+        </div>
+
+        <!-- Role Selection Form -->
+        <form method="post" class="mt-8">
+            {% csrf_token %}
+            
+            <!-- Hidden form field for role -->
+            <input type="hidden" name="role" id="selected-role" value="{{ form.role.value|default:'' }}">
+            
+            {% if form.errors %}
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-red-800 font-medium">Please correct the errors below:</span>
+                </div>
+                {% for error in form.role.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Role Selection Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Guest Role Card -->
+                <div class="role-card bg-white rounded-2xl shadow-xl p-6 cursor-pointer" 
+                     data-role="guest" 
+                     onclick="selectRole('guest')">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Traveler</h3>
+                        <p class="text-blue-600 font-medium">Find amazing places to stay</p>
+                    </div>
+                    
+                    <ul class="feature-list text-sm text-gray-600 space-y-2 mb-4">
+                        <li>Book unique accommodations</li>
+                        <li>Explore local experiences</li>
+                        <li>Save favorite properties</li>
+                        <li>Manage your bookings</li>
+                        <li>Write reviews</li>
+                    </ul>
+                    
+                    <div class="text-center mt-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            Perfect for travelers
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Host Role Card -->
+                <div class="role-card bg-white rounded-2xl shadow-xl p-6 cursor-pointer" 
+                     data-role="host" 
+                     onclick="selectRole('host')">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Host</h3>
+                        <p class="text-green-600 font-medium">Share your space</p>
+                    </div>
+                    
+                    <ul class="feature-list text-sm text-gray-600 space-y-2 mb-4">
+                        <li>List your property</li>
+                        <li>Manage bookings</li>
+                        <li>Set your pricing</li>
+                        <li>Earn extra income</li>
+                        <li>Build your reputation</li>
+                    </ul>
+                    
+                    <div class="text-center mt-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            Perfect for property owners
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Both Roles Card -->
+                <div class="role-card bg-white rounded-2xl shadow-xl p-6 cursor-pointer" 
+                     data-role="both" 
+                     onclick="selectRole('both')">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Traveler & Host</h3>
+                        <p class="text-purple-600 font-medium">The best of both worlds</p>
+                    </div>
+                    
+                    <ul class="feature-list text-sm text-gray-600 space-y-2 mb-4">
+                        <li>Book accommodations worldwide</li>
+                        <li>Host travelers at your property</li>
+                        <li>Switch between roles easily</li>
+                        <li>Full platform access</li>
+                        <li>Maximum flexibility</li>
+                    </ul>
+                    
+                    <div class="text-center mt-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                            Most popular choice
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 text-center">
+                <button type="submit" 
+                        id="continue-btn"
+                        class="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-full text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300 transform hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        disabled>
+                    <span>Continue to Aurban</span>
+                    <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </button>
+                
+                <p class="mt-4 text-white opacity-80 text-sm">
+                    You can always change this later in your account settings
+                </p>
+            </div>
+        </form>
+
+        <!-- Additional Help -->
+        <div class="text-center mt-8">
+            <p class="text-white opacity-70">
+                Need help deciding? <a href="#" class="text-white underline hover:no-underline">Learn more about roles</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let selectedRole = '';
+
+    function selectRole(role) {
+        // Remove selected class from all cards
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card
+        const selectedCard = document.querySelector(`[data-role="${role}"]`);
+        selectedCard.classList.add('selected');
+        
+        // Update hidden input
+        document.getElementById('selected-role').value = role;
+        selectedRole = role;
+        
+        // Enable continue button
+        document.getElementById('continue-btn').disabled = false;
+        
+        // Add visual feedback
+        animateSelection(selectedCard);
+    }
+
+    function animateSelection(card) {
+        card.style.transform = 'translateY(-8px) scale(1.02)';
+        setTimeout(() => {
+            card.style.transform = 'translateY(-8px) scale(1)';
+        }, 150);
+    }
+
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        const roles = ['guest', 'host', 'both'];
+        const currentIndex = roles.indexOf(selectedRole);
+        
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            event.preventDefault();
+            const nextIndex = (currentIndex + 1) % roles.length;
+            selectRole(roles[nextIndex]);
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const prevIndex = (currentIndex - 1 + roles.length) % roles.length;
+            selectRole(roles[prevIndex]);
+        } else if (event.key === 'Enter' && selectedRole) {
+            document.querySelector('form').submit();
+        }
+    });
+
+    // Add hover effects
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('selected')) {
+                this.style.transform = 'translateY(-4px)';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('selected')) {
+                this.style.transform = 'translateY(0)';
+            }
+        });
+    });
+
+    // Form submission handling
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!selectedRole) {
+            e.preventDefault();
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'mb-6 bg-red-50 border border-red-200 rounded-lg p-4';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-red-800 font-medium">Please select a role to continue</span>
+                </div>
+            `;
+            this.prepend(errorDiv);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'auth_base.html' %}
+{% load static %}
+
+{% block title %}Guest Sign Up - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+    
+    .password-strength {
+        height: 4px;
+        border-radius: 2px;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .strength-weak { background-color: #ef4444; width: 25%; }
+    .strength-fair { background-color: #f59e0b; width: 50%; }
+    .strength-good { background-color: #10b981; width: 75%; }
+    .strength-strong { background-color: #10b981; width: 100%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Join as Guest</h1>
+            <p class="text-gray-600">Create your account to start booking amazing stays</p>
+        </div>
+
+        <!-- Benefits -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold text-blue-800 mb-2">Why join as a guest?</h3>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li class="flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Book unique accommodations worldwide
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Save your favorite properties
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Manage all your bookings in one place
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Get exclusive deals and discounts
+                </li>
+            </ul>
+        </div>
+
+        <!-- Registration Form -->
+        <form method="post" class="space-y-4" id="signup-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                    <span class="text-red-800 font-medium">Please correct the errors below:</span>
+                </div>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ field.label }}: {{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Name Fields -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        First Name *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.first_name }}
+                    </div>
+                </div>
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                </label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.email }}
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div>
+                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                </label>
+                <div class="relative">
+                    <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.phone_number }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">We'll use this for booking confirmations</p>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Username *
+                </label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.username }}
+                </div>
+            </div>
+
+            <!-- Passwords -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.password1 }}
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePassword('{{ form.password1.id_for_label }}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="password1-strength" class="password-strength"></div>
+                </div>
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Password *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.password2 }}
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePassword('{{ form.password2.id_for_label }}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="password-match" class="text-xs mt-1"></div>
+                </div>
+            </div>
+
+            <!-- Terms and Submit -->
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <input type="checkbox" id="agree_terms" name="agree_terms" required class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1">
+                    <label for="agree_terms" class="ml-2 block text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">Terms of Service</a> and <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <div class="flex items-start">
+                    <input type="checkbox" id="newsletter" name="newsletter" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1">
+                    <label for="newsletter" class="ml-2 block text-sm text-gray-700">
+                        Send me occasional updates about new features and special offers
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" id="submit-btn">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Create Guest Account
+                </button>
+            </div>
+        </form>
+
+        <!-- Login Link -->
+        <div class="text-center mt-6 pt-6 border-t border-gray-200">
+            <p class="text-gray-600">
+                Already have an account? 
+                <a href="{% url 'guests:guest_login' %}" class="text-blue-600 hover:text-blue-700 font-medium">
+                    Sign in here
+                </a>
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Want to host your property instead? 
+                <a href="{% url 'hosts:register' %}" class="text-green-600 hover:text-green-700">
+                    Become a Host
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const icon = passwordInput.parentNode.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]+/)) strength++;
+        if (password.match(/[A-Z]+/)) strength++;
+        if (password.match(/[0-9]+/)) strength++;
+        if (password.match(/[!@#$%^&*(),.?":{}|<>]+/)) strength++;
+        
+        return strength;
+    }
+
+    function updatePasswordStrength() {
+        const password = document.getElementById('{{ form.password1.id_for_label }}').value;
+        const strengthBar = document.getElementById('password1-strength');
+        const strength = checkPasswordStrength(password);
+        
+        strengthBar.className = 'password-strength';
+        if (password.length > 0) {
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+            } else if (strength === 3) {
+                strengthBar.classList.add('strength-fair');
+            } else if (strength === 4) {
+                strengthBar.classList.add('strength-good');
+            } else {
+                strengthBar.classList.add('strength-strong');
+            }
+        }
+    }
+
+    function checkPasswordMatch() {
+        const password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+        const password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+        const matchIndicator = document.getElementById('password-match');
+        
+        if (password2.length === 0) {
+            matchIndicator.textContent = '';
+        } else if (password1 === password2) {
+            matchIndicator.textContent = 'Passwords match';
+            matchIndicator.className = 'text-xs mt-1 text-green-600';
+        } else {
+            matchIndicator.textContent = 'Passwords do not match';
+            matchIndicator.className = 'text-xs mt-1 text-red-600';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+        const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        password1.addEventListener('input', updatePasswordStrength);
+        password1.addEventListener('input', checkPasswordMatch);
+        password2.addEventListener('input', checkPasswordMatch);
+        
+        // Form validation
+        document.getElementById('signup-form').addEventListener('input', function() {
+            const termsChecked = document.getElementById('agree_terms').checked;
+            const password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+            const password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+            
+            submitBtn.disabled = !termsChecked || password1 !== password2 || password1.length < 8;
+        });
+        
+        // Add focus styles
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-20');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-20');
+            });
+        });
+    });
+</script>
+{% endblock %}

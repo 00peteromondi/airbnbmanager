@@ -1,0 +1,561 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load cloudinary %}
+
+{% block title %}Book {{ property.name }} - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .booking-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .property-hero {
+        position: relative;
+        height: 300px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .property-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .price-breakdown {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .price-row.total {
+        border-bottom: none;
+        border-top: 2px solid #e2e8f0;
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .date-input-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .date-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .date-card.active {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    
+    .guest-counter {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 200px;
+    }
+    
+    .counter-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .counter-btn:hover:not(:disabled) {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .counter-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .counter-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        min-width: 60px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Booking Process</span>
+                <span class="text-sm text-gray-500">Step 1 of 3</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: 33%"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Booking Form -->
+            <div class="lg:col-span-2">
+                <div class="booking-card">
+                    <!-- Property Header -->
+                    <div class="property-hero">
+                        {% if property.images.first %}
+                            {% cloudinary property.images.first.image width=800 height=400 crop="fill" class="property-image" %}
+                        {% else %}
+                            <div class="property-image bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
+                                <i class="fas fa-home text-white text-6xl"></i>
+                            </div>
+                        {% endif %}
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h1 class="text-2xl font-bold text-white mb-2">{{ property.name }}</h1>
+                            <div class="flex items-center text-white/90">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>{{ property.address }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <form method="post" id="booking-form">
+                            {% csrf_token %}
+                            
+                            <!-- Trip Dates Section -->
+                            <div class="form-section">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-calendar-alt text-blue-600 mr-3"></i>
+                                    Select Dates
+                                </h2>
+                                
+                                <div class="date-input-group">
+                                    <div class="date-card" id="checkin-card">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Check-in Date
+                                        </label>
+                                        {{ form.check_in_date }}
+                                        <div class="text-xs text-gray-500 mt-1">After 3:00 PM</div>
+                                    </div>
+                                    
+                                    <div class="date-card" id="checkout-card">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Check-out Date
+                                        </label>
+                                        {{ form.check_out_date }}
+                                        <div class="text-xs text-gray-500 mt-1">Before 11:00 AM</div>
+                                    </div>
+                                </div>
+                                
+                                <div id="date-error" class="text-red-600 text-sm mt-2 hidden">
+                                    Please select valid check-in and check-out dates
+                                </div>
+                            </div>
+
+                            <!-- Guest Details Section -->
+                            <div class="form-section">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-users text-green-600 mr-3"></i>
+                                    Guest Details
+                                </h2>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                                            Number of Guests
+                                        </label>
+                                        <div class="guest-counter">
+                                            <button type="button" class="counter-btn" id="decrease-guests">-</button>
+                                            <span class="counter-value" id="guest-count">1</span>
+                                            <button type="button" class="counter-btn" id="increase-guests">+</button>
+                                        </div>
+                                        <input type="hidden" name="num_guests" id="num_guests" value="1">
+                                        <p class="text-sm text-gray-500 mt-2">
+                                            Maximum {{ property.max_guests }} guests allowed
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="{{ form.special_requests.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Special Requests (Optional)
+                                        </label>
+                                        {{ form.special_requests }}
+                                        <p class="text-sm text-gray-500 mt-1">
+                                            Let the host know if you have any special requirements
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="form-section">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-credit-card text-purple-600 mr-3"></i>
+                                    Payment Method
+                                </h2>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer payment-option">
+                                        <input type="radio" id="payment-card" name="payment_method" value="card" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                        <label for="payment-card" class="ml-3 flex items-center flex-1">
+                                            <i class="fas fa-credit-card text-gray-400 text-xl mr-3"></i>
+                                            <div>
+                                                <div class="font-medium text-gray-900">Credit/Debit Card</div>
+                                                <div class="text-sm text-gray-500">Pay with Visa, Mastercard, or American Express</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer payment-option">
+                                        <input type="radio" id="payment-mpesa" name="payment_method" value="mpesa" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                        <label for="payment-mpesa" class="ml-3 flex items-center flex-1">
+                                            <i class="fas fa-mobile-alt text-green-500 text-xl mr-3"></i>
+                                            <div>
+                                                <div class="font-medium text-gray-900">M-Pesa</div>
+                                                <div class="text-sm text-gray-500">Pay securely with M-Pesa</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer payment-option">
+                                        <input type="radio" id="payment-paypal" name="payment_method" value="paypal" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                        <label for="payment-paypal" class="ml-3 flex items-center flex-1">
+                                            <i class="fab fa-paypal text-blue-500 text-xl mr-3"></i>
+                                            <div>
+                                                <div class="font-medium text-gray-900">PayPal</div>
+                                                <div class="text-sm text-gray-500">Pay with your PayPal account</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Booking Summary -->
+                            <div class="form-section bg-blue-50 border-blue-200">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-4">Booking Summary</h2>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Check-in</span>
+                                        <span class="font-medium" id="summary-checkin">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Check-out</span>
+                                        <span class="font-medium" id="summary-checkout">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Guests</span>
+                                        <span class="font-medium" id="summary-guests">1 guest</span>
+                                    </div>
+                                    <div class="border-t border-blue-200 pt-3">
+                                        <div class="flex justify-between items-center text-lg font-semibold">
+                                            <span>Total</span>
+                                            <span class="text-blue-600">KES <span id="summary-total">0</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" 
+                                        class="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                        id="book-now-btn">
+                                    <i class="fas fa-lock mr-2"></i>
+                                    Book Now
+                                </button>
+                                
+                                <p class="text-center text-sm text-gray-600 mt-3">
+                                    You won't be charged until the host accepts your booking request
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Property Summary -->
+            <div class="lg:col-span-1">
+                <div class="booking-card sticky top-8">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Property Details</h3>
+                        
+                        {% if property.images.first %}
+                            {% cloudinary property.images.first.image width=400 height=200 crop="fill" class="w-full h-40 rounded-lg object-cover mb-4" %}
+                        {% endif %}
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Property Type</span>
+                                <span class="font-medium capitalize">{{ property.property_type }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Max Guests</span>
+                                <span class="font-medium">{{ property.max_guests }} guests</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Bedrooms</span>
+                                <span class="font-medium">{{ property.bedrooms }} bedroom{{ property.bedrooms|pluralize }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Bathrooms</span>
+                                <span class="font-medium">{{ property.bathrooms }} bathroom{{ property.bathrooms|pluralize }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Price per night</span>
+                                <span class="font-medium text-green-600">KES {{ property.price_per_night|intcomma }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Host Info -->
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h4 class="font-semibold text-gray-900 mb-3">Hosted by</h4>
+                            <div class="flex items-center">
+                                {% if property.owner.profile_picture %}
+                                    {% cloudinary property.owner.profile_picture width=50 height=50 crop="fill" class="w-10 h-10 rounded-full object-cover mr-3" %}
+                                {% else %}
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-user text-gray-600"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ property.owner.get_display_name }}</div>
+                                    <div class="text-sm text-gray-500">Joined {{ property.owner.date_joined|date:"M Y" }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="price-breakdown mt-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Price Breakdown</h4>
+                            
+                            <div class="price-row">
+                                <span>KES <span id="breakdown-price">{{ property.price_per_night }}</span> × <span id="breakdown-nights">0</span> nights</span>
+                                <span>KES <span id="breakdown-subtotal">0</span></span>
+                            </div>
+                            
+                            <div class="price-row">
+                                <span>Cleaning fee</span>
+                                <span>KES <span id="breakdown-cleaning">500</span></span>
+                            </div>
+                            
+                            <div class="price-row">
+                                <span>Service fee</span>
+                                <span>KES <span id="breakdown-service">0</span></span>
+                            </div>
+                            
+                            <div class="price-row total">
+                                <span>Total</span>
+                                <span>KES <span id="breakdown-total">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkInInput = document.getElementById('{{ form.check_in_date.id_for_label }}');
+        const checkOutInput = document.getElementById('{{ form.check_out_date.id_for_label }}');
+        const numGuestsInput = document.getElementById('num_guests');
+        const guestCount = document.getElementById('guest-count');
+        const decreaseBtn = document.getElementById('decrease-guests');
+        const increaseBtn = document.getElementById('increase-guests');
+        const bookNowBtn = document.getElementById('book-now-btn');
+        
+        const pricePerNight = {{ property.price_per_night }};
+        const maxGuests = {{ property.max_guests }};
+        
+        // Set minimum dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const formatDate = (date) => date.toISOString().split('T')[0];
+        
+        checkInInput.min = formatDate(tomorrow);
+        checkOutInput.min = formatDate(tomorrow);
+        
+        // Guest counter functionality
+        let guestCountValue = 1;
+        
+        decreaseBtn.addEventListener('click', function() {
+            if (guestCountValue > 1) {
+                guestCountValue--;
+                updateGuestCount();
+            }
+        });
+        
+        increaseBtn.addEventListener('click', function() {
+            if (guestCountValue < maxGuests) {
+                guestCountValue++;
+                updateGuestCount();
+            }
+        });
+        
+        function updateGuestCount() {
+            guestCount.textContent = guestCountValue;
+            numGuestsInput.value = guestCountValue;
+            updateSummary();
+            calculatePrice();
+        }
+        
+        // Date selection functionality
+        function updateDateCards() {
+            const checkinCard = document.getElementById('checkin-card');
+            const checkoutCard = document.getElementById('checkout-card');
+            
+            checkinCard.classList.toggle('active', checkInInput.value !== '');
+            checkoutCard.classList.toggle('active', checkOutInput.value !== '');
+        }
+        
+        checkInInput.addEventListener('change', function() {
+            if (checkInInput.value) {
+                const checkInDate = new Date(checkInInput.value);
+                const minCheckOut = new Date(checkInDate);
+                minCheckOut.setDate(minCheckOut.getDate() + 1);
+                checkOutInput.min = formatDate(minCheckOut);
+                
+                if (checkOutInput.value && new Date(checkOutInput.value) <= checkInDate) {
+                    checkOutInput.value = '';
+                }
+            }
+            updateDateCards();
+            calculatePrice();
+            updateSummary();
+        });
+        
+        checkOutInput.addEventListener('change', function() {
+            updateDateCards();
+            calculatePrice();
+            updateSummary();
+        });
+        
+        // Price calculation
+        function calculatePrice() {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            
+            if (checkIn && checkOut && checkOut > checkIn) {
+                const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                const subtotal = pricePerNight * nights;
+                const serviceFee = subtotal * 0.1; // 10% service fee
+                const cleaningFee = 500;
+                const total = subtotal + serviceFee + cleaningFee;
+                
+                document.getElementById('breakdown-nights').textContent = nights;
+                document.getElementById('breakdown-subtotal').textContent = subtotal.toLocaleString();
+                document.getElementById('breakdown-service').textContent = serviceFee.toLocaleString();
+                document.getElementById('breakdown-total').textContent = total.toLocaleString();
+                document.getElementById('summary-total').textContent = total.toLocaleString();
+                
+                // Enable book button
+                bookNowBtn.disabled = false;
+            } else {
+                document.getElementById('breakdown-nights').textContent = '0';
+                document.getElementById('breakdown-subtotal').textContent = '0';
+                document.getElementById('breakdown-service').textContent = '0';
+                document.getElementById('breakdown-total').textContent = '0';
+                document.getElementById('summary-total').textContent = '0';
+                
+                // Disable book button
+                bookNowBtn.disabled = true;
+            }
+        }
+        
+        // Update booking summary
+        function updateSummary() {
+            document.getElementById('summary-checkin').textContent = checkInInput.value || '--';
+            document.getElementById('summary-checkout').textContent = checkOutInput.value || '--';
+            document.getElementById('summary-guests').textContent = `${guestCountValue} guest${guestCountValue !== 1 ? 's' : ''}`;
+        }
+        
+        // Payment option selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Update visual selection
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('border-blue-500', 'bg-blue-50');
+                });
+                this.classList.add('border-blue-500', 'bg-blue-50');
+            });
+        });
+        
+        // Form submission validation
+        document.getElementById('booking-form').addEventListener('submit', function(e) {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            
+            if (!checkInInput.value || !checkOutInput.value) {
+                e.preventDefault();
+                document.getElementById('date-error').classList.remove('hidden');
+                return;
+            }
+            
+            if (checkOut <= checkIn) {
+                e.preventDefault();
+                document.getElementById('date-error').classList.remove('hidden');
+                document.getElementById('date-error').textContent = 'Check-out date must be after check-in date';
+                return;
+            }
+            
+            // All validations passed
+            document.getElementById('date-error').classList.add('hidden');
+        });
+        
+        // Initialize
+        updateDateCards();
+        updateSummary();
+        calculatePrice();
+    });
+</script>
+{% endblock %}

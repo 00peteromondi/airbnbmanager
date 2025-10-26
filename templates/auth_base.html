@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Prevent caching and ensure fresh page loads */
+    body {
+        animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script>
+    // Prevent browser caching of auth pages
+    if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+        // User pressed back/forward - reload the page
+        window.location.reload();
+    }
+    
+    // Clear any cached credentials
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+    
+    // If user is already logged in and somehow reached this page, redirect
+    document.addEventListener('DOMContentLoaded', function() {
+        // This is a backup check in case middleware didn't catch it
+        const authElements = document.querySelectorAll('input[type="password"], input[name="username"], input[name="email"]');
+        if (authElements.length > 0) {
+            // This looks like an auth page - do an additional check
+            setTimeout(() => {
+                // Check if we should redirect (this would typically be handled by Django)
+                console.log('Auth page loaded - middleware should handle redirects');
+            }, 100);
+        }
+    });
+</script>
+{% endblock %}

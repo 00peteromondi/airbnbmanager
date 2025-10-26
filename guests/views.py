@@ -5,33 +5,66 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .forms import GuestSignUpForm
-from hosts.models import Listing
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from bookings.models import Booking
+from django.utils import timezone
+from core.mixins import LogoutRequiredMixin
+from django.views import View
+from properties.models import Property
 
 CustomUser = get_user_model()
 
-# This view handles the guest registration.
-def guest_signup_view(request):
-    if request.method == 'POST':
+
+
+class GuestSignUpView(LogoutRequiredMixin, View):
+    """Guest registration view - only accessible to logged out users"""
+    
+    def get(self, request):
+        # Double-check middleware didn't let this through
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('guests:guest_dashboard')
+            
+        form = GuestSignUpForm()
+        return render(request, 'guests/guest_signup.html', {'form': form})
+    
+    def post(self, request):
+        # Double-check middleware didn't let this through
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('guests:guest_dashboard')
+            
         form = GuestSignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, f"Welcome, {user.username}! Your account has been created.")
-            return redirect('guests:guest_dashboard')
+            messages.success(request, f"Welcome, {user.username}! Your guest account has been created.")
+            return redirect('users:role_selection')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-    else:
-        form = GuestSignUpForm()
-    
-    return render(request, 'guests/guest_signup.html', {'form': form})
+        return render(request, 'guests/guest_signup.html', {'form': form})
 
-# This view handles the guest login process.
-def guest_login_view(request):
-    if request.method == 'POST':
+class GuestLoginView(LogoutRequiredMixin, View):
+    """Guest login view - only accessible to logged out users"""
+    
+    def get(self, request):
+        # Double-check middleware didn't let this through
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('guests:guest_dashboard')
+            
+        form = AuthenticationForm()
+        return render(request, 'guests/guest_login.html', {'form': form})
+    
+    def post(self, request):
+        # Double-check middleware didn't let this through
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('guests:guest_dashboard')
+            
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
@@ -40,26 +73,46 @@ def guest_login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('guests:guest_dashboard')
+                
+                # Redirect based on role
+                if not user.role:
+                    return redirect('users:role_selection')
+                elif user.role in ['guest', 'both']:
+                    # Set session for users with both roles
+                    if user.role == 'both':
+                        request.session['active_role'] = 'guest'
+                    return redirect('guests:guest_dashboard')
+                else:
+                    return redirect('hosts:dashboard')
             else:
                 messages.error(request, "Invalid username or password.")
         else:
             messages.error(request, "Invalid username or password.")
-    
-    form = AuthenticationForm()
-    return render(request, 'guests/guest_login.html', {'form': form})
+        
+        return render(request, 'guests/guest_login.html', {'form': form})
 
-# This view logs out the user and redirects to the homepage.
+@login_required
 def guest_logout_view(request):
+    """Guest logout view"""
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('core:home')
 
-# This is a protected view for the guest's dashboard.
-@login_required(login_url='guests:guest_login')
+@login_required
 def guest_dashboard_view(request):
+    """Guest dashboard - only accessible to guests"""
+    # Additional protection beyond middleware
+    if not (request.user.role in ['guest', 'both']):
+        messages.error(request, "Access denied. This page is for guests only.")
+        return redirect('core:home')
+    
+    # If user has both roles but is in host mode, redirect
+    if (request.user.role == 'both' and 
+        request.session.get('active_role') == 'host'):
+        messages.info(request, "Please switch to guest mode to access the guest dashboard.")
+        return redirect('hosts:dashboard')
+    
     return render(request, 'guests/guest_dashboard.html')
-
 @login_required(login_url='guests:guest_login')
 def guest_properties_view(request):
     """
@@ -67,7 +120,7 @@ def guest_properties_view(request):
     It responds with JSON for AJAX requests and renders a full template otherwise.
     """
     # Start with all active listings
-    filtered_properties = Listing.objects.filter(status='Active').order_by('id')
+    filtered_properties = Property.objects.filter(is_active=True).order_by('id')
 
     # Get filter parameters from the request
     location_query = request.GET.get('location')

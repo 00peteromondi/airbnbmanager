@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load cloudinary %}
+
+{% block title %}My Bookings - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .booking-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .booking-card.confirmed {
+        border-left-color: #10B981;
+    }
+    
+    .booking-card.pending {
+        border-left-color: #F59E0B;
+    }
+    
+    .booking-card.cancelled {
+        border-left-color: #EF4444;
+    }
+    
+    .booking-card.completed {
+        border-left-color: #6B7280;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .status-confirmed {
+        background-color: #D1FAE5;
+        color: #065F46;
+    }
+    
+    .status-pending {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .status-cancelled {
+        background-color: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    .status-completed {
+        background-color: #F3F4F6;
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Bookings</h1>
+        <p class="text-gray-600 mt-2">Manage your upcoming and past reservations</p>
+    </div>
+
+    <!-- Booking Tabs -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+            <button id="tab-upcoming" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-red-500 text-red-600">
+                Upcoming
+            </button>
+            <button id="tab-pending" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Pending
+            </button>
+            <button id="tab-completed" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Completed
+            </button>
+            <button id="tab-cancelled" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Cancelled
+            </button>
+        </nav>
+    </div>
+
+    <!-- Bookings List -->
+    <div class="space-y-6">
+        {% for booking in bookings %}
+        <div class="booking-card bg-white rounded-lg shadow-md p-6 {{ booking.status }}">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <!-- Property Info -->
+                <div class="flex-1 mb-4 lg:mb-0">
+                    <div class="flex items-start space-x-4">
+                        {% if booking.property.images.first %}
+                            {% cloudinary booking.property.images.first.image width=120 height=80 crop="fill" class="w-20 h-20 rounded-lg object-cover" %}
+                        {% else %}
+                            <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-home text-gray-400 text-xl"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ booking.property.name }}</h3>
+                            <p class="text-gray-600 text-sm mt-1">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                {{ booking.property.city }}, {{ booking.property.country }}
+                            </p>
+                            
+                            <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <i class="fas fa-calendar-day text-red-500 mr-2"></i>
+                                    <span>{{ booking.check_in_date }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-calendar-check text-green-500 mr-2"></i>
+                                    <span>{{ booking.check_out_date }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-users text-blue-500 mr-2"></i>
+                                    <span>{{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Details & Actions -->
+                <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-0 lg:space-y-3">
+                    <!-- Price -->
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-gray-900">KES {{ booking.total_price|intcomma }}</p>
+                        <p class="text-sm text-gray-600">Total amount</p>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center space-x-3">
+                        <span class="status-badge status-{{ booking.status }}">
+                            {{ booking.status }}
+                        </span>
+                        
+                        {% if booking.status == 'pending' %}
+                        <form method="post" action="{% url 'bookings:cancel_booking' booking.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                    class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                Cancel
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Requests -->
+            {% if booking.special_requests %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Special Requests:</h4>
+                <p class="text-sm text-gray-600">{{ booking.special_requests }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    Booked on {{ booking.created_at|date:"M d, Y" }}
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'properties:property_detail' booking.property.id %}" 
+                       class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-eye mr-2"></i>
+                        View Property
+                    </a>
+                    {% if booking.status == 'completed' %}
+                    <button class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-star mr-2"></i>
+                        Write Review
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No bookings found</h3>
+            <p class="text-gray-500 mb-6">You haven't made any bookings yet.</p>
+            <a href="{% url 'core:properties_list' %}" 
+               class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                <i class="fas fa-search mr-2"></i>
+                Find Properties
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="px-3 py-2 text-sm font-medium text-white bg-red-600 border border-red-600 rounded-md">
+                {{ num }}
+            </span>
+            {% else %}
+            <a href="?page={{ num }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                {{ num }}
+            </a>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" 
+               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab-button');
+        const bookingCards = document.querySelectorAll('.booking-card');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const status = this.id.replace('tab-', '');
+                
+                // Update active tab
+                tabs.forEach(t => {
+                    t.classList.remove('border-red-500', 'text-red-600');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+                this.classList.add('border-red-500', 'text-red-600');
+                this.classList.remove('border-transparent', 'text-gray-500');
+                
+                // Filter bookings
+                bookingCards.forEach(card => {
+                    if (status === 'upcoming') {
+                        // Show confirmed bookings with future dates
+                        const isUpcoming = card.classList.contains('confirmed');
+                        card.style.display = isUpcoming ? 'block' : 'none';
+                    } else {
+                        card.style.display = card.classList.contains(status) ? 'block' : 'none';
+                    }
+                });
+            });
+        });
+        
+        // Set default tab to upcoming
+        document.getElementById('tab-upcoming').click();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,342 @@
+{% extends 'auth_base.html' %}
+{% load static %}
+
+{% block title %}Become a Host - Aurban Rentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #f59e0b, #eab308, #d97706);
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        outline: none;
+    }
+    
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 8px;
+    }
+    
+    .feature-icon {
+        width: 32px;
+        height: 32px;
+        background: #f59e0b;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    .feature-icon i {
+        color: white;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-home text-orange-600 text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Become a Host</h1>
+            <p class="text-gray-600">Start earning money by sharing your space</p>
+        </div>
+
+        <!-- Host Features -->
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold text-orange-800 mb-3">Why host with Aurban?</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-orange-900">Earn Income</div>
+                        <div class="text-xs text-orange-700">Turn your space into income</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-orange-900">Flexible Schedule</div>
+                        <div class="text-xs text-orange-700">You control your availability</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-orange-900">Host Protection</div>
+                        <div class="text-xs text-orange-700">$1M property damage protection</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-orange-900">Global Reach</div>
+                        <div class="text-xs text-orange-700">Access millions of travelers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Form -->
+        <form method="post" class="space-y-4" id="host-signup-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                    <span class="text-red-800 font-medium">Please correct the errors below:</span>
+                </div>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ field.label }}: {{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Name Fields -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        First Name *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.first_name }}
+                    </div>
+                </div>
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                </label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.email }}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                </label>
+                <div class="relative">
+                    <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.phone_number }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">We'll use this for account verification</p>
+            </div>
+
+            <div>
+                <label for="{{ form.company_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Company Name (Optional)
+                </label>
+                <div class="relative">
+                    <i class="fas fa-building absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.company_name }}
+                </div>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Username *
+                </label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {{ form.username }}
+                </div>
+            </div>
+
+            <!-- Passwords -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.password1 }}
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePassword('{{ form.password1.id_for_label }}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Password *
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        {{ form.password2 }}
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePassword('{{ form.password2.id_for_label }}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Host Agreement -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 class="font-semibold text-yellow-800 mb-2">Host Agreement</h4>
+                <p class="text-sm text-yellow-700 mb-3">
+                    By becoming a host, you agree to provide accurate listing information, maintain high cleanliness standards, and respect our community guidelines.
+                </p>
+                <div class="flex items-start">
+                    <input type="checkbox" id="host_agreement" name="host_agreement" required class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-1">
+                    <label for="host_agreement" class="ml-2 block text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-orange-600 hover:text-orange-700 font-medium">Host Agreement</a> and understand my responsibilities as a host.
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" id="submit-btn">
+                <i class="fas fa-home mr-2"></i>
+                Become a Host
+            </button>
+        </form>
+
+        <!-- Login Link -->
+        <div class="text-center mt-6 pt-6 border-t border-gray-200">
+            <p class="text-gray-600">
+                Already have a host account? 
+                <a href="{% url 'hosts:login' %}" class="text-orange-600 hover:text-orange-700 font-medium">
+                    Sign in here
+                </a>
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Just looking to book stays? 
+                <a href="{% url 'guests:guest_signup' %}" class="text-blue-600 hover:text-blue-700">
+                    Sign up as Guest
+                </a>
+            </p>
+        </div>
+
+        <!-- Support Information -->
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center text-sm text-blue-700">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>Our host support team is available 24/7 to help you get started</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const icon = passwordInput.parentNode.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.getElementById('submit-btn');
+        const hostAgreement = document.getElementById('host_agreement');
+        
+        // Form validation
+        document.getElementById('host-signup-form').addEventListener('input', function() {
+            submitBtn.disabled = !hostAgreement.checked;
+        });
+        
+        // Add focus styles
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-orange-500', 'ring-opacity-20');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-orange-500', 'ring-opacity-20');
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Guest Dashboard - Aurban Rentals{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Guest Dashboard</h1>
+        <p class="text-gray-600 mt-2">Welcome back, {{ user.get_display_name }}!</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Upcoming Stays</h3>
+            <p class="text-3xl font-bold text-blue-600">0</p>
+            <p class="text-gray-600 text-sm">You have no upcoming bookings</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Past Stays</h3>
+            <p class="text-3xl font-bold text-green-600">0</p>
+            <p class="text-gray-600 text-sm">Total completed trips</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Wishlist</h3>
+            <p class="text-3xl font-bold text-purple-600">0</p>
+            <p class="text-gray-600 text-sm">Saved properties</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'core:properties_list' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <i class="fas fa-search text-blue-600 text-xl mr-3"></i>
+                <span class="font-medium">Find Stays</span>
+            </a>
+            
+            <a href="{% url 'bookings:booking_list' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors">
+                <i class="fas fa-calendar text-green-600 text-xl mr-3"></i>
+                <span class="font-medium">My Bookings</span>
+            </a>
+            
+            <a href="{% url 'users:profile' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                <i class="fas fa-user text-purple-600 text-xl mr-3"></i>
+                <span class="font-medium">Profile</span>
+            </a>
+            
+            {% if user.role == 'both' %}
+            <a href="{% url 'users:switch_role' 'host' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition-colors">
+                <i class="fas fa-sync-alt text-red-600 text-xl mr-3"></i>
+                <span class="font-medium">Switch to Host</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
