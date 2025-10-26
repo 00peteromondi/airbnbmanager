@@ -6,7 +6,6 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0005_add_test_property'),
         ('properties', '0005_rename_reviews_property_average_rating_review'),
     ]
 
