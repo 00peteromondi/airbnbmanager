@@ -164,9 +164,9 @@ def guest_properties_view(request):
             'title': p.name,
             'location': p.city,
             'type': p.property_type,
-            'price_per_night': p.price,
+            'price_per_night': p.price_per_night,
             'beds': p.beds,
-            'baths': p.baths,
+            'bathrooms': p.bathrooms,
             'sqft': p.sqft,
             # Placeholder for image_url, you would add this to your model
             'image_url': f"https://placehold.co/600x400/E5E7EB/4B5563?text=Property+{p.id}"

@@ -84,7 +84,6 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',
-            BASE_DIR / 'airbnb_manager' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {

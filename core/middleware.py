@@ -94,15 +94,15 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         user = request.user
         
         if not user.role:
-            return 'users:role_selection'
+            return '/users/role-selection/'
         
         if user.role == 'both':
             active_role = request.session.get('active_role', 'guest')
-            return 'hosts:dashboard' if active_role == 'host' else 'guests:guest_dashboard'
+            return '/hosts/dashboard/' if active_role == 'host' else '/guests/dashboard/'
         elif user.role == 'host':
-            return 'hosts:dashboard'
+            return '/hosts/dashboard/'
         else:  # guest
-            return 'guests:guest_dashboard'
+            return '/guests/dashboard/'
 
 class SessionTimeoutMiddleware(MiddlewareMixin):
     """

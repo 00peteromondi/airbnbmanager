@@ -42,7 +42,7 @@ class PropertyForm(forms.ModelForm):
         model = Property
         fields = [
             'name', 'description', 'property_type', 'address', 'city', 
-            'state', 'country', 'price', 'max_guests', 
+            'state', 'country', 'price_per_night', 'max_guests',
             'bedrooms', 'bathrooms', 'amenities', 'check_in_time', 
             'check_out_time', 'is_active'
         ]
