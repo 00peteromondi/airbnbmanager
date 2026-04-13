@@ -84,11 +84,11 @@
                     <div class="mt-4 flex items-center text-gray-600">
                         <!-- Displaying the new fields from the model -->
                         <span class="flex items-center mr-4"><i class="fas fa-bed mr-2"></i> {{ listing.beds }} Beds</span>
-                        <span class="flex items-center mr-4"><i class="fas fa-bath mr-2"></i> {{ listing.baths }} Baths</span>
+                        <span class="flex items-center mr-4"><i class="fas fa-bath mr-2"></i> {{ listing.bathrooms }} Baths</span>
                         <span class="flex items-center"><i class="fas fa-ruler-combined mr-2"></i> {{ listing.sqft }} sqft</span>
                     </div>
                      <div class="mt-4 flex justify-between items-center">
-                        <p class="text-xl font-bold text-gray-900">${{ listing.price }}<span class="text-sm font-normal text-gray-500">/night</span></p>
+                        <p class="text-xl font-bold text-gray-900">${{ listing.price_per_night }}<span class="text-sm font-normal text-gray-500">/night</span></p>
                         <a href="#" class="px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 transition duration-300 flex items-center space-x-2">
                             <i class="fas fa-info-circle"></i>
                             <span>View Details</span>

@@ -46,18 +46,12 @@ class Property(models.Model):
     country = models.CharField(max_length=100, default='Kenya')
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Changed from 'price'
-    # Backwards-compatible price_per_night field. Some parts of the codebase
-    # and templates expect `price_per_night` so we keep both fields and
-    # synchronize them in save(). This avoids immediate migration issues.
-    price_per_night = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    # Additional fields expected by views/templates
-    beds = models.PositiveIntegerField(default=1)
-    baths = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
-    sqft = models.PositiveIntegerField(null=True, blank=True)
+    price_per_night = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     max_guests = models.PositiveIntegerField()
     bedrooms = models.PositiveIntegerField()
+    beds = models.PositiveIntegerField(default=1)
     bathrooms = models.DecimalField(max_digits=3, decimal_places=1)
+    sqft = models.PositiveIntegerField(null=True, blank=True)
     amenities = models.JSONField(default=list)
     average_rating = models.FloatField(default=0.0)
     check_in_time = models.TimeField(default=time(15, 0))
@@ -69,20 +63,6 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        # Keep price and price_per_night in sync for backward compatibility
-        try:
-            # If price_per_night not provided, populate it from price
-            if (self.price_per_night is None or self.price_per_night == '') and hasattr(self, 'price'):
-                self.price_per_night = self.price
-
-            # If price_per_night provided but price missing/different, update price too
-            if hasattr(self, 'price') and self.price_per_night is not None and self.price != self.price_per_night:
-                self.price = self.price_per_night
-        except Exception:
-            pass
-
-        super().save(*args, **kwargs)
 
     @property
     def amenities_list(self):

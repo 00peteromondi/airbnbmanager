@@ -107,15 +107,15 @@
             <!-- Price & Property Type -->
             <div class="space-y-6">
                 <div class="form-field-container">
-                    <label for="{{ form.price.id_for_label }}" class="form-label flex items-center">
+                    <label for="{{ form.price_per_night.id_for_label }}" class="form-label flex items-center">
                         <div data-lucide="dollar-sign" class="icon"></div> Price per Night
                     </label>
-                    <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}"
-                        value="{{ form.price.value|default_if_none:'' }}"
+                    <input type="number" name="{{ form.price_per_night.name }}" id="{{ form.price_per_night.id_for_label }}"
+                        value="{{ form.price_per_night.value|default_if_none:'' }}"
                         class="form-input"
                         placeholder="e.g. 15000" min="0" required>
-                    {% if form.price.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.price.errors }}</div>
+                    {% if form.price_per_night.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.price_per_night.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-field-container">
@@ -148,14 +148,14 @@
                 {% endif %}
             </div>
             <div class="form-field-container">
-                <label for="{{ form.baths.id_for_label }}" class="form-label flex items-center">
+                <label for="{{ form.bathrooms.id_for_label }}" class="form-label flex items-center">
                     <div data-lucide="bath" class="icon"></div> Baths
                 </label>
-                <input type="number" name="{{ form.baths.name }}" id="{{ form.baths.id_for_label }}"
-                    value="{{ form.baths.value|default_if_none:'' }}"
+                <input type="number" name="{{ form.bathrooms.name }}" id="{{ form.bathrooms.id_for_label }}"
+                    value="{{ form.bathrooms.value|default_if_none:'' }}"
                     class="form-input" min="0" required>
-                {% if form.baths.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.baths.errors }}</div>
+                {% if form.bathrooms.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.bathrooms.errors }}</div>
                 {% endif %}
             </div>
             <div class="form-field-container">
