@@ -3,214 +3,664 @@
 
 {% block title %}Edit Listing | Aurban Host{% endblock %}
 
-{% block content_header %}Edit {{ listing.name }}{% endblock %}
-
 {% block content %}
 <style>
-    /* Custom CSS to apply specific styles as requested */
-    .form-field-container .form-label {
-        /* The margin between the label and the input field */
-        margin-bottom: 5px;
-    }
-    .form-input, .form-textarea, .form-select {
-        /* Padding for a better user experience */
-        padding: 15px;
-        border-radius: 8px;
-        background-color: #f3f4f6; /* A light grey background for the input fields */
-    }
-    
-    /* Styles for other elements */
-    .form-input, .form-textarea, .form-select {
-        @apply w-full p-3 md:p-4 border border-gray-300 rounded-xl shadow-sm transition-all duration-300 focus:ring-red-500 focus:border-red-500 focus:ring-2 focus:outline-none;
-    }
-    .form-input:hover, .form-textarea:hover, .form-select:hover {
-        @apply border-red-400;
-    }
-    .form-textarea {
-        @apply min-h-[150px] resize-y;
-    }
-    .icon {
-        @apply mr-2 w-5 h-5 text-red-500;
-    }
-    
-    /* The primary button with the requested border and hover effects */
-    .button-primary {
-        @apply bg-red-500 text-white font-semibold py-3 px-8 rounded-xl border border-red-500 hover:bg-red-600 hover:border-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg;
-    }
-    /* The new cancel button with complementary styling */
-    .button-secondary {
-        @apply bg-gray-200 text-gray-800 font-semibold py-3 px-8 rounded-xl border border-gray-400 hover:bg-gray-300 transition-all duration-300 transform hover:scale-105 shadow-lg;
+    .form-container {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
     }
 
-    /* Animations from the original file */
-    @keyframes fadeInU {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: translateY(0); }
+    .form-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
     }
-    .animate-fade-in-up {
-        animation: fadeInU 0.8s ease-out;
+
+    .form-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #eef2f6;
+        transition: all 0.3s ease;
     }
-    @keyframes bounceIn {
-        0% { transform: scale(0.5); opacity: 0; }
-        60% { transform: scale(1.2); opacity: 1; }
-        100% { transform: scale(1); }
+
+    .form-section:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
     }
-    .animate-bounce-in {
-        animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-input, .form-textarea, .form-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+        color: #334155;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+        background: white;
+    }
+
+    .form-input.error, .form-textarea.error, .form-select.error {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    .form-textarea {
+        min-height: 140px;
+        resize: vertical;
+    }
+
+    .amenity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .amenity-option {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+
+    .amenity-option:hover {
+        border-color: #6366f1;
+        background: white;
+    }
+
+    .amenity-option.selected {
+        border-color: #6366f1;
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+
+    .amenity-checkbox {
+        display: none;
+    }
+
+    .icon-check {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+        color: #94a3b8;
+        transition: color 0.2s ease;
+    }
+
+    .amenity-option.selected .icon-check {
+        color: #6366f1;
+    }
+    
+    .button-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        font-weight: 700;
+        padding: 1rem 2.5rem;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+    }
+
+    .button-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(79, 70, 229, 0.3);
+        filter: brightness(1.1);
+    }
+
+    .button-secondary {
+        background: white;
+        color: #475569;
+        font-weight: 600;
+        padding: 1rem 2rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .button-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+
+    .image-preview-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .image-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 4/3;
+        border: 2px solid #e2e8f0;
+        background: #f1f5f9;
+        transition: all 0.3s ease;
+    }
+
+    .image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-card .remove-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(255, 255, 255, 0.9);
+        color: #ef4444;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.2s ease;
+    }
+
+    .image-card:hover .remove-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .image-card .remove-btn:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .primary-badge {
+        position: absolute;
+        bottom: 0.5rem;
+        left: 0.5rem;
+        background: rgba(79, 70, 229, 0.9);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        backdrop-filter: blur(4px);
+    }
+
+    .error-msg {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+
+    .error-msg i {
+        margin-right: 0.5rem;
+    }
+
+    .non-field-errors {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
     }
 </style>
 
-<div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-200 max-w-4xl mx-auto transform transition-all duration-300 hover:scale-[1.01]">
-
-    <!-- Page Header with Illustration -->
-    <div class="flex flex-col items-center text-center mb-10">
-        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4 animate-fade-in-up">
-            <div data-lucide="home-cog" class="w-12 h-12 text-red-500 transform animate-bounce-in"></div>
-        </div>
-        <h2 class="text-4xl font-extrabold text-gray-900 leading-tight">Edit Your Listing</h2>
-        <p class="mt-2 text-lg text-gray-500 max-w-md">Update the details for {{ listing.name }}. Your changes will be reflected immediately.</p>
-    </div>
-
-    <form method="post" class="space-y-8">
-        {% csrf_token %}
-        
-        <!-- Animated Form Fields Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Property Name & City -->
-            <div class="space-y-6">
-                <div class="form-field-container">
-                    <label for="{{ form.name.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="signature" class="icon"></div> Property Name
-                    </label>
-                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
-                        value="{{ form.name.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. Modern Loft" required>
-                    {% if form.name.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.name.errors }}</div>
-                    {% endif %}
-                </div>
-                <div class="form-field-container">
-                    <label for="{{ form.city.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="map-pin" class="icon"></div> City
-                    </label>
-                    <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}"
-                        value="{{ form.city.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. Nairobi" required>
-                    {% if form.city.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.city.errors }}</div>
-                    {% endif %}
+<div class="form-container">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Edit Listing</h1>
+                <p class="text-slate-500 font-medium text-lg">Update your property details to attract more guests</p>
+            </div>
+            <div class="hidden md:block">
+                <div class="w-20 h-20 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-edit text-3xl text-indigo-600"></i>
                 </div>
             </div>
+        </div>
 
-            <!-- Price & Property Type -->
-            <div class="space-y-6">
-                <div class="form-field-container">
-                    <label for="{{ form.price_per_night.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="dollar-sign" class="icon"></div> Price per Night
-                    </label>
-                    <input type="number" name="{{ form.price_per_night.name }}" id="{{ form.price_per_night.id_for_label }}"
-                        value="{{ form.price_per_night.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. 15000" min="0" required>
-                    {% if form.price_per_night.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.price_per_night.errors }}</div>
-                    {% endif %}
-                </div>
-                <div class="form-field-container">
-                    <label for="{{ form.property_type.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="building" class="icon"></div> Property Type
-                    </label>
-                    <select name="{{ form.property_type.name }}" id="{{ form.property_type.id_for_label }}" class="form-select" required>
-                        {% for choice in form.property_type.field.choices %}
-                            <option value="{{ choice.0 }}" {% if form.property_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+        {% if form.non_field_errors or image_formset.non_form_errors %}
+        <div class="non-field-errors animate-shake">
+            <h3 class="font-bold mb-2 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                There were some issues with your submission:
+            </h3>
+            <ul class="list-disc list-inside text-sm">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                {% for error in image_formset.non_form_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" id="listing-form">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                            <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3 text-sm">1</span>
+                            Essential Details
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Property Name</label>
+                                <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
+                                       value="{{ form.name.value|default_if_none:'' }}"
+                                       class="form-input {% if form.name.errors %}error{% endif %}"
+                                       placeholder="e.g., Minimalist Studio in Kilimani" required>
+                                {% for error in form.name.errors %}
+                                    <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ form.property_type.id_for_label }}" class="form-label">Property Type</label>
+                                    <select name="{{ form.property_type.name }}" id="{{ form.property_type.id_for_label }}"
+                                            class="form-select {% if form.property_type.errors %}error{% endif %}" required>
+                                        {% for choice in form.property_type.field.choices %}
+                                            <option value="{{ choice.0 }}" {% if form.property_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% for error in form.property_type.errors %}
+                                        <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.is_active.id_for_label }}" class="form-label">Visibility</label>
+                                    <select name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" class="form-select">
+                                        <option value="True" {% if form.is_active.value %}selected{% endif %}>Public - Visible to all</option>
+                                        <option value="False" {% if not form.is_active.value %}selected{% endif %}>Private - Hidden from search</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                                <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}"
+                                          class="form-textarea {% if form.description.errors %}error{% endif %}"
+                                          placeholder="Tell guests about your place..." required>{{ form.description.value|default_if_none:'' }}</textarea>
+                                {% for error in form.description.errors %}
+                                    <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-section">
+                        <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                            <span class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mr-3 text-sm">2</span>
+                            Location
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label for="{{ form.address.id_for_label }}" class="form-label">Street Address</label>
+                                <input type="text" name="{{ form.address.name }}" id="{{ form.address.id_for_label }}"
+                                       value="{{ form.address.value|default_if_none:'' }}"
+                                       class="form-input {% if form.address.errors %}error{% endif %}" required>
+                                {% for error in form.address.errors %}
+                                    <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">City</label>
+                                    <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}"
+                                           value="{{ form.city.value|default_if_none:'' }}"
+                                           class="form-input {% if form.city.errors %}error{% endif %}" required>
+                                    {% for error in form.city.errors %}
+                                        <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.state.id_for_label }}" class="form-label">State/Region</label>
+                                    <input type="text" name="{{ form.state.name }}" id="{{ form.state.id_for_label }}"
+                                           value="{{ form.state.value|default_if_none:'' }}"
+                                           class="form-input {% if form.state.errors %}error{% endif %}" required>
+                                </div>
+                                <div>
+                                    <label for="{{ form.country.id_for_label }}" class="form-label">Country</label>
+                                    <input type="text" name="{{ form.country.name }}" id="{{ form.country.id_for_label }}"
+                                           value="{{ form.country.value|default_if_none:'Kenya' }}"
+                                           class="form-input {% if form.country.errors %}error{% endif %}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="form-section">
+                        <h2 class="text-xl font-bold text-slate-900 mb-2 flex items-center">
+                            <span class="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mr-3 text-sm">3</span>
+                            What this place offers
+                        </h2>
+                        <p class="text-slate-500 text-sm mb-6">Select all the features and services available to guests</p>
+
+                        <div class="amenity-grid">
+                            {% for value, label in form.amenities.field.choices %}
+                            <label class="amenity-option {% if value in form.amenities.value %}selected{% endif %}">
+                                <input type="checkbox" name="amenities" value="{{ value }}"
+                                       class="amenity-checkbox" {% if value in form.amenities.value %}checked{% endif %}>
+                                <i class="fas fa-check-circle icon-check"></i>
+                                <span class="font-semibold text-sm">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% for error in form.amenities.errors %}
+                            <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
                         {% endfor %}
-                    </select>
-                    {% if form.property_type.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.property_type.errors }}</div>
-                    {% endif %}
+                    </div>
+
+                    <!-- Images Management -->
+                    <div class="form-section">
+                        <h2 class="text-xl font-bold text-slate-900 mb-2 flex items-center">
+                            <span class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3 text-sm">4</span>
+                            Property Photos
+                        </h2>
+                        <p class="text-slate-500 text-sm mb-6">Upload high-quality images. The first image marked as primary will be your cover photo.</p>
+
+                        {{ image_formset.management_form }}
+
+                        <div id="image-formset-container" class="space-y-4">
+                            {% for img_form in image_formset %}
+                            <div class="image-form-row group bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200 transition-all hover:border-indigo-300 hover:bg-indigo-50/30">
+                                <div class="flex flex-col md:flex-row gap-6 items-start">
+                                    <div class="w-full md:w-48 h-32 bg-white rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 relative">
+                                        {% if img_form.instance.image %}
+                                            <img src="{{ img_form.instance.image.url }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                <i class="fas fa-image text-2xl mb-2"></i>
+                                                <span class="text-[10px] font-bold uppercase tracking-wider">New Image</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="preview-overlay absolute inset-0 bg-black/40 opacity-0 transition-opacity flex items-center justify-center">
+                                            <span class="text-white text-xs font-bold">Change Image</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-grow space-y-4 w-full">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="form-label text-xs uppercase tracking-wider text-slate-400">Upload Image</label>
+                                                {{ img_form.image }}
+                                                {% for error in img_form.image.errors %}
+                                                    <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-xs uppercase tracking-wider text-slate-400">Caption (Optional)</label>
+                                                <input type="text" name="{{ img_form.prefix }}-caption"
+                                                       value="{{ img_form.caption.value|default:'' }}"
+                                                       class="form-input !py-2 !px-3 !text-sm" placeholder="e.g. Living Room">
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between pt-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" name="{{ img_form.prefix }}-is_primary"
+                                                       class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                                       {% if img_form.is_primary.value %}checked{% endif %}>
+                                                <span class="ml-2 text-xs font-bold text-slate-600">Primary Cover</span>
+                                            </label>
+
+                                            {% if img_form.instance.pk %}
+                                            <label class="flex items-center cursor-pointer group/delete">
+                                                <input type="checkbox" name="{{ img_form.prefix }}-DELETE"
+                                                       class="w-4 h-4 text-red-600 rounded focus:ring-red-500">
+                                                <span class="ml-2 text-xs font-bold text-red-500 group-hover/delete:underline">Remove photo</span>
+                                            </label>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {{ img_form.id }}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Template for dynamic forms -->
+                        <div id="empty-form" class="hidden">
+                            <div class="image-form-row group bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200 transition-all hover:border-indigo-300 hover:bg-indigo-50/30 mb-4">
+                                <div class="flex flex-col md:flex-row gap-6 items-start">
+                                    <div class="w-full md:w-48 h-32 bg-white rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 relative">
+                                        <div class="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                            <i class="fas fa-plus text-2xl mb-2"></i>
+                                            <span class="text-[10px] font-bold uppercase tracking-wider">Add Photo</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-grow space-y-4 w-full">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="form-label text-xs uppercase tracking-wider text-slate-400">Upload Image</label>
+                                                {{ image_formset.empty_form.image }}
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-xs uppercase tracking-wider text-slate-400">Caption (Optional)</label>
+                                                <input type="text" name="images-__prefix__-caption" class="form-input !py-2 !px-3 !text-sm" placeholder="e.g. Bedroom View">
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between pt-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" name="images-__prefix__-is_primary" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                                                <span class="ml-2 text-xs font-bold text-slate-600">Primary Cover</span>
+                                            </label>
+                                            <button type="button" class="remove-dynamic-row text-xs font-bold text-red-500 hover:underline">Discard</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="add-image-btn" class="w-full mt-6 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all">
+                            <i class="fas fa-plus-circle mr-2"></i> Add Another Photo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sidebar Controls -->
+                <div class="lg:col-span-1">
+                    <div class="sticky top-28 space-y-6">
+                        <!-- Pricing & Capacity Card -->
+                        <div class="form-section !mb-0">
+                            <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center">
+                                <i class="fas fa-coins text-amber-500 mr-2"></i> Economics
+                            </h3>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="{{ form.price_per_night.id_for_label }}" class="form-label">Price per Night (Ksh)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Ksh</span>
+                                        <input type="number" name="{{ form.price_per_night.name }}" id="{{ form.price_per_night.id_for_label }}"
+                                               value="{{ form.price_per_night.value|default_if_none:'' }}"
+                                               class="form-input !pl-14 {% if form.price_per_night.errors %}error{% endif %}" min="0" step="0.01" required>
+                                    </div>
+                                    {% for error in form.price_per_night.errors %}
+                                        <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="{{ form.bedrooms.id_for_label }}" class="form-label">Bedrooms</label>
+                                        <input type="number" name="{{ form.bedrooms.name }}" id="{{ form.bedrooms.id_for_label }}"
+                                               value="{{ form.bedrooms.value|default_if_none:'1' }}"
+                                               class="form-input !py-3" min="0" required>
+                                    </div>
+                                    <div>
+                                        <label for="{{ form.bathrooms.id_for_label }}" class="form-label">Bathrooms</label>
+                                        <input type="number" name="{{ form.bathrooms.name }}" id="{{ form.bathrooms.id_for_label }}"
+                                               value="{{ form.bathrooms.value|default_if_none:'1' }}"
+                                               class="form-input !py-3" min="0" step="0.5" required>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.max_guests.id_for_label }}" class="form-label">Guest Capacity</label>
+                                    <input type="number" name="{{ form.max_guests.name }}" id="{{ form.max_guests.id_for_label }}"
+                                           value="{{ form.max_guests.value|default_if_none:'2' }}"
+                                           class="form-input !py-3" min="1" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Logistics Card -->
+                        <div class="form-section !mb-0">
+                            <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center">
+                                <i class="fas fa-clock text-rose-500 mr-2"></i> Logistics
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="form-label !text-xs !mb-2 uppercase tracking-wider text-slate-400">Check-in After</label>
+                                    {{ form.check_in_time }}
+                                </div>
+                                <div>
+                                    <label class="form-label !text-xs !mb-2 uppercase tracking-wider text-slate-400">Check-out Before</label>
+                                    {{ form.check_out_time }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button type="submit" class="w-full button-primary flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Save Changes
+                            </button>
+                            <a href="{% url 'hosts:dashboard' %}" class="w-full button-secondary flex items-center justify-center">
+                                <i class="fas fa-times mr-2"></i> Cancel
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Bedrooms, Bathrooms, Sqft & Status -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="form-field-container">
-                <label for="{{ form.beds.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="bed" class="icon"></div> Beds
-                </label>
-                <input type="number" name="{{ form.beds.name }}" id="{{ form.beds.id_for_label }}"
-                    value="{{ form.beds.value|default_if_none:'' }}"
-                    class="form-input" min="0" required>
-                {% if form.beds.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.beds.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-field-container">
-                <label for="{{ form.bathrooms.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="bath" class="icon"></div> Baths
-                </label>
-                <input type="number" name="{{ form.bathrooms.name }}" id="{{ form.bathrooms.id_for_label }}"
-                    value="{{ form.bathrooms.value|default_if_none:'' }}"
-                    class="form-input" min="0" required>
-                {% if form.bathrooms.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.bathrooms.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-field-container">
-                <label for="{{ form.sqft.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="ruler" class="icon"></div> Sqft
-                </label>
-                <input type="number" name="{{ form.sqft.name }}" id="{{ form.sqft.id_for_label }}"
-                    value="{{ form.sqft.value|default_if_none:'' }}"
-                    class="form-input" min="0">
-                {% if form.sqft.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.sqft.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-field-container">
-                <label for="{{ form.status.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="check-circle-2" class="icon"></div> Status
-                </label>
-                <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" class="form-select" required>
-                    {% for choice in form.status.field.choices %}
-                        <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                    {% endfor %}
-                </select>
-                {% if form.status.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.status.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Description (Full Width) -->
-        <div class="form-field-container">
-            <label for="{{ form.description.id_for_label }}" class="form-label flex items-center">
-                <div data-lucide="clipboard-list" class="icon"></div> Description
-            </label>
-            <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}"
-                class="form-textarea" placeholder="Describe your property..." required>{{ form.description.value|default_if_none:'' }}</textarea>
-            {% if form.description.errors %}
-                <div class="text-red-500 text-sm mt-1">{{ form.description.errors }}</div>
-            {% endif %}
-        </div>
-        
-        <!-- Submit Buttons -->
-        <div class="mt-8 flex justify-end space-x-4">
-            <a href="{% url 'hosts:dashboard' %}" class="button-secondary group">
-                <span class="flex items-center space-x-2">
-                    <div data-lucide="x" class="w-5 h-5 transition-transform duration-300 group-hover:rotate-90"></div>
-                    <span>Cancel</span>
-                </span>
-            </a>
-            <button type="submit" class="button-primary group">
-                <span class="flex items-center space-x-2">
-                    <div data-lucide="refresh-cw" class="w-5 h-5 transition-transform duration-300 group-hover:rotate-180"></div>
-                    <span>Update Listing</span>
-                </span>
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Amenity selection
+        const amenityOptions = document.querySelectorAll('.amenity-option');
+        amenityOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const checkbox = this.querySelector('.amenity-checkbox');
+                checkbox.checked = !checkbox.checked;
+                this.classList.toggle('selected', checkbox.checked);
+            });
+        });
+
+        // Image Management
+        const container = document.getElementById('image-formset-container');
+        const addBtn = document.getElementById('add-image-btn');
+        const totalForms = document.getElementById('id_images-TOTAL_FORMS');
+        const emptyFormTemplate = document.getElementById('empty-form').innerHTML;
+
+        function setupImagePreview(row) {
+            const input = row.querySelector('input[type="file"]');
+            const img = row.querySelector('img');
+            const placeholder = row.querySelector('.text-slate-400');
+
+            if (input) {
+                input.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (img) {
+                                img.src = e.target.result;
+                                img.classList.remove('hidden');
+                                if (placeholder) placeholder.classList.add('hidden');
+                            } else {
+                                // If it was a placeholder only row
+                                const newImg = document.createElement('img');
+                                newImg.src = e.target.result;
+                                newImg.className = 'w-full h-full object-cover';
+                                const previewBox = row.querySelector('.flex-shrink-0');
+                                previewBox.innerHTML = '';
+                                previewBox.appendChild(newImg);
+                            }
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+        }
+
+        // Initialize existing rows
+        document.querySelectorAll('.image-form-row').forEach(row => {
+            setupImagePreview(row);
+        });
+
+        addBtn.addEventListener('click', () => {
+            const formIdx = parseInt(totalForms.value);
+            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formIdx);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = newFormHtml;
+            const newRow = wrapper.firstElementChild;
+
+            newRow.querySelector('.remove-dynamic-row').addEventListener('click', function() {
+                this.closest('.image-form-row').remove();
+            });
+
+            setupImagePreview(newRow);
+            container.appendChild(newRow);
+            totalForms.value = formIdx + 1;
+        });
+
+        // Ensure existing checkboxes in amenity-grid work if clicked directly
+        const checkboxes = document.querySelectorAll('.amenity-checkbox');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function(e) {
+                e.stopPropagation();
+                this.closest('.amenity-option').classList.toggle('selected', this.checked);
+            });
+        });
+    });
+</script>
 {% endblock %}

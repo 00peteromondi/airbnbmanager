@@ -2,6 +2,7 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
+from django.urls import reverse
 
 class AuthenticationGuardMiddleware(MiddlewareMixin):
     """
@@ -9,30 +10,35 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
     and handle role-based redirects
     """
     
-    # Pages that should ONLY be accessible to logged-out users
-    AUTH_PAGES = [
-        '/guests/login/',
-        '/guests/signup/',
-        '/hosts/login/',
-        '/hosts/register/',
-        '/users/login/',
-        '/users/register/',
-    ]
+    @property
+    def auth_pages(self):
+        # Pages that should ONLY be accessible to logged-out users
+        return [
+            reverse('guests:guest_login'),
+            reverse('guests:guest_signup'),
+            reverse('hosts:login'),
+            reverse('hosts:register'),
+            reverse('users:login'),
+            reverse('users:register'),
+        ]
     
-    # Pages that require specific roles
-    GUEST_ONLY_PAGES = [
-        '/guests/dashboard/',
-        '/guests/properties/',
-        '/bookings/',  # All booking pages
-    ]
+    @property
+    def guest_only_pages(self):
+        # Pages that require specific roles
+        return [
+            reverse('guests:guest_dashboard'),
+            reverse('guests:guest_properties'),
+            '/bookings/',  # Prefix check for all booking pages
+        ]
     
-    HOST_ONLY_PAGES = [
-        '/hosts/dashboard/',
-        '/hosts/listings/',
-        '/hosts/listings/add/',
-        '/hosts/listings/edit/',
-        '/hosts/listings/delete/',
-    ]
+    @property
+    def host_only_pages(self):
+        return [
+            reverse('hosts:dashboard'),
+            reverse('hosts:my_listings'),
+            reverse('hosts:add_listing'),
+            '/hosts/properties/', # For prefix match on edit/delete
+        ]
 
     def process_request(self, request):
         # Skip for static files and admin
@@ -44,7 +50,7 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         # Check if user is authenticated
         if request.user.is_authenticated:
             # Prevent access to auth pages (login/register)
-            if any(request.path.startswith(auth_page) for auth_page in self.AUTH_PAGES):
+            if any(request.path.startswith(auth_page) for auth_page in self.auth_pages):
                 messages.info(request, "You're already logged in!")
                 return redirect(self._get_redirect_url(request))
             
@@ -53,7 +59,7 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         else:
             # For non-authenticated users, allow access to auth pages
             # but redirect from protected pages
-            if any(request.path.startswith(protected) for protected in self.GUEST_ONLY_PAGES + self.HOST_ONLY_PAGES):
+            if any(request.path.startswith(protected) for protected in self.guest_only_pages + self.host_only_pages):
                 messages.error(request, "Please log in to access this page.")
                 return redirect('guests:guest_login')
 
@@ -64,7 +70,7 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         user = request.user
         
         # Guest-only pages check
-        if any(request.path.startswith(page) for page in self.GUEST_ONLY_PAGES):
+        if any(request.path.startswith(page) for page in self.guest_only_pages):
             if not (user.role in ['guest', 'both']):
                 messages.error(request, "This page is only available for guests.")
                 return redirect('core:home')
@@ -76,7 +82,7 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
                 return redirect('hosts:dashboard')
 
         # Host-only pages check
-        if any(request.path.startswith(page) for page in self.HOST_ONLY_PAGES):
+        if any(request.path.startswith(page) for page in self.host_only_pages):
             if not (user.role in ['host', 'both']):
                 messages.error(request, "This page is only available for hosts.")
                 return redirect('core:home')
@@ -94,15 +100,15 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         user = request.user
         
         if not user.role:
-            return '/users/role-selection/'
+            return reverse('users:role_selection')
         
         if user.role == 'both':
             active_role = request.session.get('active_role', 'guest')
-            return '/hosts/dashboard/' if active_role == 'host' else '/guests/dashboard/'
+            return reverse('hosts:dashboard') if active_role == 'host' else reverse('guests:guest_dashboard')
         elif user.role == 'host':
-            return '/hosts/dashboard/'
+            return reverse('hosts:dashboard')
         else:  # guest
-            return '/guests/dashboard/'
+            return reverse('guests:guest_dashboard')
 
 class SessionTimeoutMiddleware(MiddlewareMixin):
     """

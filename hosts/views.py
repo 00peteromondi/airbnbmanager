@@ -78,26 +78,23 @@ def dashboard(request):
 def add_listing(request):
     if request.method == 'POST':
         form = PropertyForm(request.POST)
-        if form.is_valid():
+        image_formset = PropertyImageFormSet(request.POST, request.FILES, prefix='images')
+
+        if form.is_valid() and image_formset.is_valid():
             property = form.save(commit=False)
             property.owner = request.user
             property.save()
 
-            # Handle image uploads (use prefix 'images' so JS matches the management_form ids)
-            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
-            if image_formset.is_valid():
-                image_formset.save()
-                messages.success(request, 'Property listed successfully with images!')
-                return redirect('hosts:dashboard')
-            else:
-                # If image formset is invalid, delete the property and show error
-                property.delete()
-                messages.error(request, 'Error uploading images. Please try again.')
+            image_formset.instance = property
+            image_formset.save()
+
+            messages.success(request, 'Property listed successfully with images!')
+            return redirect('hosts:dashboard')
         else:
-            # Ensure image_formset exists so the template can render it with form errors
-            # We don't have a saved Property instance in this branch, so provide an empty formset
-            image_formset = PropertyImageFormSet(request.POST or None, request.FILES or None, prefix='images')
-            messages.error(request, 'Please correct the errors below.')
+            if not form.is_valid():
+                messages.error(request, 'There were errors in the property details.')
+            if not image_formset.is_valid():
+                messages.error(request, 'There were errors with the property images.')
     else:
         form = PropertyForm()
         image_formset = PropertyImageFormSet(prefix='images')
@@ -114,15 +111,13 @@ def edit_listing(request, property_id):
     
     if request.method == 'POST':
         form = PropertyForm(request.POST, instance=property)
-        if form.is_valid():
-            form.save()
+        image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
 
-            # Handle image uploads
-            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
-            if image_formset.is_valid():
-                image_formset.save()
-                messages.success(request, 'Property updated successfully!')
-                return redirect('hosts:view_listing', property_id=property.id)
+        if form.is_valid() and image_formset.is_valid():
+            form.save()
+            image_formset.save()
+            messages.success(request, 'Property updated successfully!')
+            return redirect('hosts:view_listing', property_id=property.id)
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
