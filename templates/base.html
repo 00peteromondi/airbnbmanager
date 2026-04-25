@@ -99,7 +99,7 @@
         {% block mobile_drawer %}
         <aside id="mobile-drawer" class="drawer-shell fixed inset-0 z-[90] lg:hidden">
             <div class="absolute inset-0 bg-slate-950/45" data-close-drawer></div>
-            <div class="drawer-panel absolute right-0 top-0 h-full w-[88vw] max-w-sm bg-white p-6 shadow-2xl">
+            <div class="drawer-panel absolute right-0 top-0 h-full w-[88vw] max-w-sm bg-white p-6 shadow-2xl flex flex-col">
                 <div class="flex items-center justify-between mb-8">
                     <div>
                         <p class="font-display text-xl font-semibold">BayStays</p>
@@ -109,28 +109,42 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="space-y-3">
-                    <a href="{% url 'core:home' %}" class="block panel px-4 py-3"><i class="fa-solid fa-house mr-2 text-red-500"></i>Home</a>
-                    <a href="{% url 'core:properties_list' %}" class="block panel px-4 py-3"><i class="fa-solid fa-compass mr-2 text-blue-500"></i>Explore stays</a>
-                    <a href="{% url 'core:hosts' %}" class="block panel px-4 py-3"><i class="fa-solid fa-store mr-2 text-orange-500"></i>Host with us</a>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'users:profile' %}" class="block panel px-4 py-3"><i class="fa-regular fa-circle-user mr-2 text-red-500"></i>Profile</a>
-                        {% if user.role == 'both' %}
-                            <a href="{% url 'users:switch_role' 'guest' %}" class="block panel px-4 py-3"><i class="fa-solid fa-person-walking-luggage mr-2 text-blue-500"></i>Switch to guest</a>
-                            <a href="{% url 'users:switch_role' 'host' %}" class="block panel px-4 py-3"><i class="fa-solid fa-key mr-2 text-green-600"></i>Switch to host</a>
+                <div class="flex-1 overflow-y-auto pr-1 space-y-6">
+                    <div class="space-y-3">
+                        <a href="{% url 'core:home' %}" class="block panel px-4 py-3"><i class="fa-solid fa-house mr-2 text-red-500"></i>Home</a>
+                        <a href="{% url 'core:properties_list' %}" class="block panel px-4 py-3"><i class="fa-solid fa-compass mr-2 text-blue-500"></i>Explore stays</a>
+                        <a href="{% url 'core:hosts' %}" class="block panel px-4 py-3"><i class="fa-solid fa-store mr-2 text-orange-500"></i>Host with us</a>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'users:profile' %}" class="block panel px-4 py-3"><i class="fa-regular fa-circle-user mr-2 text-red-500"></i>Profile</a>
+                            {% if user.role == 'both' %}
+                                <a href="{% url 'users:switch_role' 'guest' %}" class="block panel px-4 py-3"><i class="fa-solid fa-person-walking-luggage mr-2 text-blue-500"></i>Switch to guest</a>
+                                <a href="{% url 'users:switch_role' 'host' %}" class="block panel px-4 py-3"><i class="fa-solid fa-key mr-2 text-green-600"></i>Switch to host</a>
+                            {% endif %}
+                            {% if user.role == 'guest' or user.role == 'both' %}
+                                <a href="{% url 'bookings:booking_list' %}" class="block panel px-4 py-3"><i class="fa-solid fa-calendar-days mr-2 text-yellow-500"></i>Bookings</a>
+                            {% endif %}
+                            {% if user.role == 'host' or user.role == 'both' %}
+                                <a href="{% url 'hosts:dashboard' %}" class="block panel px-4 py-3"><i class="fa-solid fa-chart-line mr-2 text-red-500"></i>Hosting hub</a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'guests:guest_login' %}" class="block panel px-4 py-3"><i class="fa-solid fa-right-to-bracket mr-2 text-red-500"></i>Log in</a>
+                            <a href="{% url 'guests:guest_signup' %}" class="block panel px-4 py-3"><i class="fa-solid fa-user-plus mr-2 text-blue-500"></i>Create guest account</a>
+                            <a href="{% url 'hosts:register' %}" class="block panel px-4 py-3"><i class="fa-solid fa-house-circle-check mr-2 text-green-600"></i>Create host account</a>
                         {% endif %}
-                        {% if user.role == 'guest' or user.role == 'both' %}
-                            <a href="{% url 'bookings:booking_list' %}" class="block panel px-4 py-3"><i class="fa-solid fa-calendar-days mr-2 text-yellow-500"></i>Bookings</a>
-                        {% endif %}
-                        {% if user.role == 'host' or user.role == 'both' %}
-                            <a href="{% url 'hosts:dashboard' %}" class="block panel px-4 py-3"><i class="fa-solid fa-chart-line mr-2 text-red-500"></i>Hosting hub</a>
-                        {% endif %}
-                    {% else %}
-                        <a href="{% url 'guests:guest_login' %}" class="block panel px-4 py-3"><i class="fa-solid fa-right-to-bracket mr-2 text-red-500"></i>Log in</a>
-                        <a href="{% url 'guests:guest_signup' %}" class="block panel px-4 py-3"><i class="fa-solid fa-user-plus mr-2 text-blue-500"></i>Create guest account</a>
-                        <a href="{% url 'hosts:register' %}" class="block panel px-4 py-3"><i class="fa-solid fa-house-circle-check mr-2 text-green-600"></i>Create host account</a>
-                    {% endif %}
+                    </div>
                 </div>
+                {% if user.is_authenticated %}
+                    <div class="pt-4 mt-4 border-t border-slate-100">
+                        <form method="post" action="{% url 'users:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-bay w-full">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                Sign out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </aside>
         {% endblock %}

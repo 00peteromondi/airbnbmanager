@@ -355,6 +355,8 @@ label {
 .modal-panel {
     transform: translateY(14px) scale(0.98);
     transition: transform 180ms ease;
+    max-height: min(88vh, 56rem);
+    overflow-y: auto;
 }
 
 .modal-shell.is-open .modal-panel,
@@ -365,6 +367,7 @@ label {
 .drawer-panel {
     transform: translateX(100%);
     transition: transform 220ms ease;
+    overflow-y: auto;
 }
 
 .drawer-shell.is-open .drawer-panel {
@@ -439,7 +442,7 @@ label {
 
 .hero-carousel {
     position: relative;
-    min-height: clamp(34rem, 72vh, 48rem);
+    min-height: clamp(38rem, 76vh, 58rem);
     overflow: hidden;
     border-radius: 0.95rem;
     background: #28070d;
@@ -459,13 +462,22 @@ label {
 .hero-slide__bg {
     position: absolute;
     inset: 0;
+    overflow: hidden;
+}
+
+.hero-slide__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     background-size: cover;
     background-position: center;
     transform: scale(1.02);
     transition: transform 7s ease;
 }
 
-.hero-slide.is-active .hero-slide__bg {
+.hero-slide.is-active .hero-slide__image {
     transform: scale(1.08);
 }
 
@@ -517,12 +529,14 @@ label {
 
 .hero-copy h1,
 .hero-copy h2 {
-    font-size: clamp(2.35rem, 4vw, 4.3rem);
-    line-height: 1.08;
+    font-size: clamp(1.65rem, 2.5vw, 2.7rem);
+    line-height: 1.02;
 }
 
 .hero-copy p {
     max-width: 33rem;
+    color: #fde68a;
+    line-height: 1.45;
 }
 
 .hero-slide.is-active .hero-copy {
@@ -905,7 +919,7 @@ table td {
 
 @media (max-width: 767px) {
     .hero-carousel {
-        min-height: 38rem;
+        min-height: 40rem;
     }
 
     .hero-slide__content {
@@ -919,8 +933,8 @@ table td {
 
     .hero-copy h1,
     .hero-copy h2 {
-        font-size: clamp(2rem, 8vw, 3.35rem);
-        line-height: 1.08;
+        font-size: clamp(1.45rem, 6.2vw, 2.15rem);
+        line-height: 1.05;
     }
 
     .mobile-stack {

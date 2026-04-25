@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ProfileDetailsForm, ProfilePreferencesForm
 from django.http import JsonResponse
+from bookings.models import Booking
+from properties.models import Property
+from hosts.models import Host
+from django.db.models import Sum, Avg
 
 def register(request):
     if request.method == 'POST':
@@ -15,7 +19,58 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 def profile(request):
-    return render(request, 'users/profile.html')
+    if not request.user.is_authenticated:
+        return redirect('guests:guest_login')
+
+    profile_obj = request.user.profile
+    if request.method == 'POST':
+        form_scope = request.POST.get('form_scope')
+        if form_scope == 'preferences':
+            details_form = ProfileDetailsForm(instance=request.user)
+            preferences_form = ProfilePreferencesForm(request.POST, instance=profile_obj)
+            if preferences_form.is_valid():
+                preferences_form.save()
+                from django.contrib import messages
+                messages.success(request, "Your BayStays preferences have been updated.")
+                return redirect('users:profile')
+        else:
+            details_form = ProfileDetailsForm(request.POST, request.FILES, instance=request.user)
+            preferences_form = ProfilePreferencesForm(instance=profile_obj)
+            if details_form.is_valid():
+                details_form.save()
+                from django.contrib import messages
+                messages.success(request, "Your BayStays profile has been updated.")
+                return redirect('users:profile')
+    else:
+        details_form = ProfileDetailsForm(instance=request.user)
+        preferences_form = ProfilePreferencesForm(instance=profile_obj)
+
+    guest_bookings = Booking.objects.filter(guest=request.user).exclude(status='cancelled')
+    host_properties = Property.objects.filter(owner=request.user)
+    host_bookings = Booking.objects.filter(property__owner=request.user)
+    host_profile = Host.objects.filter(user=request.user).first()
+
+    context = {
+        'details_form': details_form,
+        'preferences_form': preferences_form,
+        'guest_stats': {
+            'total_bookings': guest_bookings.count(),
+            'upcoming_trips': guest_bookings.filter(status__in=['pending', 'confirmed']).count(),
+            'completed_trips': guest_bookings.filter(status__in=['completed', 'checked_out']).count(),
+            'spend': guest_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+        },
+        'host_stats': {
+            'total_properties': host_properties.count(),
+            'live_properties': host_properties.filter(is_active=True).count(),
+            'total_bookings': host_bookings.count(),
+            'revenue': host_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+            'avg_rating': host_properties.aggregate(avg=Avg('average_rating'))['avg'] or 0,
+        },
+        'host_profile': host_profile,
+        'recent_guest_bookings': guest_bookings.select_related('property').order_by('-created_at')[:4],
+        'recent_host_bookings': host_bookings.select_related('property', 'guest').order_by('-created_at')[:4],
+    }
+    return render(request, 'users/profile.html', context)
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required

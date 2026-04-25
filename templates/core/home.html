@@ -9,7 +9,7 @@
     <div class="hero-carousel section-fade" data-hero-carousel data-hero-duration="6500">
         {% if not user.is_authenticated %}
             <article class="hero-slide is-active" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/hero-1.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80" alt="Lakeside home exterior" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--left max-w-7xl mx-auto">
                     <div class="hero-copy">
@@ -41,7 +41,7 @@
                 </div>
             </article>
             <article class="hero-slide" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/urban.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80" alt="Modern apartment interior" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--center max-w-7xl mx-auto">
                     <div class="hero-copy text-center mx-auto">
@@ -56,7 +56,7 @@
                 </div>
             </article>
             <article class="hero-slide" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/family.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80" alt="Family-friendly vacation rental" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--right max-w-7xl mx-auto">
                     <div class="hero-copy ml-auto">
@@ -70,9 +70,24 @@
                     </div>
                 </div>
             </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80" alt="Boutique stay bedroom" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--center max-w-7xl mx-auto">
+                    <div class="hero-copy text-center mx-auto">
+                        <span class="badge badge-primary mb-5 shadow-sm">Built for both sides of the booking</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">Guests compare better. Hosts present better. BayStays keeps both sides in sync.</h2>
+                        <p class="mt-4 max-w-2xl mx-auto text-base lg:text-lg text-white/88">The platform now puts trust, availability, listing quality, and booking context closer to the decision instead of hiding it.</p>
+                        <div class="mt-7 hero-actions justify-center">
+                            <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>See what is live</a>
+                            <a href="{% url 'hosts:register' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-key"></i>List your place</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {% elif user.role == 'host' %}
             <article class="hero-slide is-active" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/urban.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80" alt="Host listing workspace" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--left max-w-7xl mx-auto">
                     <div class="hero-copy">
@@ -87,7 +102,7 @@
                 </div>
             </article>
             <article class="hero-slide" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/hero-1.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80" alt="Lakeside host listing" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--right max-w-7xl mx-auto">
                     <div class="hero-copy ml-auto">
@@ -101,9 +116,24 @@
                     </div>
                 </div>
             </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1600&q=80" alt="Property management with multiple homes" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--center max-w-7xl mx-auto">
+                    <div class="hero-copy text-center mx-auto">
+                        <span class="badge badge-orange mb-5 shadow-sm">Portfolio view</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">Whether you run one home or several, BayStays now gives hosts a fuller operating view.</h2>
+                        <p class="mt-4 max-w-2xl mx-auto text-base lg:text-lg text-white/88">Monitor arrivals, listing quality, demand, and reservation flow from the hosting hub without jumping between disconnected pages.</p>
+                        <div class="mt-7 hero-actions justify-center">
+                            <a href="{% url 'hosts:my_listings' %}" class="btn-bay"><i class="fa-solid fa-house"></i>Open portfolio</a>
+                            <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-calendar-days"></i>Reservation queue</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {% else %}
             <article class="hero-slide is-active" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/family.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80" alt="Guest planning a stay" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--left max-w-7xl mx-auto">
                     <div class="hero-copy">
@@ -118,7 +148,7 @@
                 </div>
             </article>
             <article class="hero-slide" data-hero-slide>
-                <div class="hero-slide__bg" style="background-image: url('{% static "images/hero-1.jpg" %}');"></div>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80" alt="Guest browsing lakeside stay" class="hero-slide__image"></div>
                 <div class="hero-slide__veil"></div>
                 <div class="hero-slide__content hero-slide__content--center max-w-7xl mx-auto">
                     <div class="hero-copy text-center mx-auto">
@@ -132,9 +162,25 @@
                     </div>
                 </div>
             </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80" alt="Guest room ready for arrival" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--right max-w-7xl mx-auto">
+                    <div class="hero-copy ml-auto">
+                        <span class="badge badge-primary mb-5 shadow-sm">Guest account benefits</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">Track booked homes, review blocked dates, and keep every stay decision in one account.</h2>
+                        <p class="mt-4 max-w-2xl text-base lg:text-lg text-white/88">Your BayStays account now carries more of the travel workload so you spend less time rechecking details manually.</p>
+                        <div class="mt-7 hero-actions">
+                            <a href="{% url 'users:profile' %}" class="btn-bay"><i class="fa-regular fa-circle-user"></i>Open account</a>
+                            <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-suitcase-rolling"></i>Trip history</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {% endif %}
         <div class="hero-progress" aria-hidden="true">
             <span data-hero-progress-item class="is-active"></span>
+            <span data-hero-progress-item></span>
             <span data-hero-progress-item></span>
             {% if not user.is_authenticated %}<span data-hero-progress-item></span>{% endif %}
         </div>
