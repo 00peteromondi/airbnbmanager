@@ -266,15 +266,11 @@ label {
     color: #1d4ed8;
 }
 
-.section-fade {
-    opacity: 0;
-    transform: translateY(28px);
-    transition: opacity 560ms ease, transform 560ms ease;
-}
-
+.section-fade,
 .section-fade.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
+    transition: none;
 }
 
 .stat-number {
