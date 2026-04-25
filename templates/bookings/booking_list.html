@@ -7,9 +7,23 @@
         <div>
             <span class="badge badge-primary mb-3">Guest bookings</span>
             <h1 class="font-display text-4xl font-semibold">Your BayStays plans</h1>
-            <p class="mt-2 text-slate-600">Track each reservation with cleaner status cues, stronger stay context, and a calmer trip overview.</p>
+            <p class="mt-2 text-slate-600">Track, adjust, and cancel reservations with clearer stay context, stronger status cues, and better trip self-service.</p>
         </div>
         <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Browse more stays</a>
+    </div>
+    <div class="grid gap-4 md:grid-cols-3 section-fade">
+        <div class="panel p-5">
+            <p class="text-sm text-slate-500">Total reservations</p>
+            <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.total }}</p>
+        </div>
+        <div class="panel p-5">
+            <p class="text-sm text-slate-500">Upcoming stays</p>
+            <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.upcoming }}</p>
+        </div>
+        <div class="panel p-5">
+            <p class="text-sm text-slate-500">Manageable right now</p>
+            <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.manageable }}</p>
+        </div>
     </div>
     <div class="flex flex-wrap gap-2 section-fade">
         <button type="button" class="filter-chip is-active" data-booking-filter="all"><i class="fa-solid fa-layer-group mr-2"></i>All</button>
@@ -32,9 +46,34 @@
                         <p class="font-display text-3xl font-semibold mt-3">KES {{ booking.total_price|intcomma }}</p>
                     </div>
                 </div>
-                {% if booking.special_requests %}<div class="mt-4 rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><strong class="text-slate-900">Your note:</strong> {{ booking.special_requests }}</div>{% endif %}
+                {% if booking.special_requests %}<div class="mt-4 rounded-[0.7rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><strong class="text-slate-900">Your note:</strong> {{ booking.special_requests }}</div>{% endif %}
+                {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                    {% if booking.check_in_date > today %}
+                    <div class="mt-4 rounded-[0.7rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-arrows-rotate mt-1"></i>
+                            <div>
+                                <p class="font-semibold">You can still manage this reservation.</p>
+                                <p class="mt-1">Reschedule the dates or cancel the booking before the stay starts.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
                 <div class="mt-5 flex flex-wrap gap-3">
                     <a href="{% url 'properties:property_detail' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>View stay</a>
+                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                        {% if booking.check_in_date > today %}
+                            <a href="{% url 'bookings:reschedule_booking' booking.id %}" class="btn-bay-secondary"><i class="fa-solid fa-calendar-plus"></i>Reschedule</a>
+                            <form method="post" action="{% url 'bookings:cancel_booking' booking.id %}" data-loading-form="true" class="inline-flex">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-bay-ghost text-red-600 border-red-200 bg-red-50 hover:bg-red-100">
+                                    <span data-submit-text><i class="fa-solid fa-ban"></i>Cancel booking</span>
+                                    <span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Cancelling</span>
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
         {% empty %}
@@ -45,7 +84,7 @@
                     <p class="text-sm text-slate-500 mt-2">Once you request a stay, BayStays will keep every reservation, date range, and host response neatly organized here.</p>
                     <div class="empty-state__actions">
                         <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Explore stays</a>
-                        <button type="button" class="btn-bay-ghost" data-open-modal="support-modal"><i class="fa-solid fa-circle-info"></i>How booking works</button>
+                        <a href="{% url 'users:profile' %}" class="btn-bay-ghost"><i class="fa-regular fa-circle-user"></i>Complete your profile</a>
                     </div>
                 </div>
             </div>

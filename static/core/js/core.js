@@ -335,6 +335,27 @@
         });
     }
 
+    document.querySelectorAll('[data-profile-photo-preview]').forEach((wrapper) => {
+        const input = wrapper.querySelector('input[type="file"]');
+        const previewImages = document.querySelectorAll('[data-profile-preview-image]');
+        const previewIcons = document.querySelectorAll('[data-profile-preview-icon]');
+
+        input?.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) {
+                return;
+            }
+            const objectUrl = URL.createObjectURL(file);
+            previewImages.forEach((image) => {
+                image.src = objectUrl;
+                image.classList.remove('hidden');
+            });
+            previewIcons.forEach((icon) => {
+                icon.classList.add('hidden');
+            });
+        });
+    });
+
     document.querySelectorAll('[data-booking-calculator]').forEach((bookingCalculator) => {
         const checkIn = bookingCalculator.querySelector('input[name="check_in_date"]');
         const checkOut = bookingCalculator.querySelector('input[name="check_out_date"]');

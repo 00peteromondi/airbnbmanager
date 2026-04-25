@@ -8,11 +8,8 @@
             <div class="panel p-6 lg:p-8 surface-tint">
                 <div class="flex items-start gap-4">
                     <div class="h-20 w-20 rounded-[0.8rem] bg-gradient-to-br from-red-500 to-orange-500 text-white flex items-center justify-center text-3xl overflow-hidden">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_display_name }}" class="h-full w-full object-cover">
-                        {% else %}
-                            <i class="fa-regular fa-circle-user"></i>
-                        {% endif %}
+                        <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% endif %}" alt="{{ user.get_display_name }}" class="h-full w-full object-cover {% if not user.profile_picture %}hidden{% endif %}" data-profile-preview-image>
+                        <i class="fa-regular fa-circle-user {% if user.profile_picture %}hidden{% endif %}" data-profile-preview-icon></i>
                     </div>
                     <div class="min-w-0">
                         <span class="badge badge-primary mb-3">Account center</span>
@@ -36,10 +33,73 @@
             <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 150ms;">
                 <span class="badge badge-warm mb-3">Verification and privacy</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">Trust controls</h2>
-                <div class="space-y-3">
+                <div class="space-y-3 mb-5">
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Email verification</span><span class="badge {% if user.email_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.email_verified %}Ready{% else %}Needs action{% endif %}</span></div>
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Phone verification</span><span class="badge {% if user.phone_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.phone_verified %}Ready{% else %}Needs action{% endif %}</span></div>
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Public profile</span><span class="badge {% if user.profile.profile_public %}badge-success{% else %}badge-warning{% endif %}">{% if user.profile.profile_public %}Visible{% else %}Private{% endif %}</span></div>
+                </div>
+                <div class="space-y-4">
+                    <div class="rounded-[0.7rem] border border-slate-200 p-4">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <p class="font-semibold text-slate-900"><i class="fa-solid fa-envelope-circle-check text-red-500 mr-2"></i>Email verification</p>
+                                <p class="text-sm text-slate-500 mt-1">We send verification emails through Brevo so your account stays aligned with the rest of the BayStays ecosystem.</p>
+                            </div>
+                            <span class="badge {% if user.email_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.email_verified %}Verified{% elif email_verification_pending %}Code sent{% else %}Pending{% endif %}</span>
+                        </div>
+                        {% if not user.email_verified %}
+                            <div class="flex flex-col gap-3">
+                                <form method="post" action="{% url 'users:send_email_verification' %}" data-loading-form="true" class="flex flex-wrap gap-3">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-bay-secondary">
+                                        <span data-submit-text><i class="fa-solid fa-paper-plane"></i>Send email code</span>
+                                        <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Sending</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'users:verify_email_code' %}" data-loading-form="true" class="flex flex-col sm:flex-row gap-3">
+                                    {% csrf_token %}
+                                    <input type="text" name="email_code" maxlength="6" placeholder="Enter email code" class="input-shell sm:max-w-[12rem]">
+                                    <button type="submit" class="btn-bay">
+                                        <span data-submit-text><i class="fa-solid fa-shield-check"></i>Verify email</span>
+                                        <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Verifying</span>
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[0.7rem] px-4 py-3">This email is already trusted for booking updates, host communication, and account recovery.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="rounded-[0.7rem] border border-slate-200 p-4">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <p class="font-semibold text-slate-900"><i class="fa-solid fa-mobile-screen-button text-orange-500 mr-2"></i>Phone verification</p>
+                                <p class="text-sm text-slate-500 mt-1">Confirm your number so time-sensitive booking updates and arrival coordination can reach you reliably.</p>
+                            </div>
+                            <span class="badge {% if user.phone_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.phone_verified %}Verified{% elif phone_verification_pending %}Code sent{% else %}Pending{% endif %}</span>
+                        </div>
+                        {% if not user.phone_verified %}
+                            <div class="flex flex-col gap-3">
+                                <form method="post" action="{% url 'users:send_phone_verification' %}" data-loading-form="true" class="flex flex-wrap gap-3">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-bay-secondary">
+                                        <span data-submit-text><i class="fa-solid fa-message"></i>Send phone code</span>
+                                        <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Sending</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'users:verify_phone_code' %}" data-loading-form="true" class="flex flex-col sm:flex-row gap-3">
+                                    {% csrf_token %}
+                                    <input type="text" name="phone_code" maxlength="6" placeholder="Enter phone code" class="input-shell sm:max-w-[12rem]">
+                                    <button type="submit" class="btn-bay">
+                                        <span data-submit-text><i class="fa-solid fa-shield-check"></i>Verify phone</span>
+                                        <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Verifying</span>
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[0.7rem] px-4 py-3">Your number is verified and ready for guest or host coordination.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -94,7 +154,19 @@
                         <div><label for="{{ details_form.email.id_for_label }}">Email</label>{{ details_form.email }}</div>
                         <div><label for="{{ details_form.phone_number.id_for_label }}">Phone number</label>{{ details_form.phone_number }}</div>
                         <div><label for="{{ details_form.date_of_birth.id_for_label }}">Date of birth</label>{{ details_form.date_of_birth }}</div>
-                        <div class="md:col-span-2"><label for="{{ details_form.profile_picture.id_for_label }}">Profile photo</label>{{ details_form.profile_picture }}</div>
+                        <div class="md:col-span-2">
+                            <label for="{{ details_form.profile_picture.id_for_label }}">Profile photo</label>
+                            <div class="mt-3 flex flex-col sm:flex-row gap-4 items-start" data-profile-photo-preview>
+                                <div class="h-24 w-24 rounded-[0.8rem] bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400 text-3xl">
+                                    <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% endif %}" alt="{{ user.get_display_name }}" class="h-full w-full object-cover {% if not user.profile_picture %}hidden{% endif %}" data-profile-preview-image>
+                                    <i class="fa-regular fa-circle-user {% if user.profile_picture %}hidden{% endif %}" data-profile-preview-icon></i>
+                                </div>
+                                <div class="flex-1 space-y-3 min-w-0">
+                                    {{ details_form.profile_picture }}
+                                    <p class="text-sm text-slate-500">Use a clear profile photo so hosts and guests can recognize who they are coordinating with.</p>
+                                </div>
+                            </div>
+                        </div>
                         <div class="md:col-span-2"><label for="{{ details_form.bio.id_for_label }}">Bio</label>{{ details_form.bio }}</div>
                         <div class="md:col-span-2"><label for="{{ details_form.address_line_1.id_for_label }}">Address line 1</label>{{ details_form.address_line_1 }}</div>
                         <div class="md:col-span-2"><label for="{{ details_form.address_line_2.id_for_label }}">Address line 2</label>{{ details_form.address_line_2 }}</div>

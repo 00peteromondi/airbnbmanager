@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.utils import timezone
+from datetime import timedelta
 
 class CustomUser(AbstractUser):
     # Role system
@@ -104,6 +105,34 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"Profile for {self.user.username}"
+
+
+class VerificationCode(models.Model):
+    CHANNEL_CHOICES = (
+        ('email', 'Email'),
+        ('phone', 'Phone'),
+    )
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='verification_codes')
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.channel}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+    @classmethod
+    def expiry_time(cls):
+        return timezone.now() + timedelta(minutes=15)
 
 # Signal to create user profile automatically
 from django.db.models.signals import post_save

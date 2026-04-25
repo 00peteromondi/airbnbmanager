@@ -178,6 +178,18 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'core:home'
 
+# Email and verification delivery
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('BREVO_SMTP_LOGIN', os.environ.get('EMAIL_HOST_USER', ''))
+EMAIL_HOST_PASSWORD = os.environ.get('BREVO_SMTP_KEY', os.environ.get('EMAIL_HOST_PASSWORD', ''))
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BayStays <noreply@baystays.app>')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+BREVO_SMS_API_KEY = os.environ.get('BREVO_SMS_API_KEY', '')
+BREVO_SMS_SENDER = os.environ.get('BREVO_SMS_SENDER', 'BayStays')
+
 # Session settings
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_SAVE_EVERY_REQUEST = True

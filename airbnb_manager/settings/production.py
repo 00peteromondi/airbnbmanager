@@ -25,12 +25,14 @@ SECURE_HSTS_PRELOAD = True
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.yourprovider.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
-DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.getenv('BREVO_SMTP_LOGIN', os.getenv('EMAIL_HOST_USER', ''))
+EMAIL_HOST_PASSWORD = os.getenv('BREVO_SMTP_KEY', os.getenv('EMAIL_HOST_PASSWORD', ''))
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'BayStays <noreply@baystays.app>')
+BREVO_SMS_API_KEY = os.getenv('BREVO_SMS_API_KEY', '')
+BREVO_SMS_SENDER = os.getenv('BREVO_SMS_SENDER', 'BayStays')
 
 # Logging
 LOGGING = {

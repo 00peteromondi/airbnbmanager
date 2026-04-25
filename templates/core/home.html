@@ -237,6 +237,35 @@
                 </div>
             </div>
         </section>
+        <section class="grid gap-6 lg:grid-cols-3 section-fade">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-orange mb-3">Before you join</span>
+                <h2 class="font-display text-2xl font-semibold">What guests can expect after signup</h2>
+                <div class="mt-5 space-y-4 text-sm text-slate-600">
+                    <div class="flex gap-3"><i class="fa-solid fa-envelope-circle-check text-red-500 mt-1"></i><p>Profile verification to secure booking alerts and recovery flows.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-calendar-days text-blue-500 mt-1"></i><p>A bookings hub built to track, reschedule, or cancel eligible reservations.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-share-nodes text-green-600 mt-1"></i><p>Stay pages with reviews, ratings, sharing, and location confidence built in.</p></div>
+                </div>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-blue mb-3">For serious hosts</span>
+                <h2 class="font-display text-2xl font-semibold">Tools waiting inside the hosting hub</h2>
+                <div class="mt-5 space-y-4 text-sm text-slate-600">
+                    <div class="flex gap-3"><i class="fa-solid fa-gauge-high text-red-500 mt-1"></i><p>Portfolio-level performance and readiness signals.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-image text-orange-500 mt-1"></i><p>Better image workflow, previewing, and listing detail quality checks.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-list-check text-green-600 mt-1"></i><p>A booking queue built for confirming, tracking, and acting on reservations.</p></div>
+                </div>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-primary mb-3">Trust first</span>
+                <h2 class="font-display text-2xl font-semibold">Why BayStays feels safer to book</h2>
+                <div class="mt-5 space-y-4 text-sm text-slate-600">
+                    <div class="flex gap-3"><i class="fa-solid fa-shield-heart text-red-500 mt-1"></i><p>Email and phone verification are visible in the account experience.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-user-check text-blue-500 mt-1"></i><p>Real review voices and clearer property context reduce guesswork.</p></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-location-crosshairs text-orange-500 mt-1"></i><p>OpenStreetMap-powered location search and detail-page map precision.</p></div>
+                </div>
+            </div>
+        </section>
     {% elif user.role == 'host' %}
         <section class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] section-fade">
             <div class="panel p-6 lg:p-8">
@@ -289,6 +318,26 @@
                 </div>
             </div>
         </section>
+        <section class="grid gap-6 lg:grid-cols-3 section-fade">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-primary mb-3">Identity and trust</span>
+                <h2 class="font-display text-2xl font-semibold">Keep your host account verified</h2>
+                <p class="mt-4 text-sm text-slate-600">Confirm your email and phone from the profile center so guest communication and reservation updates reach the right channels.</p>
+                <a href="{% url 'users:profile' %}" class="btn-bay-secondary mt-5"><i class="fa-regular fa-circle-user"></i>Open profile center</a>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-blue mb-3">Portfolio workflow</span>
+                <h2 class="font-display text-2xl font-semibold">Work across one or many listings</h2>
+                <p class="mt-4 text-sm text-slate-600">Review listing health, availability pressure, imagery, amenities, and booking activity from a more capable hosting workspace.</p>
+                <a href="{% url 'hosts:my_listings' %}" class="btn-bay-secondary mt-5"><i class="fa-solid fa-house"></i>Manage listings</a>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-orange mb-3">Reservation flow</span>
+                <h2 class="font-display text-2xl font-semibold">Stay ahead of arrivals and issues</h2>
+                <p class="mt-4 text-sm text-slate-600">The host queue keeps reservation status, upcoming arrivals, and action items closer to the work.</p>
+                <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-secondary mt-5"><i class="fa-solid fa-calendar-check"></i>Review booking queue</a>
+            </div>
+        </section>
     {% else %}
         <section class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] section-fade">
             <div class="panel p-6 lg:p-8">
@@ -333,6 +382,26 @@
                         <div><p class="font-semibold text-slate-900">Location confidence is higher</p><p class="mt-1">Search stays fast, then inspect the actual listing pin when reviewing the final home.</p></div>
                     </div>
                 </div>
+            </div>
+        </section>
+        <section class="grid gap-6 lg:grid-cols-3 section-fade">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-primary mb-3">Profile readiness</span>
+                <h2 class="font-display text-2xl font-semibold">Keep travel details ready before you need them</h2>
+                <p class="mt-4 text-sm text-slate-600">Verify your email and phone, update your photo, and make it easier for hosts to trust the reservation behind the booking.</p>
+                <a href="{% url 'users:profile' %}" class="btn-bay-secondary mt-5"><i class="fa-regular fa-circle-user"></i>Open profile</a>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-blue mb-3">Booking control</span>
+                <h2 class="font-display text-2xl font-semibold">Manage the stays you already booked</h2>
+                <p class="mt-4 text-sm text-slate-600">For eligible reservations, BayStays now gives you guest-side rescheduling and cancellation tools directly from your bookings page.</p>
+                <a href="{% url 'bookings:booking_list' %}" class="btn-bay-secondary mt-5"><i class="fa-solid fa-suitcase-rolling"></i>Manage bookings</a>
+            </div>
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-orange mb-3">Stay confidence</span>
+                <h2 class="font-display text-2xl font-semibold">Make the next booking with more context</h2>
+                <p class="mt-4 text-sm text-slate-600">Amenity icons, blocked dates, exact map location, and real review voices now sit closer to the booking decision.</p>
+                <a href="{% url 'core:properties_list' %}" class="btn-bay-secondary mt-5"><i class="fa-solid fa-compass"></i>Find a stay</a>
             </div>
         </section>
     {% endif %}

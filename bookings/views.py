@@ -1,13 +1,40 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, CreateView, UpdateView
 from django.contrib import messages
-from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse
-from .models import Booking
-from .forms import BookingForm
-from properties.models import Property
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.views.generic import CreateView, ListView, UpdateView
+
+from properties.models import Property
+
+from .forms import BookingForm
+from .models import Booking
+
+
+def _unavailable_ranges_for_property(property_obj):
+    return list(
+        Booking.objects.filter(
+            property=property_obj,
+            status__in=['confirmed', 'pending', 'checked_in']
+        )
+        .order_by('check_in_date')
+        .values('check_in_date', 'check_out_date', 'status')[:12]
+    )
+
+
+def _booking_overlap_queryset(property_obj, check_in_date, check_out_date, exclude_id=None):
+    queryset = Booking.objects.filter(
+        property=property_obj,
+        check_in_date__lt=check_out_date,
+        check_out_date__gt=check_in_date,
+        status__in=['confirmed', 'pending', 'checked_in'],
+    )
+    if exclude_id:
+        queryset = queryset.exclude(id=exclude_id)
+    return queryset
+
 
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Booking
@@ -17,48 +44,46 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['property'] = get_object_or_404(Property, pk=self.kwargs['property_id'])
         return context
-    
+
     def form_valid(self, form):
-        property = get_object_or_404(Property, pk=self.kwargs['property_id'])
-        unavailable_ranges = list(
-            Booking.objects.filter(
-                property=property,
-                status__in=['confirmed', 'pending', 'checked_in']
-            )
-            .order_by('check_in_date')
-            .values('check_in_date', 'check_out_date', 'status')[:8]
+        property_obj = get_object_or_404(Property, pk=self.kwargs['property_id'])
+        unavailable_ranges = _unavailable_ranges_for_property(property_obj)
+
+        overlapping_bookings = _booking_overlap_queryset(
+            property_obj,
+            form.instance.check_in_date,
+            form.instance.check_out_date,
         )
-        
-        # Check availability
-        overlapping_bookings = Booking.objects.filter(
-            property=property,
+
+        if overlapping_bookings.exists():
+            form.add_error(None, 'These dates are not available')
+            return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
+
+        if Booking.objects.filter(
+            guest=self.request.user,
+            property=property_obj,
             check_in_date__lt=form.instance.check_out_date,
             check_out_date__gt=form.instance.check_in_date,
-            status__in=['confirmed', 'pending']
-        )
-        
-        if overlapping_bookings.exists():
-            form.add_error(None, "These dates are not available")
+            status__in=['pending', 'confirmed', 'checked_in']
+        ).exists():
+            form.add_error(None, 'You already have an active booking for this stay within that period.')
             return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
-        
-        # Validate check-in is at least tomorrow
+
         if form.instance.check_in_date <= timezone.now().date():
-            form.add_error('check_in_date', "Check-in must be at least 1 day in advance")
+            form.add_error('check_in_date', 'Check-in must be at least 1 day in advance')
             return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
-        
-        # Validate number of guests
-        if form.instance.num_guests > property.max_guests:
-            form.add_error('num_guests', f"This property accommodates maximum {property.max_guests} guests")
+
+        if form.instance.num_guests > property_obj.max_guests:
+            form.add_error('num_guests', f'This property accommodates maximum {property_obj.max_guests} guests')
             return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
-        
-        # Calculate total price
+
         num_nights = (form.instance.check_out_date - form.instance.check_in_date).days
-        form.instance.total_price = num_nights * property.price_per_night
+        form.instance.total_price = num_nights * property_obj.price_per_night
         form.instance.guest = self.request.user
-        form.instance.property = property
+        form.instance.property = property_obj
 
         response = super().form_valid(form)
-        messages.success(self.request, "Booking request submitted successfully!")
+        messages.success(self.request, 'Booking request submitted successfully!')
         if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'ok': True,
@@ -86,24 +111,23 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
                 ],
             }, status=400)
         return response
-    
+
     def get_success_url(self):
         return reverse('bookings:booking_list')
+
 
 class OwnerBookingListView(LoginRequiredMixin, ListView):
     model = Booking
     template_name = 'hosts/owner_bookings.html'
     context_object_name = 'bookings'
     paginate_by = 10
-    
+
     def get_queryset(self):
         return Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         bookings = self.get_queryset()
-        
-        # Add statistics to context
         context['stats'] = {
             'total_bookings': bookings.count(),
             'pending_bookings': bookings.filter(status='pending').count(),
@@ -112,34 +136,36 @@ class OwnerBookingListView(LoginRequiredMixin, ListView):
         }
         return context
 
+
+@login_required
 def update_booking_status(request, booking_id, status):
-    """Update booking status (for hosts)"""
     if request.method == 'POST':
         booking = get_object_or_404(Booking, id=booking_id, property__owner=request.user)
         valid_statuses = ['confirmed', 'cancelled']
-        
+
         if status in valid_statuses:
             booking.status = status
             booking.save()
-            
-            messages.success(request, f"Booking has been {status} successfully!")
+            messages.success(request, f'Booking has been {status} successfully!')
         else:
-            messages.error(request, "Invalid status")
-    
+            messages.error(request, 'Invalid status')
+
     return redirect('hosts:property_bookings')
 
+
+@login_required
 def update_booking_notes(request, booking_id):
-    """Update admin notes for a booking"""
     if request.method == 'POST':
         booking = get_object_or_404(Booking, id=booking_id, property__owner=request.user)
         if hasattr(booking, 'admin_notes'):
             booking.admin_notes = request.POST.get('admin_notes', '')
             booking.save()
-            messages.success(request, "Notes updated successfully!")
+            messages.success(request, 'Notes updated successfully!')
         else:
-            messages.info(request, "Booking notes are not enabled on this project yet.")
-    
+            messages.info(request, 'Booking notes are not enabled on this project yet.')
+
     return redirect('hosts:property_bookings')
+
 
 class BookingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Booking
@@ -161,5 +187,90 @@ class UserBookingListView(LoginRequiredMixin, ListView):
     context_object_name = 'bookings'
 
     def get_queryset(self):
-        return Booking.objects.filter(guest=self.request.user).order_by('-created_at')
+        return Booking.objects.filter(guest=self.request.user).select_related('property').order_by('-created_at')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        bookings = context['bookings']
+        today = timezone.now().date()
+        active_bookings = bookings.exclude(status='cancelled')
+        context['today'] = today
+        context['booking_summary'] = {
+            'total': bookings.count(),
+            'upcoming': active_bookings.filter(check_out_date__gte=today).count(),
+            'manageable': bookings.filter(
+                status__in=['pending', 'confirmed'],
+                check_in_date__gt=today,
+            ).count(),
+        }
+        context['can_manage_any_booking'] = bookings.filter(
+            status__in=['pending', 'confirmed'],
+            check_in_date__gt=today,
+        ).exists()
+        return context
+
+
+@login_required
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, guest=request.user)
+    if request.method != 'POST':
+        return redirect('bookings:booking_list')
+
+    if booking.status not in ['pending', 'confirmed']:
+        messages.error(request, 'Only active reservation requests can be cancelled.')
+        return redirect('bookings:booking_list')
+    if booking.check_in_date <= timezone.now().date():
+        messages.error(request, 'This booking can no longer be cancelled from your account because the stay has already started.')
+        return redirect('bookings:booking_list')
+
+    booking.status = 'cancelled'
+    booking.save(update_fields=['status', 'updated_at'])
+    messages.success(request, f'{booking.property.name} has been cancelled.')
+    return redirect('bookings:booking_list')
+
+
+@login_required
+def reschedule_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, guest=request.user)
+    if booking.status not in ['pending', 'confirmed']:
+        messages.error(request, 'Only active bookings can be rescheduled.')
+        return redirect('bookings:booking_list')
+    if booking.check_in_date <= timezone.now().date():
+        messages.error(request, 'This stay has already started, so it cannot be rescheduled from your account.')
+        return redirect('bookings:booking_list')
+
+    if request.method == 'POST':
+        form = BookingForm(request.POST, instance=booking)
+        if form.is_valid():
+            rescheduled = form.save(commit=False)
+            unavailable_ranges = _unavailable_ranges_for_property(booking.property)
+            overlaps = _booking_overlap_queryset(
+                booking.property,
+                rescheduled.check_in_date,
+                rescheduled.check_out_date,
+                exclude_id=booking.id,
+            )
+            if overlaps.exists():
+                form.add_error(None, 'Those new dates overlap with another active booking.')
+            elif rescheduled.check_in_date <= timezone.now().date():
+                form.add_error('check_in_date', 'Check-in must be at least 1 day in advance')
+            elif rescheduled.num_guests > booking.property.max_guests:
+                form.add_error('num_guests', f'This property accommodates maximum {booking.property.max_guests} guests')
+            else:
+                nights = (rescheduled.check_out_date - rescheduled.check_in_date).days
+                rescheduled.total_price = nights * booking.property.price_per_night
+                rescheduled.save()
+                messages.success(request, f'{booking.property.name} was rescheduled successfully.')
+                return redirect('bookings:booking_list')
+        else:
+            unavailable_ranges = _unavailable_ranges_for_property(booking.property)
+    else:
+        form = BookingForm(instance=booking)
+        unavailable_ranges = _unavailable_ranges_for_property(booking.property)
+
+    return render(request, 'bookings/booking_edit.html', {
+        'form': form,
+        'booking': booking,
+        'property': booking.property,
+        'unavailable_ranges': unavailable_ranges,
+    })

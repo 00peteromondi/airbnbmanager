@@ -8,9 +8,13 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', auth_views.LoginView.as_view(template_name='users/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    
+
     path('role-selection/', views.role_selection, name='role_selection'),
     path('switch-role/<str:role>/', views.switch_role, name='switch_role'),
     path('get-active-role/', views.get_active_role, name='get_active_role'),
     path('profile/', views.profile, name='profile'),
+    path('profile/send-email-code/', views.send_email_verification, name='send_email_verification'),
+    path('profile/verify-email-code/', views.verify_email_code, name='verify_email_code'),
+    path('profile/send-phone-code/', views.send_phone_verification, name='send_phone_verification'),
+    path('profile/verify-phone-code/', views.verify_phone_code, name='verify_phone_code'),
 ]
