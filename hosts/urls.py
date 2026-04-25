@@ -14,6 +14,7 @@ urlpatterns = [
     # Property management routes
     path('properties/', views.my_listings, name='my_listings'),
     path('properties/add/', views.add_listing, name='add_listing'),
+    path('properties/<int:property_id>/toggle-status/', views.toggle_listing_status, name='toggle_listing_status'),
     path('properties/<int:property_id>/edit/', views.edit_listing, name='edit_listing'),
     path('properties/<int:property_id>/delete/', views.delete_listing, name='delete_listing'),
     path('properties/<int:property_id>/', views.view_listing, name='view_listing'),

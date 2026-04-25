@@ -1,26 +1,128 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load cloudinary %}
+{% load property_extras %}
 {% block title %}{{ property.name }} | BayStays{% endblock %}
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
     <div class="flex items-center justify-between gap-4 flex-wrap section-fade">
-        <div><span class="badge badge-primary mb-3">Listing detail</span><h1 class="font-display text-4xl font-semibold">{{ property.name }}</h1><p class="mt-2 text-slate-600">{{ property.city }}, {{ property.country }} · {{ property.max_guests }} guests</p></div>
-        <div class="flex gap-3"><a href="{% url 'hosts:edit_listing' property.id %}" class="btn-bay">Edit</a><a href="{% url 'hosts:delete_listing' property.id %}" class="btn-danger">Delete</a></div>
-    </div>
-    <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div class="panel overflow-hidden section-fade">
-            {% if property.images.first %}{% cloudinary property.images.first.image class="h-[26rem] w-full object-cover" %}{% else %}<div class="h-[26rem] bg-gradient-to-br from-sky-200 to-amber-100 flex items-center justify-center text-5xl text-slate-500"><i class="fa-solid fa-house"></i></div>{% endif %}
+        <div>
+            <span class="badge badge-primary mb-3">Listing control</span>
+            <h1 class="font-display text-4xl font-semibold">{{ property.name }}</h1>
+            <p class="mt-2 text-slate-600">{{ property.city }}, {{ property.country }} · {{ property.max_guests }} guests · {% if property.is_active %}Live on BayStays{% else %}Currently paused{% endif %}</p>
         </div>
-        <div class="panel p-6 section-fade">
-            <h2 class="font-display text-2xl font-semibold mb-4">Snapshot</h2>
-            <div class="space-y-3 text-sm text-slate-600">
-                <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"><span>Nightly rate</span><strong>KES {{ property.price_per_night|intcomma }}</strong></div>
-                <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"><span>Bedrooms</span><strong>{{ property.bedrooms }}</strong></div>
-                <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"><span>Bathrooms</span><strong>{{ property.bathrooms }}</strong></div>
-                <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"><span>Status</span><span class="badge {% if property.is_active %}badge-success{% else %}badge-warning{% endif %}">{% if property.is_active %}Live{% else %}Paused{% endif %}</span></div>
+        <div class="flex flex-wrap gap-3">
+            <form method="post" action="{% url 'hosts:toggle_listing_status' property.id %}" data-loading-form="true">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'hosts:view_listing' property.id %}">
+                <button type="submit" class="btn-bay-ghost">
+                    <span data-submit-text><i class="fa-solid {% if property.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>{% if property.is_active %}Pause listing{% else %}Go live{% endif %}</span>
+                    <span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Updating</span>
+                </button>
+            </form>
+            <a href="{% url 'hosts:edit_listing' property.id %}" class="btn-bay"><i class="fa-solid fa-pen"></i>Edit</a>
+            <a href="{% url 'hosts:delete_listing' property.id %}" class="btn-danger"><i class="fa-solid fa-trash"></i>Delete</a>
+        </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div class="space-y-6 section-fade">
+            <div class="panel overflow-hidden">
+                {% if property.images.first %}
+                    {% cloudinary property.images.first.image class="h-[26rem] w-full object-cover" %}
+                {% else %}
+                    <div class="h-[26rem] bg-gradient-to-br from-sky-200 to-amber-100 flex items-center justify-center text-5xl text-slate-500"><i class="fa-solid fa-house"></i></div>
+                {% endif %}
             </div>
-            <p class="mt-5 text-slate-600">{{ property.description }}</p>
+
+            <div class="panel p-6 lg:p-8">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                        <span class="badge badge-blue mb-3">Listing story</span>
+                        <h2 class="font-display text-2xl font-semibold">What guests currently see</h2>
+                    </div>
+                    <span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ property.average_rating|floatformat:1 }} rating</span>
+                </div>
+                <p class="mt-4 text-slate-600 leading-7">{{ property.description }}</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    {% for amenity in property.amenities %}
+                        <span class="badge badge-blue"><i class="{{ amenity|amenity_icon }}"></i>{{ amenity|amenity_label }}</span>
+                    {% empty %}
+                        <span class="text-sm text-slate-500">No amenities added yet.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-primary mb-3">Recent booking activity</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Reservations tied to this listing</h2>
+                <div class="space-y-4">
+                    {% for booking in bookings %}
+                        <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ booking.check_in_date }} to {{ booking.check_out_date }} · {{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</p>
+                                </div>
+                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                            </div>
+                            <p class="text-sm text-slate-600 mt-3">KES {{ booking.total_price|intcomma }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-calendar-day text-2xl text-blue-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No bookings for this listing yet</p>
+                                <p class="text-sm text-slate-500 mt-1">Once guests start requesting this stay, reservation activity will show up here.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6 section-fade">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-warm mb-3">Performance snapshot</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">How this listing is performing</h2>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Total bookings</p><p class="font-display text-3xl font-semibold mt-2">{{ listing_stats.total_bookings }}</p></div>
+                    <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Pending</p><p class="font-display text-3xl font-semibold mt-2">{{ listing_stats.pending_bookings }}</p></div>
+                    <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Confirmed</p><p class="font-display text-3xl font-semibold mt-2">{{ listing_stats.confirmed_bookings }}</p></div>
+                    <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Revenue</p><p class="font-display text-3xl font-semibold mt-2">KES {{ listing_stats.revenue|intcomma }}</p></div>
+                </div>
+                <div class="mt-4 bg-slate-50 rounded-[0.7rem] px-4 py-4 text-sm text-slate-600">
+                    <strong class="text-slate-900">Next arrival:</strong>
+                    {% if listing_stats.next_arrival %}
+                        {{ listing_stats.next_arrival.guest.get_display_name }} on {{ listing_stats.next_arrival.check_in_date }}
+                    {% else %}
+                        Nothing upcoming right now.
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-blue mb-3">Listing quality</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Guest-facing quality checks</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Map pin</span><span class="badge {% if property.latitude and property.longitude %}badge-success{% else %}badge-warning{% endif %}">{% if property.latitude and property.longitude %}Ready{% else %}Missing{% endif %}</span></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Gallery coverage</span><span class="badge {% if property.images.count >= 3 %}badge-success{% else %}badge-warning{% endif %}">{{ property.images.count }} photo{{ property.images.count|pluralize }}</span></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Amenities depth</span><span class="badge {% if property.amenities|length >= 4 %}badge-success{% else %}badge-warning{% endif %}">{{ property.amenities|length }} amenit{{ property.amenities|length|pluralize:"y,ies" }}</span></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Public status</span><span class="badge {% if property.is_active %}badge-success{% else %}badge-warning{% endif %}">{% if property.is_active %}Visible{% else %}Paused{% endif %}</span></div>
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-primary mb-3">Operational details</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Core stay settings</h2>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Nightly rate</span><strong>KES {{ property.price_per_night|intcomma }}</strong></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Bedrooms</span><strong>{{ property.bedrooms }}</strong></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Beds</span><strong>{{ property.beds }}</strong></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Bathrooms</span><strong>{{ property.bathrooms }}</strong></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Check-in / check-out</span><strong>{{ property.check_in_time }} / {{ property.check_out_time }}</strong></div>
+                </div>
+            </div>
         </div>
     </div>
 </section>

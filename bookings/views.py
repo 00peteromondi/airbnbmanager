@@ -126,22 +126,24 @@ def update_booking_status(request, booking_id, status):
         else:
             messages.error(request, "Invalid status")
     
-    return redirect('hosts:owner_bookings')
+    return redirect('hosts:property_bookings')
 
 def update_booking_notes(request, booking_id):
     """Update admin notes for a booking"""
     if request.method == 'POST':
         booking = get_object_or_404(Booking, id=booking_id, property__owner=request.user)
-        booking.admin_notes = request.POST.get('admin_notes', '')
-        booking.save()
-        
-        messages.success(request, "Notes updated successfully!")
+        if hasattr(booking, 'admin_notes'):
+            booking.admin_notes = request.POST.get('admin_notes', '')
+            booking.save()
+            messages.success(request, "Notes updated successfully!")
+        else:
+            messages.info(request, "Booking notes are not enabled on this project yet.")
     
-    return redirect('hosts:owner_bookings')
+    return redirect('hosts:property_bookings')
 
 class BookingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Booking
-    fields = ['status', 'admin_notes']
+    fields = ['status']
 
     def test_func(self):
         return self.request.user == self.get_object().property.owner
