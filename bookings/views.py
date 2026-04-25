@@ -12,9 +12,22 @@ from django.urls import reverse
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Booking
     form_class = BookingForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['property'] = get_object_or_404(Property, pk=self.kwargs['property_id'])
+        return context
     
     def form_valid(self, form):
         property = get_object_or_404(Property, pk=self.kwargs['property_id'])
+        unavailable_ranges = list(
+            Booking.objects.filter(
+                property=property,
+                status__in=['confirmed', 'pending', 'checked_in']
+            )
+            .order_by('check_in_date')
+            .values('check_in_date', 'check_out_date', 'status')[:8]
+        )
         
         # Check availability
         overlapping_bookings = Booking.objects.filter(
@@ -26,26 +39,53 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         
         if overlapping_bookings.exists():
             form.add_error(None, "These dates are not available")
-            return self.form_invalid(form)
+            return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
         
         # Validate check-in is at least tomorrow
         if form.instance.check_in_date <= timezone.now().date():
             form.add_error('check_in_date', "Check-in must be at least 1 day in advance")
-            return self.form_invalid(form)
+            return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
         
         # Validate number of guests
         if form.instance.num_guests > property.max_guests:
             form.add_error('num_guests', f"This property accommodates maximum {property.max_guests} guests")
-            return self.form_invalid(form)
+            return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
         
         # Calculate total price
         num_nights = (form.instance.check_out_date - form.instance.check_in_date).days
         form.instance.total_price = num_nights * property.price_per_night
         form.instance.guest = self.request.user
         form.instance.property = property
-        
+
+        response = super().form_valid(form)
         messages.success(self.request, "Booking request submitted successfully!")
-        return super().form_valid(form)
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'message': 'Booking request submitted successfully.',
+                'redirect_url': reverse('bookings:booking_list'),
+                'total_price': str(self.object.total_price),
+                'status': self.object.status,
+            })
+        return response
+
+    def form_invalid(self, form, unavailable_ranges=None):
+        response = super().form_invalid(form)
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': False,
+                'errors': form.errors,
+                'non_field_errors': form.non_field_errors(),
+                'unavailable_ranges': [
+                    {
+                        'check_in': row['check_in_date'].isoformat(),
+                        'check_out': row['check_out_date'].isoformat(),
+                        'status': row['status'],
+                    }
+                    for row in (unavailable_ranges or [])
+                ],
+            }, status=400)
+        return response
     
     def get_success_url(self):
         return reverse('bookings:booking_list')
@@ -115,7 +155,7 @@ class BookingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class UserBookingListView(LoginRequiredMixin, ListView):
     model = Booking
-    template_name = 'bookings/user_bookings.html'
+    template_name = 'bookings/booking_list.html'
     context_object_name = 'bookings'
 
     def get_queryset(self):

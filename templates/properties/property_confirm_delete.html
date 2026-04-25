@@ -1,36 +1,12 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Delete {{ property.name }} - Aurban Rentals{% endblock %}
-
+{% block title %}Delete stay | BayStays{% endblock %}
 {% block content %}
-<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <div class="text-center mb-6">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900">Delete Property</h2>
-                <p class="mt-2 text-sm text-gray-600">
-                    Are you sure you want to delete <span class="font-semibold text-gray-900">"{{ property.name }}"</span>? This action cannot be undone.
-                </p>
-            </div>
-
-            <form method="post" class="space-y-4">
-                {% csrf_token %}
-                <button type="submit"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                    Yes, delete property
-                </button>
-                <a href="{% url 'hosts:dashboard' %}"
-                   class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                    Cancel and go back
-                </a>
-            </form>
-        </div>
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="panel p-8 section-fade">
+        <span class="badge badge-danger mb-3">Danger zone</span>
+        <h1 class="font-display text-4xl font-semibold">Delete {{ property.name }}?</h1>
+        <p class="mt-3 text-slate-600">This action removes the listing from your BayStays portfolio. Existing booking history should be reviewed before you continue.</p>
+        <form method="post" class="mt-8 flex flex-wrap gap-3" data-loading-form="true">{% csrf_token %}<button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-trash"></i>Delete permanently</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Deleting</span></button><a href="{% url 'hosts:view_listing' property.id %}" class="btn-bay-ghost">Keep listing</a></form>
     </div>
-</div>
+</section>
 {% endblock %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, Review
 
 class PropertyForm(forms.ModelForm):
     amenities = forms.MultipleChoiceField(
@@ -12,20 +12,38 @@ class PropertyForm(forms.ModelForm):
         model = Property
         fields = [
             'name', 'description', 'property_type', 'address', 'city', 
-            'state', 'country', 'price_per_night', 'max_guests', 
-            'bedrooms', 'bathrooms', 'amenities', 'check_in_time', 
-            'check_out_time', 'is_active'
+            'state', 'country', 'latitude', 'longitude', 'price_per_night',
+            'max_guests', 'bedrooms', 'beds', 'bathrooms', 'sqft',
+            'amenities', 'check_in_time', 'check_out_time', 'is_active'
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'check_in_time': forms.TimeInput(attrs={'type': 'time'}),
             'check_out_time': forms.TimeInput(attrs={'type': 'time'}),
+            'latitude': forms.HiddenInput(),
+            'longitude': forms.HiddenInput(),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.initial['amenities'] = self.instance.amenities
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxSelectMultiple):
+                continue
+            css = 'input-shell'
+            if isinstance(field.widget, forms.Textarea):
+                css += ' min-h-32'
+            field.widget.attrs['class'] = css
+        self.fields['address'].widget.attrs.update({
+            'class': 'input-shell pl-11',
+            'data-location-input': 'true',
+            'data-location-address': 'true',
+            'autocomplete': 'off',
+        })
+        self.fields['city'].widget.attrs['data-location-city'] = 'true'
+        self.fields['state'].widget.attrs['data-location-state'] = 'true'
+        self.fields['country'].widget.attrs['data-location-country'] = 'true'
     
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -45,6 +63,8 @@ class PropertyImageForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['image'].required = True
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'input-shell'
 
 PropertyImageFormSet = forms.inlineformset_factory(
     Property,
@@ -54,3 +74,18 @@ PropertyImageFormSet = forms.inlineformset_factory(
     can_delete=True,
     max_num=10  # Maximum number of images
 )
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(),
+            'comment': forms.Textarea(attrs={'rows': 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rating'].widget.attrs['class'] = 'input-shell'
+        self.fields['comment'].widget.attrs['class'] = 'input-shell min-h-28'

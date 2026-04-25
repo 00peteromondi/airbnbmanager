@@ -14,12 +14,14 @@ from django.http import HttpResponse
 from django.template import loader
 import decimal
 from datetime import datetime
-from properties.models import Property
+from properties.models import Property, Review
 from bookings.models import Booking
 from hosts.models import Host
 from django.db.models import Avg, Count
 from datetime import timedelta
 from django.utils import timezone
+from django.template.loader import render_to_string
+from decimal import Decimal, InvalidOperation
 
 # This is the view function for the hosts page.
 # It handles the HTTP request and renders the hosts.html template.
@@ -63,27 +65,118 @@ def properties_list(request):
 
     # Get filter parameters from the request
     location_query = request.GET.get('location')
+    location_lat = request.GET.get('location_lat')
+    location_lng = request.GET.get('location_lng')
     property_type_query = request.GET.get('property-type')
     guests_query = request.GET.get('guests')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    check_in = request.GET.get('check_in')
+    check_out = request.GET.get('check_out')
+    sort_by = request.GET.get('sort', 'recommended')
 
     # Apply filters if they exist
     if location_query:
-        # Filter Propertys where the city contains the search query (case-insensitive)
-        filtered_properties = filtered_properties.filter(city__icontains=location_query)
+        geo_filtered = None
+        if location_lat and location_lng:
+            try:
+                lat = Decimal(location_lat)
+                lng = Decimal(location_lng)
+                delta = Decimal('0.45')
+                geo_filtered = filtered_properties.filter(
+                    latitude__isnull=False,
+                    longitude__isnull=False,
+                    latitude__gte=lat - delta,
+                    latitude__lte=lat + delta,
+                    longitude__gte=lng - delta,
+                    longitude__lte=lng + delta,
+                )
+            except (InvalidOperation, TypeError):
+                geo_filtered = None
+
+        if geo_filtered is not None and geo_filtered.exists():
+            filtered_properties = geo_filtered
+        else:
+            filtered_properties = filtered_properties.filter(
+                Q(city__icontains=location_query) |
+                Q(state__icontains=location_query) |
+                Q(country__icontains=location_query) |
+                Q(address__icontains=location_query) |
+                Q(name__icontains=location_query)
+            )
 
     if property_type_query and property_type_query != 'All Types':
-        # Filter Propertys by the selected property type
         filtered_properties = filtered_properties.filter(property_type=property_type_query)
 
     if guests_query and guests_query != 'All Guests':
-        # Convert guest query to an integer for filtering
-        if guests_query == '4+ Guests':
-            # Filter for Propertys with 4 or more beds
-            filtered_properties = filtered_properties.filter(beds__gte=4)
-        else:
-            # Filter for Propertys with an exact number of beds
-            num_guests = int(guests_query.split(' ')[0])
-            filtered_properties = filtered_properties.filter(beds=num_guests)
+        try:
+            if guests_query == '4+ Guests':
+                filtered_properties = filtered_properties.filter(max_guests__gte=4)
+            else:
+                filtered_properties = filtered_properties.filter(max_guests__gte=int(str(guests_query).split(' ')[0]))
+        except (ValueError, TypeError):
+            pass
+
+    if min_price:
+        try:
+            filtered_properties = filtered_properties.filter(price_per_night__gte=Decimal(min_price))
+        except (InvalidOperation, TypeError):
+            pass
+
+    if max_price:
+        try:
+            filtered_properties = filtered_properties.filter(price_per_night__lte=Decimal(max_price))
+        except (InvalidOperation, TypeError):
+            pass
+
+    if check_in and check_out:
+        try:
+            check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date()
+            booked_properties = Booking.objects.filter(
+                check_in_date__lt=check_out_date,
+                check_out_date__gt=check_in_date,
+                status__in=['confirmed', 'pending', 'checked_in']
+            ).values_list('property_id', flat=True)
+            filtered_properties = filtered_properties.exclude(id__in=booked_properties)
+        except ValueError:
+            pass
+
+    filtered_properties = filtered_properties.annotate(
+        review_count=Count('reviews')
+    )
+
+    if sort_by == 'price_asc':
+        filtered_properties = filtered_properties.order_by('price_per_night', '-average_rating')
+    elif sort_by == 'price_desc':
+        filtered_properties = filtered_properties.order_by('-price_per_night', '-average_rating')
+    elif sort_by == 'top_rated':
+        filtered_properties = filtered_properties.order_by('-average_rating', '-review_count', '-id')
+    elif sort_by == 'most_guests':
+        filtered_properties = filtered_properties.order_by('-max_guests', '-average_rating')
+    else:
+        filtered_properties = filtered_properties.order_by('-average_rating', 'price_per_night', '-id')
+
+    destination = (
+        filtered_properties.exclude(city__exact='')
+        .values('city')
+        .annotate(total=Count('id'))
+        .order_by('-total', 'city')
+        .first()
+    )
+    summary = filtered_properties.aggregate(
+        avg_price=Avg('price_per_night'),
+        avg_rating=Avg('average_rating'),
+        total_results=Count('id'),
+    )
+    user_booked_property_ids = []
+    if request.user.is_authenticated and request.user.role in ['guest', 'both']:
+        user_booked_property_ids = list(
+            Booking.objects.filter(guest=request.user)
+            .exclude(status='cancelled')
+            .values_list('property_id', flat=True)
+            .distinct()
+        )
 
     # Set up pagination
     paginator = Paginator(filtered_properties, 6) # Show 6 properties per page
@@ -97,22 +190,17 @@ def properties_list(request):
 
     # Check if the request is an AJAX request
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # Prepare data for JSON response
-        properties_json = [{
-            'id': p.id,
-            'title': p.name,
-            'location': p.city,
-            'type': p.property_type,
-            'price_per_night': p.price_per_night,
-            'beds': p.beds,
-            'bathrooms': p.bathrooms,
-            'sqft': p.sqft,
-            # Placeholder for image_url, you would add this to your model
-            'image_url': f"https://placehold.co/600x400/E5E7EB/4B5563?text=Property+{p.id}"
-        } for p in page_obj.object_list]
-        
+        results_html = render_to_string(
+            'core/_property_results.html',
+            {
+                'properties': page_obj.object_list,
+                'user': request.user,
+                'user_booked_property_ids': user_booked_property_ids,
+            },
+            request=request,
+        )
         data = {
-            'properties': properties_json,
+            'html': results_html,
             'page': page_obj.number,
             'total_pages': paginator.num_pages,
             'has_next': page_obj.has_next(),
@@ -120,6 +208,10 @@ def properties_list(request):
             'location': location_query,
             'property_type': property_type_query,
             'guests': guests_query,
+            'results_count': summary['total_results'] or 0,
+            'avg_price': summary['avg_price'] or 0,
+            'avg_rating': summary['avg_rating'] or 0,
+            'top_destination': destination['city'] if destination else '',
         }
         return JsonResponse(data)
     
@@ -129,8 +221,20 @@ def properties_list(request):
         'page': page_obj.number,
         'total_pages': range(1, paginator.num_pages + 1),
         'location': location_query,
+        'location_lat': location_lat,
+        'location_lng': location_lng,
         'property_type': property_type_query,
         'guests': guests_query,
+        'min_price': min_price,
+        'max_price': max_price,
+        'check_in': check_in,
+        'check_out': check_out,
+        'sort': sort_by,
+        'results_count': summary['total_results'] or 0,
+        'avg_price': summary['avg_price'] or 0,
+        'avg_rating': summary['avg_rating'] or 0,
+        'top_destination': destination['city'] if destination else '',
+        'user_booked_property_ids': user_booked_property_ids,
     }
     return render(request, 'core/properties.html', context)
 
@@ -183,31 +287,23 @@ def home(request):
         'countries': Property.objects.values('country').distinct().count(),
     }
     
-    # Testimonials (you can create a Testimonial model later)
-    testimonials = [
-        {
-            'name': 'Sarah Johnson',
-            'location': 'New York, USA',
-            'text': 'This platform made managing my vacation rental so much easier!',
-            'rating': 5,
-            'image_url': 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-        },
-        {
-            'name': 'Mike Chen',
-            'location': 'Toronto, Canada', 
-            'text': 'As a host, the tools provided are incredible. Highly recommended!',
-            'rating': 5,
-            'image_url': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-        },
-        {
-            'name': 'Emma Davis',
-            'location': 'London, UK',
-            'text': 'Found the perfect apartment for my family vacation. Amazing experience!',
-            'rating': 5,
-            'image_url': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-        }
-    ]
-    
+    testimonials = list(
+        Review.objects.select_related('user', 'property')
+        .exclude(comment__exact='')
+        .order_by('-created_at')[:3]
+    )
+
+    user_booked_property_ids = []
+    active_guest_bookings = []
+    if request.user.is_authenticated and request.user.role in ['guest', 'both']:
+        active_guest_bookings = list(
+            Booking.objects.filter(guest=request.user)
+            .exclude(status='cancelled')
+            .select_related('property')
+            .order_by('-created_at')[:3]
+        )
+        user_booked_property_ids = [booking.property_id for booking in active_guest_bookings]
+
     context = {
         'top_rated_properties': top_rated_properties,
         'most_booked_properties': most_booked_properties,
@@ -216,6 +312,8 @@ def home(request):
         'special_offer_properties': special_offer_properties,
         'stats': stats,
         'testimonials': testimonials,
+        'active_guest_bookings': active_guest_bookings,
+        'user_booked_property_ids': user_booked_property_ids,
     }
     
     return render(request, 'core/home.html', context)

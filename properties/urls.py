@@ -8,5 +8,6 @@ urlpatterns = [
     # Add your property-related URLs here
     path('', views.property_search, name='property_search'),
     path('<int:property_id>/', views.PropertyDetailView.as_view(), name='property_detail'),
+    path('<int:property_id>/reviews/', views.submit_review, name='submit_review'),
 
 ]

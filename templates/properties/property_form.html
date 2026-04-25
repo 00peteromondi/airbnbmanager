@@ -1,113 +1,57 @@
-{% extends 'base.html' %} {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Owner Dashboard</h1>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Booking Summary</h5>
-                    <div class="d-flex justify-content-around text-center">
-                        <div>
-                            <div class="fs-2 text-primary">
-                                {{ pending_count }}
-                            </div>
-                            <div>Pending</div>
-                        </div>
-                        <div>
-                            <div class="fs-2 text-success">
-                                {{ confirmed_count }}
-                            </div>
-                            <div>Confirmed</div>
-                        </div>
-                        <div>
-                            <div class="fs-2 text-danger">
-                                {{ cancelled_count }}
-                            </div>
-                            <div>Cancelled</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Recent Bookings</h5>
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Guest</th>
-                                <th>Dates</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for booking in recent_bookings %}
-                            <tr>
-                                <td>{{ booking.property.name }}</td>
-                                <td>{{ booking.guest.get_full_name }}</td>
-                                <td>
-                                    {{ booking.check_in_date|date:"M d" }} - {{
-                                    booking.check_out_date|date:"M d" }}
-                                </td>
-                                <td>
-                                    <span
-                                        class="badge bg-{{ booking.status_badge }}"
-                                        >{{ booking.get_status_display }}</span
-                                    >
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4">No bookings yet</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+{% extends 'base.html' %}
+{% block title %}{% if property %}Edit stay{% else %}Add stay{% endif %} | BayStays{% endblock %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div class="panel p-6 lg:p-8 section-fade">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+                <span class="badge badge-warm mb-3">Host studio</span>
+                <h1 class="font-display text-4xl font-semibold">{% if property %}Edit your stay{% else %}Create a BayStays listing{% endif %}</h1>
+                <p class="mt-3 text-slate-600 max-w-2xl">Use this guided studio to describe the stay, confirm location details, set guest expectations, and upload imagery.</p>
             </div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Properties</h5>
-                    <div class="list-group">
-                        {% for property in properties %}
-                        <a
-                            href="{% url 'property_detail' property.id %}"
-                            class="list-group-item list-group-item-action"
-                        >
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{ property.name }}</h5>
-                                <span
-                                    class="badge bg-{% if property.is_active %}success{% else %}secondary{% endif %}"
-                                >
-                                    {% if property.is_active %}Active{% else
-                                    %}Inactive{% endif %}
-                                </span>
+        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-8" data-loading-form="true">
+            {% csrf_token %}
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="panel p-5"><label for="id_name">Stay name</label>{{ form.name }}{{ form.name.errors }}<div class="mt-4"><label for="id_property_type">Stay type</label>{{ form.property_type }}{{ form.property_type.errors }}</div></div>
+                <div class="panel p-5"><label for="id_description">Story and highlights</label>{{ form.description }}{{ form.description.errors }}</div>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="panel p-5"><label for="id_address">Address</label>{{ form.address }}</div>
+                <div class="panel p-5"><label for="id_city">Town or city</label>{{ form.city }}</div>
+                <div class="panel p-5"><label for="id_state">Region</label>{{ form.state }}</div>
+                <div class="panel p-5"><label for="id_country">Country</label>{{ form.country }}</div>
+                <div class="panel p-5"><label for="id_price_per_night">Nightly rate</label>{{ form.price_per_night }}</div>
+                <div class="panel p-5"><label for="id_max_guests">Guest capacity</label>{{ form.max_guests }}</div>
+                <div class="panel p-5"><label for="id_bedrooms">Bedrooms</label>{{ form.bedrooms }}</div>
+                <div class="panel p-5"><label for="id_bathrooms">Bathrooms</label>{{ form.bathrooms }}</div>
+                <div class="panel p-5"><label for="id_check_in_time">Check-in time</label>{{ form.check_in_time }}<div class="mt-4"><label for="id_check_out_time">Check-out time</label>{{ form.check_out_time }}</div></div>
+            </div>
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4"><div><h2 class="font-display text-2xl font-semibold">Amenities</h2><p class="text-sm text-slate-500">Choose the comforts guests will experience.</p></div><div class="badge badge-primary">Modern filters ready</div></div>
+                <div class="check-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3">{{ form.amenities }}</div>
+            </div>
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4"><div><h2 class="font-display text-2xl font-semibold">Gallery uploads</h2><p class="text-sm text-slate-500">Add up to five visuals that set the tone of arrival.</p></div></div>
+                {{ image_formset.management_form }}
+                <div class="space-y-4">
+                    {% for image_form in image_formset %}
+                        <div class="grid gap-4 md:grid-cols-3 rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                            <div><label>Image</label>{{ image_form.image }}</div>
+                            <div><label>Caption</label>{{ image_form.caption }}</div>
+                            <div class="flex items-end gap-3">
+                                <label class="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 border border-slate-100">{{ image_form.is_primary }} Primary</label>
+                                {% if image_form.instance.pk %}<label class="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 border border-slate-100">{{ image_form.DELETE }} Remove</label>{% endif %}
                             </div>
-                            <p class="mb-1">
-                                {{ property.property_type|title }} · {{
-                                property.address }}
-                            </p>
-                            <small>Ksh{{ property.price_per_night }}/night</small>
-                        </a>
-                        {% empty %}
-                        <div class="list-group-item">
-                            <p>No properties listed yet</p>
-                            <a
-                                href="{% url 'property_create' %}"
-                                class="btn btn-primary"
-                                >Add Property</a
-                            >
                         </div>
-                        {% endfor %}
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-floppy-disk"></i>{% if property %}Save changes{% else %}Publish stay{% endif %}</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving</span></button>
+                <a href="{% url 'hosts:dashboard' %}" class="btn-bay-ghost">Cancel</a>
+            </div>
+        </form>
     </div>
-</div>
+</section>
 {% endblock %}

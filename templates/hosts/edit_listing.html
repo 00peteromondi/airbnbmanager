@@ -1,216 +1,173 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Edit Listing | Aurban Host{% endblock %}
-
-{% block content_header %}Edit {{ listing.name }}{% endblock %}
-
+{% block title %}{% if property %}Edit stay{% else %}Add stay{% endif %} | BayStays{% endblock %}
 {% block content %}
-<style>
-    /* Custom CSS to apply specific styles as requested */
-    .form-field-container .form-label {
-        /* The margin between the label and the input field */
-        margin-bottom: 5px;
-    }
-    .form-input, .form-textarea, .form-select {
-        /* Padding for a better user experience */
-        padding: 15px;
-        border-radius: 8px;
-        background-color: #f3f4f6; /* A light grey background for the input fields */
-    }
-    
-    /* Styles for other elements */
-    .form-input, .form-textarea, .form-select {
-        @apply w-full p-3 md:p-4 border border-gray-300 rounded-xl shadow-sm transition-all duration-300 focus:ring-red-500 focus:border-red-500 focus:ring-2 focus:outline-none;
-    }
-    .form-input:hover, .form-textarea:hover, .form-select:hover {
-        @apply border-red-400;
-    }
-    .form-textarea {
-        @apply min-h-[150px] resize-y;
-    }
-    .icon {
-        @apply mr-2 w-5 h-5 text-red-500;
-    }
-    
-    /* The primary button with the requested border and hover effects */
-    .button-primary {
-        @apply bg-red-500 text-white font-semibold py-3 px-8 rounded-xl border border-red-500 hover:bg-red-600 hover:border-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg;
-    }
-    /* The new cancel button with complementary styling */
-    .button-secondary {
-        @apply bg-gray-200 text-gray-800 font-semibold py-3 px-8 rounded-xl border border-gray-400 hover:bg-gray-300 transition-all duration-300 transform hover:scale-105 shadow-lg;
-    }
-
-    /* Animations from the original file */
-    @keyframes fadeInU {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-        animation: fadeInU 0.8s ease-out;
-    }
-    @keyframes bounceIn {
-        0% { transform: scale(0.5); opacity: 0; }
-        60% { transform: scale(1.2); opacity: 1; }
-        100% { transform: scale(1); }
-    }
-    .animate-bounce-in {
-        animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-    }
-</style>
-
-<div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-200 max-w-4xl mx-auto transform transition-all duration-300 hover:scale-[1.01]">
-
-    <!-- Page Header with Illustration -->
-    <div class="flex flex-col items-center text-center mb-10">
-        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4 animate-fade-in-up">
-            <div data-lucide="home-cog" class="w-12 h-12 text-red-500 transform animate-bounce-in"></div>
-        </div>
-        <h2 class="text-4xl font-extrabold text-gray-900 leading-tight">Edit Your Listing</h2>
-        <p class="mt-2 text-lg text-gray-500 max-w-md">Update the details for {{ listing.name }}. Your changes will be reflected immediately.</p>
-    </div>
-
-    <form method="post" class="space-y-8">
-        {% csrf_token %}
-        
-        <!-- Animated Form Fields Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Property Name & City -->
-            <div class="space-y-6">
-                <div class="form-field-container">
-                    <label for="{{ form.name.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="signature" class="icon"></div> Property Name
-                    </label>
-                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
-                        value="{{ form.name.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. Modern Loft" required>
-                    {% if form.name.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.name.errors }}</div>
-                    {% endif %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div class="panel p-6 lg:p-8 section-fade surface-tint">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <span class="badge badge-warm mb-3">Host studio</span>
+                    <h1 class="font-display text-4xl font-semibold">{% if property %}Refine your stay{% else %}Create a BayStays listing{% endif %}</h1>
+                    <p class="mt-3 text-slate-600 max-w-2xl">Build the listing with stronger hierarchy, image handling, and guest-facing detail so it feels production-ready before you publish.</p>
                 </div>
-                <div class="form-field-container">
-                    <label for="{{ form.city.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="map-pin" class="icon"></div> City
-                    </label>
-                    <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}"
-                        value="{{ form.city.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. Nairobi" required>
-                    {% if form.city.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.city.errors }}</div>
-                    {% endif %}
+                <div class="panel px-4 py-4 min-w-[16rem]">
+                    <p class="text-sm text-slate-500 uppercase tracking-[0.18em]">Publishing checklist</p>
+                    <div class="mt-3 space-y-2 text-sm text-slate-600">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Name, story, and stay type</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Location and timing detail</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Gallery, captions, and cover image</div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Price & Property Type -->
-            <div class="space-y-6">
-                <div class="form-field-container">
-                    <label for="{{ form.price_per_night.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="dollar-sign" class="icon"></div> Price per Night
-                    </label>
-                    <input type="number" name="{{ form.price_per_night.name }}" id="{{ form.price_per_night.id_for_label }}"
-                        value="{{ form.price_per_night.value|default_if_none:'' }}"
-                        class="form-input"
-                        placeholder="e.g. 15000" min="0" required>
-                    {% if form.price_per_night.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.price_per_night.errors }}</div>
-                    {% endif %}
+            <form method="post" enctype="multipart/form-data" class="mt-8 space-y-8" data-loading-form="true">
+                {% csrf_token %}
+                <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-pen-ruler"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Listing identity</h2><p class="text-sm text-slate-500">Shape the first impression guests will see.</p></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label for="id_name">Stay name</label>{{ form.name }}{{ form.name.errors }}</div>
+                            <div><label for="id_property_type">Stay type</label>{{ form.property_type }}{{ form.property_type.errors }}</div>
+                            <div><label for="id_description">Story and highlights</label>{{ form.description }}{{ form.description.errors }}</div>
+                        </div>
+                    </div>
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-location-crosshairs"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Location and timing</h2><p class="text-sm text-slate-500">Give guests arrival confidence and practical detail.</p></div>
+                        </div>
+                        {{ form.latitude }}{{ form.longitude }}
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="md:col-span-2 location-autocomplete" data-location-autocomplete>
+                                <label for="id_address">Address</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-map-location-dot"></i></span>
+                                    {{ form.address }}
+                                </div>
+                                <div class="location-suggestions hidden" data-location-suggestions></div>
+                            </div>
+                            <div><label for="id_city">Town or city</label>{{ form.city }}</div>
+                            <div><label for="id_state">Region</label>{{ form.state }}</div>
+                            <div><label for="id_country">Country</label>{{ form.country }}</div>
+                            <div><label for="id_beds">Beds</label>{{ form.beds }}</div>
+                            <div><label for="id_sqft">Square feet</label>{{ form.sqft }}</div>
+                            <div><label for="id_check_in_time">Check-in time</label>{{ form.check_in_time }}</div>
+                            <div><label for="id_check_out_time">Check-out time</label>{{ form.check_out_time }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-field-container">
-                    <label for="{{ form.property_type.id_for_label }}" class="form-label flex items-center">
-                        <div data-lucide="building" class="icon"></div> Property Type
-                    </label>
-                    <select name="{{ form.property_type.name }}" id="{{ form.property_type.id_for_label }}" class="form-select" required>
-                        {% for choice in form.property_type.field.choices %}
-                            <option value="{{ choice.0 }}" {% if form.property_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+
+                <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-amber-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Pricing and fit</h2><p class="text-sm text-slate-500">Clarify who the stay is for and how it is priced.</p></div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div><label for="id_price_per_night">Nightly rate</label>{{ form.price_per_night }}</div>
+                            <div><label for="id_max_guests">Guest capacity</label>{{ form.max_guests }}</div>
+                            <div><label for="id_bedrooms">Bedrooms</label>{{ form.bedrooms }}</div>
+                            <div><label for="id_bathrooms">Bathrooms</label>{{ form.bathrooms }}</div>
+                        </div>
+                    </div>
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-11 w-11 rounded-[0.95rem] bg-green-50 text-green-600 flex items-center justify-center"><i class="fa-solid fa-sparkles"></i></div>
+                                <div><h2 class="font-display text-2xl font-semibold">Amenities</h2><p class="text-sm text-slate-500">Choose the comforts guests will experience.</p></div>
+                            </div>
+                            <div class="badge badge-primary"><i class="fa-solid fa-sliders"></i>Filter-ready metadata</div>
+                        </div>
+                        <div class="check-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3">{{ form.amenities }}</div>
+                    </div>
+                </div>
+
+                <div class="panel p-5">
+                    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-images"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Gallery uploads</h2><p class="text-sm text-slate-500">Preview imagery before publish, manage primary images, and stage the gallery visually.</p></div>
+                        </div>
+                        <button type="button" class="btn-bay-ghost" data-add-image-slot><i class="fa-solid fa-plus"></i>Add image slot</button>
+                    </div>
+                    {{ image_formset.management_form }}
+                    <div class="grid gap-4 lg:grid-cols-2">
+                        {% for image_form in image_formset %}
+                            <div class="image-card p-4 {% if not image_form.instance.pk and not forloop.first %}hidden{% endif %}" data-image-slot data-slot-visible="{% if image_form.instance.pk or forloop.first %}true{% else %}false{% endif %}">
+                                <div class="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p class="font-semibold" data-image-title>{% if image_form.instance.pk %}Existing gallery image{% else %}New gallery image{% endif %}</p>
+                                        <p class="text-sm text-slate-500">Cover, alternate angles, or detail shots.</p>
+                                    </div>
+                                    <button type="button" class="btn-icon" data-remove-image-slot aria-label="Remove image slot"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                                <div class="image-preview {% if not image_form.instance.pk %}hidden{% endif %}" data-image-preview>
+                                    {% if image_form.instance.pk %}
+                                        <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.caption|default:property.name }}" data-image-preview-image>
+                                    {% else %}
+                                        <img src="" alt="" data-image-preview-image>
+                                    {% endif %}
+                                </div>
+                                <div class="image-dropzone p-5 text-center {% if image_form.instance.pk %}hidden{% endif %}" data-image-empty>
+                                    <i class="fa-solid fa-camera-retro text-2xl text-red-500"></i>
+                                    <p class="mt-3 font-semibold text-slate-700">Preview before publish</p>
+                                    <p class="text-sm text-slate-500 mt-1">Upload a photo and BayStays will show it here instantly.</p>
+                                </div>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label>Image file</label>
+                                        {{ image_form.image }}
+                                    </div>
+                                    <div>
+                                        <label>Caption</label>
+                                        {{ image_form.caption }}
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.is_primary }} Primary image</label>
+                                        {% if image_form.instance.pk %}
+                                            <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.DELETE }} Delete on save</label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         {% endfor %}
-                    </select>
-                    {% if form.property_type.errors %}
-                        <div class="text-red-500 text-sm mt-1">{{ form.property_type.errors }}</div>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="inline-note rounded-[0.95rem] px-4 py-4 text-sm text-slate-600">
+                        <strong class="text-slate-900">Visibility note:</strong> guests now get clearer galleries, stronger trust signals, and smoother booking context from the details you set here.
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{% url 'hosts:dashboard' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-left"></i>Cancel</a>
+                        <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-floppy-disk"></i>{% if property %}Save changes{% else %}Publish stay{% endif %}</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving</span></button>
+                    </div>
+                </div>
+            </form>
         </div>
 
-        <!-- Bedrooms, Bathrooms, Sqft & Status -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="form-field-container">
-                <label for="{{ form.beds.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="bed" class="icon"></div> Beds
-                </label>
-                <input type="number" name="{{ form.beds.name }}" id="{{ form.beds.id_for_label }}"
-                    value="{{ form.beds.value|default_if_none:'' }}"
-                    class="form-input" min="0" required>
-                {% if form.beds.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.beds.errors }}</div>
-                {% endif %}
+        <aside class="space-y-6 section-fade">
+            <div class="panel p-6">
+                <span class="badge badge-primary mb-3">Host standards</span>
+                <h2 class="font-display text-2xl font-semibold">What a strong listing needs</h2>
+                <div class="mt-5 space-y-4 text-sm text-slate-600">
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Readable pricing</strong> guests should understand the nightly value instantly.</div></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Useful imagery</strong> a cover image and 2-4 supporting angles make a huge difference.</div></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Arrival confidence</strong> location detail and timing reduce booking hesitation.</div></div>
+                </div>
             </div>
-            <div class="form-field-container">
-                <label for="{{ form.bathrooms.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="bath" class="icon"></div> Baths
-                </label>
-                <input type="number" name="{{ form.bathrooms.name }}" id="{{ form.bathrooms.id_for_label }}"
-                    value="{{ form.bathrooms.value|default_if_none:'' }}"
-                    class="form-input" min="0" required>
-                {% if form.bathrooms.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.bathrooms.errors }}</div>
-                {% endif %}
+            <div class="panel p-6">
+                <span class="badge badge-blue mb-3">Guest view</span>
+                <h2 class="font-display text-2xl font-semibold">What this improves downstream</h2>
+                <div class="mt-5 grid gap-3">
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-image text-red-500 mr-2"></i>Larger image browsing and lightbox viewing.</div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-location-dot text-blue-500 mr-2"></i>Sharper location and arrival context.</div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i>Cleaner booking submissions with better guest notes.</div>
+                </div>
             </div>
-            <div class="form-field-container">
-                <label for="{{ form.sqft.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="ruler" class="icon"></div> Sqft
-                </label>
-                <input type="number" name="{{ form.sqft.name }}" id="{{ form.sqft.id_for_label }}"
-                    value="{{ form.sqft.value|default_if_none:'' }}"
-                    class="form-input" min="0">
-                {% if form.sqft.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.sqft.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-field-container">
-                <label for="{{ form.status.id_for_label }}" class="form-label flex items-center">
-                    <div data-lucide="check-circle-2" class="icon"></div> Status
-                </label>
-                <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" class="form-select" required>
-                    {% for choice in form.status.field.choices %}
-                        <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                    {% endfor %}
-                </select>
-                {% if form.status.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.status.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Description (Full Width) -->
-        <div class="form-field-container">
-            <label for="{{ form.description.id_for_label }}" class="form-label flex items-center">
-                <div data-lucide="clipboard-list" class="icon"></div> Description
-            </label>
-            <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}"
-                class="form-textarea" placeholder="Describe your property..." required>{{ form.description.value|default_if_none:'' }}</textarea>
-            {% if form.description.errors %}
-                <div class="text-red-500 text-sm mt-1">{{ form.description.errors }}</div>
-            {% endif %}
-        </div>
-        
-        <!-- Submit Buttons -->
-        <div class="mt-8 flex justify-end space-x-4">
-            <a href="{% url 'hosts:dashboard' %}" class="button-secondary group">
-                <span class="flex items-center space-x-2">
-                    <div data-lucide="x" class="w-5 h-5 transition-transform duration-300 group-hover:rotate-90"></div>
-                    <span>Cancel</span>
-                </span>
-            </a>
-            <button type="submit" class="button-primary group">
-                <span class="flex items-center space-x-2">
-                    <div data-lucide="refresh-cw" class="w-5 h-5 transition-transform duration-300 group-hover:rotate-180"></div>
-                    <span>Update Listing</span>
-                </span>
-            </button>
-        </div>
-    </form>
-</div>
+        </aside>
+    </div>
+</section>
 {% endblock %}

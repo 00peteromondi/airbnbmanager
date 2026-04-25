@@ -1,0 +1,11 @@
+{% for property in properties %}
+    {% include 'partials/property_card.html' with property=property %}
+{% empty %}
+    <div class="empty-state rounded-[1rem] px-6 py-10 md:col-span-2 xl:col-span-3">
+        <div>
+            <i class="fa-solid fa-binoculars text-3xl text-red-500"></i>
+            <p class="mt-4 font-semibold text-slate-800">No stays match this combination yet</p>
+            <p class="text-sm text-slate-500 mt-2">Try widening your budget, shifting dates, or choosing a nearby shoreline town.</p>
+        </div>
+    </div>
+{% endfor %}

@@ -1,421 +1,173 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Add Listing | Aurban Host{% endblock %}
-
-{% block content_header %}Add New Listing{% endblock %}
-
+{% block title %}{% if property %}Edit stay{% else %}Add stay{% endif %} | BayStays{% endblock %}
 {% block content %}
-<style>
-    .form-container {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
-    
-    .form-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-    
-    .form-section {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .form-label {
-        display: block;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.5rem;
-    }
-    
-    .form-input, .form-textarea, .form-select {
-        width: 100%;
-        padding: 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: #f9fafb;
-    }
-    
-    .form-input:focus, .form-textarea:focus, .form-select:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        outline: none;
-        background: white;
-    }
-    
-    .form-textarea {
-        min-height: 120px;
-        resize: vertical;
-    }
-    
-    .amenity-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .amenity-option {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #f9fafb;
-    }
-    
-    .amenity-option:hover {
-        border-color: #3b82f6;
-        transform: translateY(-2px);
-    }
-    
-    .amenity-option.selected {
-        border-color: #3b82f6;
-        background: #eff6ff;
-    }
-    
-    .amenity-checkbox {
-        display: none;
-    }
-    
-    .icon {
-        width: 20px;
-        height: 20px;
-        margin-right: 0.75rem;
-        color: #6b7280;
-    }
-    
-    .amenity-option.selected .icon {
-        color: #3b82f6;
-    }
-    
-    .button-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .button-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    }
-    
-    .button-secondary {
-        background: #6b7280;
-        color: white;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .button-secondary:hover {
-        background: #4b5563;
-        transform: translateY(-2px);
-    }
-</style>
-
-<div class="form-container">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-home-plus text-3xl text-blue-600"></i>
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div class="panel p-6 lg:p-8 section-fade surface-tint">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <span class="badge badge-warm mb-3">Host studio</span>
+                    <h1 class="font-display text-4xl font-semibold">{% if property %}Refine your stay{% else %}Create a BayStays listing{% endif %}</h1>
+                    <p class="mt-3 text-slate-600 max-w-2xl">Build the listing with stronger hierarchy, image handling, and guest-facing detail so it feels production-ready before you publish.</p>
+                </div>
+                <div class="panel px-4 py-4 min-w-[16rem]">
+                    <p class="text-sm text-slate-500 uppercase tracking-[0.18em]">Publishing checklist</p>
+                    <div class="mt-3 space-y-2 text-sm text-slate-600">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Name, story, and stay type</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Location and timing detail</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Gallery, captions, and cover image</div>
+                    </div>
+                </div>
             </div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Create New Listing</h1>
-            <p class="text-lg text-gray-600">Share your space with travelers from around the world</p>
+            <form method="post" enctype="multipart/form-data" class="mt-8 space-y-8" data-loading-form="true">
+                {% csrf_token %}
+                <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-pen-ruler"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Listing identity</h2><p class="text-sm text-slate-500">Shape the first impression guests will see.</p></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label for="id_name">Stay name</label>{{ form.name }}{{ form.name.errors }}</div>
+                            <div><label for="id_property_type">Stay type</label>{{ form.property_type }}{{ form.property_type.errors }}</div>
+                            <div><label for="id_description">Story and highlights</label>{{ form.description }}{{ form.description.errors }}</div>
+                        </div>
+                    </div>
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-location-crosshairs"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Location and timing</h2><p class="text-sm text-slate-500">Give guests arrival confidence and practical detail.</p></div>
+                        </div>
+                        {{ form.latitude }}{{ form.longitude }}
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="md:col-span-2 location-autocomplete" data-location-autocomplete>
+                                <label for="id_address">Address</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-map-location-dot"></i></span>
+                                    {{ form.address }}
+                                </div>
+                                <div class="location-suggestions hidden" data-location-suggestions></div>
+                            </div>
+                            <div><label for="id_city">Town or city</label>{{ form.city }}</div>
+                            <div><label for="id_state">Region</label>{{ form.state }}</div>
+                            <div><label for="id_country">Country</label>{{ form.country }}</div>
+                            <div><label for="id_beds">Beds</label>{{ form.beds }}</div>
+                            <div><label for="id_sqft">Square feet</label>{{ form.sqft }}</div>
+                            <div><label for="id_check_in_time">Check-in time</label>{{ form.check_in_time }}</div>
+                            <div><label for="id_check_out_time">Check-out time</label>{{ form.check_out_time }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                    <div class="panel p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-amber-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Pricing and fit</h2><p class="text-sm text-slate-500">Clarify who the stay is for and how it is priced.</p></div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div><label for="id_price_per_night">Nightly rate</label>{{ form.price_per_night }}</div>
+                            <div><label for="id_max_guests">Guest capacity</label>{{ form.max_guests }}</div>
+                            <div><label for="id_bedrooms">Bedrooms</label>{{ form.bedrooms }}</div>
+                            <div><label for="id_bathrooms">Bathrooms</label>{{ form.bathrooms }}</div>
+                        </div>
+                    </div>
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-11 w-11 rounded-[0.95rem] bg-green-50 text-green-600 flex items-center justify-center"><i class="fa-solid fa-sparkles"></i></div>
+                                <div><h2 class="font-display text-2xl font-semibold">Amenities</h2><p class="text-sm text-slate-500">Choose the comforts guests will experience.</p></div>
+                            </div>
+                            <div class="badge badge-primary"><i class="fa-solid fa-sliders"></i>Filter-ready metadata</div>
+                        </div>
+                        <div class="check-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3">{{ form.amenities }}</div>
+                    </div>
+                </div>
+
+                <div class="panel p-5">
+                    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-images"></i></div>
+                            <div><h2 class="font-display text-2xl font-semibold">Gallery uploads</h2><p class="text-sm text-slate-500">Preview imagery before publish, manage primary images, and stage the gallery visually.</p></div>
+                        </div>
+                        <button type="button" class="btn-bay-ghost" data-add-image-slot><i class="fa-solid fa-plus"></i>Add image slot</button>
+                    </div>
+                    {{ image_formset.management_form }}
+                    <div class="grid gap-4 lg:grid-cols-2">
+                        {% for image_form in image_formset %}
+                            <div class="image-card p-4 {% if not image_form.instance.pk and not forloop.first %}hidden{% endif %}" data-image-slot data-slot-visible="{% if image_form.instance.pk or forloop.first %}true{% else %}false{% endif %}">
+                                <div class="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p class="font-semibold" data-image-title>{% if image_form.instance.pk %}Existing gallery image{% else %}New gallery image{% endif %}</p>
+                                        <p class="text-sm text-slate-500">Cover, alternate angles, or detail shots.</p>
+                                    </div>
+                                    <button type="button" class="btn-icon" data-remove-image-slot aria-label="Remove image slot"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                                <div class="image-preview {% if not image_form.instance.pk %}hidden{% endif %}" data-image-preview>
+                                    {% if image_form.instance.pk %}
+                                        <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.caption|default:property.name }}" data-image-preview-image>
+                                    {% else %}
+                                        <img src="" alt="" data-image-preview-image>
+                                    {% endif %}
+                                </div>
+                                <div class="image-dropzone p-5 text-center {% if image_form.instance.pk %}hidden{% endif %}" data-image-empty>
+                                    <i class="fa-solid fa-camera-retro text-2xl text-red-500"></i>
+                                    <p class="mt-3 font-semibold text-slate-700">Preview before publish</p>
+                                    <p class="text-sm text-slate-500 mt-1">Upload a photo and BayStays will show it here instantly.</p>
+                                </div>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label>Image file</label>
+                                        {{ image_form.image }}
+                                    </div>
+                                    <div>
+                                        <label>Caption</label>
+                                        {{ image_form.caption }}
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.is_primary }} Primary image</label>
+                                        {% if image_form.instance.pk %}
+                                            <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.DELETE }} Delete on save</label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="inline-note rounded-[0.95rem] px-4 py-4 text-sm text-slate-600">
+                        <strong class="text-slate-900">Visibility note:</strong> guests now get clearer galleries, stronger trust signals, and smoother booking context from the details you set here.
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{% url 'hosts:dashboard' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-left"></i>Cancel</a>
+                        <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-floppy-disk"></i>{% if property %}Save changes{% else %}Publish stay{% endif %}</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving</span></button>
+                    </div>
+                </div>
+            </form>
         </div>
 
-    <form method="post" enctype="multipart/form-data" class="form-card p-8">
-            {% csrf_token %}
-            
-            <!-- Basic Information -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-                    Basic Information
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Property Name</label>
-                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
-                               value="{{ form.name.value|default_if_none:'' }}"
-                               class="form-input" placeholder="e.g., Modern Downtown Apartment" required>
-                        {% if form.name.errors %}
-                            <div class="text-red-600 text-sm mt-1">{{ form.name.errors }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.property_type.id_for_label }}" class="form-label">Property Type</label>
-                        <select name="{{ form.property_type.name }}" id="{{ form.property_type.id_for_label }}" class="form-select" required>
-                            {% for choice in form.property_type.field.choices %}
-                                <option value="{{ choice.0 }}" {% if form.property_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                            {% endfor %}
-                        </select>
-                        {% if form.property_type.errors %}
-                            <div class="text-red-600 text-sm mt-1">{{ form.property_type.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="mt-6">
-                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}"
-                              class="form-textarea" placeholder="Describe your property, its unique features, and what makes it special..." required>{{ form.description.value|default_if_none:'' }}</textarea>
-                    {% if form.description.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.description.errors }}</div>
-                    {% endif %}
+        <aside class="space-y-6 section-fade">
+            <div class="panel p-6">
+                <span class="badge badge-primary mb-3">Host standards</span>
+                <h2 class="font-display text-2xl font-semibold">What a strong listing needs</h2>
+                <div class="mt-5 space-y-4 text-sm text-slate-600">
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Readable pricing</strong> guests should understand the nightly value instantly.</div></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Useful imagery</strong> a cover image and 2-4 supporting angles make a huge difference.</div></div>
+                    <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Arrival confidence</strong> location detail and timing reduce booking hesitation.</div></div>
                 </div>
             </div>
-
-            <!-- Location -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-map-marker-alt text-green-600 mr-3"></i>
-                    Location
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
-                        <input type="text" name="{{ form.address.name }}" id="{{ form.address.id_for_label }}"
-                               value="{{ form.address.value|default_if_none:'' }}"
-                               class="form-input" placeholder="Full street address" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.city.id_for_label }}" class="form-label">City</label>
-                        <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}"
-                               value="{{ form.city.value|default_if_none:'' }}"
-                               class="form-input" placeholder="e.g., Nairobi" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.state.id_for_label }}" class="form-label">State/Region</label>
-                        <input type="text" name="{{ form.state.name }}" id="{{ form.state.id_for_label }}"
-                               value="{{ form.state.value|default_if_none:'' }}"
-                               class="form-input" placeholder="e.g., Nairobi County" required>
-                    </div>
+            <div class="panel p-6">
+                <span class="badge badge-blue mb-3">Guest view</span>
+                <h2 class="font-display text-2xl font-semibold">What this improves downstream</h2>
+                <div class="mt-5 grid gap-3">
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-image text-red-500 mr-2"></i>Larger image browsing and lightbox viewing.</div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-location-dot text-blue-500 mr-2"></i>Sharper location and arrival context.</div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i>Cleaner booking submissions with better guest notes.</div>
                 </div>
             </div>
-
-            <!-- Pricing & Capacity -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-tag text-yellow-600 mr-3"></i>
-                    Pricing & Capacity
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div>
-                        <label for="{{ form.price_per_night.id_for_label }}" class="form-label">Price per Night (Ksh)</label>
-                        <input type="number" name="{{ form.price_per_night.name }}" id="{{ form.price_per_night.id_for_label }}"
-                               value="{{ form.price_per_night.value|default_if_none:'' }}"
-                               class="form-input" min="0" step="0.01" placeholder="5000" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.max_guests.id_for_label }}" class="form-label">Max Guests</label>
-                        <input type="number" name="{{ form.max_guests.name }}" id="{{ form.max_guests.id_for_label }}"
-                               value="{{ form.max_guests.value|default_if_none:'' }}"
-                               class="form-input" min="1" placeholder="4" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.bedrooms.id_for_label }}" class="form-label">Bedrooms</label>
-                        <input type="number" name="{{ form.bedrooms.name }}" id="{{ form.bedrooms.id_for_label }}"
-                               value="{{ form.bedrooms.value|default_if_none:'' }}"
-                               class="form-input" min="0" placeholder="2" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.bathrooms.id_for_label }}" class="form-label">Bathrooms</label>
-                        <input type="number" name="{{ form.bathrooms.name }}" id="{{ form.bathrooms.id_for_label }}"
-                               value="{{ form.bathrooms.value|default_if_none:'' }}"
-                               class="form-input" min="0" step="0.5" placeholder="1.5" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Amenities -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-concierge-bell text-purple-600 mr-3"></i>
-                    Amenities
-                </h2>
-                
-                <p class="text-gray-600 mb-4">Select all amenities that your property offers:</p>
-                
-                <div class="amenity-grid">
-                    {% for value, label in form.amenities.field.choices %}
-                    <label class="amenity-option">
-                        <input type="checkbox" name="amenities" value="{{ value }}" 
-                               class="amenity-checkbox" {% if value in form.amenities.value %}checked{% endif %}>
-                        <i class="fas fa-check-circle icon"></i>
-                        <span>{{ label }}</span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Check-in/Check-out -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-clock text-red-600 mr-3"></i>
-                    Check-in & Check-out
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="{{ form.check_in_time.id_for_label }}" class="form-label">Check-in Time</label>
-                        <input type="time" name="{{ form.check_in_time.name }}" id="{{ form.check_in_time.id_for_label }}"
-                               value="{{ form.check_in_time.value|default_if_none:'15:00' }}"
-                               class="form-input" required>
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.check_out_time.id_for_label }}" class="form-label">Check-out Time</label>
-                        <input type="time" name="{{ form.check_out_time.name }}" id="{{ form.check_out_time.id_for_label }}"
-                               value="{{ form.check_out_time.value|default_if_none:'11:00' }}"
-                               class="form-input" required>
-                    </div>
-                </div>
-            </div>
-            <!-- Image Upload Section -->
-            <div class="form-section">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-images text-indigo-600 mr-3"></i>
-                    Property Images
-                </h2>
-                
-                <p class="text-gray-600 mb-4">Upload images of your property. The first image will be used as the primary image.</p>
-                
-                <div id="image-forms">
-                    {{ image_formset.management_form }}
-                    {% for form in image_formset %}
-                    <div class="image-form border border-gray-300 rounded-lg p-4 mb-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Image</label>
-                                {{ form.image }}
-                                {% if form.image.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ form.image.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label class="form-label">Caption (Optional)</label>
-                                {{ form.caption }}
-                            </div>
-                        </div>
-                        <div class="flex items-center mt-3">
-                            {{ form.is_primary }}
-                            <label class="form-label ml-2 mb-0">Set as primary image</label>
-                        </div>
-                        {% if form.instance.pk %}
-                            {{ form.DELETE }}
-                            <label class="form-label ml-2 text-red-600">Delete this image</label>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <button type="button" id="add-image-form" class="button-secondary">
-                    <i class="fas fa-plus mr-2"></i>
-                    Add Another Image
-                </button>
-            </div>
-            <!-- Form Actions -->
-            <div class="flex justify-end space-x-4 mt-8">
-                <a href="{% url 'hosts:dashboard' %}" class="button-secondary">
-                    <i class="fas fa-times mr-2"></i>
-                    Cancel
-                </a>
-                <button type="submit" class="button-primary">
-                    <i class="fas fa-plus-circle mr-2"></i>
-                    Create Listing
-                </button>
-            </div>
-        </form>
+        </aside>
     </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Amenity selection functionality
-        const amenityOptions = document.querySelectorAll('.amenity-option');
-        
-        amenityOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                const checkbox = this.querySelector('.amenity-checkbox');
-                checkbox.checked = !checkbox.checked;
-                this.classList.toggle('selected', checkbox.checked);
-            });
-        });
-        
-        // Initialize amenity selected state
-        amenityOptions.forEach(option => {
-            const checkbox = option.querySelector('.amenity-checkbox');
-            if (checkbox.checked) {
-                option.classList.add('selected');
-            }
-        });
-    });
-</script>
-{% endblock %}
-{% block extra_js %}
-<script>
-    // Dynamic image formset handling
-    document.addEventListener('DOMContentLoaded', function() {
-        const addImageBtn = document.getElementById('add-image-form');
-        const imageFormsDiv = document.getElementById('image-forms');
-        const totalForms = document.querySelector('#id_images-TOTAL_FORMS');
-
-        addImageBtn.addEventListener('click', function() {
-            const currentFormCount = parseInt(totalForms.value);
-            const formRegex = new RegExp(`images-(\\d+)-`, 'g');
-            const emptyForm = document.querySelector('.image-form:last-of-type').cloneNode(true);
-
-            // Clear input values in the cloned form
-            emptyForm.querySelectorAll('input, textarea').forEach(input => {
-                if (input.type === 'checkbox' || input.type === 'radio') {
-                    input.checked = false;
-                } else {
-                    input.value = '';
-                }
-            });
-
-            // Remove delete checkbox if present
-            const deleteInput = emptyForm.querySelector('input[type="checkbox"][name$="DELETE"]');
-            if (deleteInput) {
-                deleteInput.checked = false;
-                deleteInput.parentElement.style.display = 'none';
-            }
-
-            // Update form index
-            emptyForm.innerHTML = emptyForm.innerHTML.replace(formRegex, `images-${currentFormCount}-`);
-            imageFormsDiv.appendChild(emptyForm);
-            totalForms.value = currentFormCount + 1;
-        });
-    });
-</script>
+</section>
 {% endblock %}

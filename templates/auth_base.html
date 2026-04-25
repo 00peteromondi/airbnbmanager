@@ -1,45 +1,73 @@
 {% extends 'base.html' %}
 
-{% block extra_css %}
-{{ block.super }}
-<style>
-    /* Prevent caching and ensure fresh page loads */
-    body {
-        animation: fadeIn 0.5s;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-</style>
-{% endblock %}
+{% block body_class %}auth-screen{% endblock %}
+{% block site_chrome %}{% endblock %}
+{% block mobile_drawer %}{% endblock %}
+{% block site_footer %}{% endblock %}
 
-{% block extra_scripts %}
-{{ block.super }}
-<script>
-    // Prevent browser caching of auth pages
-    if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
-        // User pressed back/forward - reload the page
-        window.location.reload();
-    }
-    
-    // Clear any cached credentials
-    if (window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
-    }
-    
-    // If user is already logged in and somehow reached this page, redirect
-    document.addEventListener('DOMContentLoaded', function() {
-        // This is a backup check in case middleware didn't catch it
-        const authElements = document.querySelectorAll('input[type="password"], input[name="username"], input[name="email"]');
-        if (authElements.length > 0) {
-            // This looks like an auth page - do an additional check
-            setTimeout(() => {
-                // Check if we should redirect (this would typically be handled by Django)
-                console.log('Auth page loaded - middleware should handle redirects');
-            }, 100);
-        }
-    });
-</script>
+{% block content %}
+<section class="auth-shell">
+    <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        <div class="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] items-stretch auth-grid">
+            <div class="auth-side rounded-[0.95rem] p-8 lg:p-12 section-fade">
+                <div class="relative z-10 flex h-full flex-col justify-between gap-8">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <div class="h-12 w-12 rounded-[0.8rem] bg-white/14 text-white flex items-center justify-center">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div>
+                                <p class="font-display text-xl font-semibold">BayStays</p>
+                                <p class="text-sm text-white/70 uppercase tracking-[0.24em]">
+                                    {% if '/hosts/' in request.path %}Host access{% else %}Guest access{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% if '/hosts/' in request.path %}
+                            <span class="badge badge-warm mt-8 mb-5">For BayStays hosts</span>
+                            <h1 class="font-display text-4xl sm:text-5xl font-semibold leading-tight">Get back to managing listings, dates, and guest demand without distractions.</h1>
+                            <p class="mt-5 text-lg text-white/78 max-w-2xl">This host entry flow keeps the focus on access, so you can get straight into listing quality, reservation review, and revenue-moving tasks.</p>
+                        {% else %}
+                            <span class="badge badge-warm mt-8 mb-5">For BayStays guests</span>
+                            <h1 class="font-display text-4xl sm:text-5xl font-semibold leading-tight">Pick up your stays, saved plans, and booking activity without losing momentum.</h1>
+                            <p class="mt-5 text-lg text-white/78 max-w-2xl">Guest access is tuned for travel flow: clear sign-in, fast account creation, and an immediate path back to browsing or managing booked homes.</p>
+                        {% endif %}
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        {% if '/hosts/' in request.path %}
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Live</p>
+                                <p class="text-sm text-white/72 mt-1">Reservation view</p>
+                            </div>
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Fast</p>
+                                <p class="text-sm text-white/72 mt-1">Listing access</p>
+                            </div>
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Clear</p>
+                                <p class="text-sm text-white/72 mt-1">Guest signals</p>
+                            </div>
+                        {% else %}
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Quick</p>
+                                <p class="text-sm text-white/72 mt-1">Trip access</p>
+                            </div>
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Clear</p>
+                                <p class="text-sm text-white/72 mt-1">Stay detail</p>
+                            </div>
+                            <div class="glass-card rounded-[0.7rem] p-4">
+                                <p class="text-2xl font-display font-semibold">Safe</p>
+                                <p class="text-sm text-white/72 mt-1">Booking flow</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel auth-shell__panel p-6 lg:p-8 section-fade">
+                {% block auth_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

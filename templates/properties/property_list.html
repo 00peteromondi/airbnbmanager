@@ -1,103 +1,26 @@
 {% extends 'base.html' %}
-
+{% block title %}Search BayStays{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <h1 class="mb-4">Find Your Perfect Stay</h1>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Location</label>
-                    <input type="text" name="q" class="form-control" placeholder="Where to?" value="{{ search_query }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Check-in</label>
-                    <input type="date" name="check_in" class="form-control" value="{{ check_in }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Check-out</label>
-                    <input type="date" name="check_out" class="form-control" value="{{ check_out }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Guests</label>
-                    <select name="guests" class="form-select">
-                        <option value="">Any</option>
-                        {% for i in guest_options %}
-                        <option value="{{ i }}" {% if guests == i|stringformat:"s" %}selected{% endif %}>{{ i }} guest{{ i|pluralize }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Property Type</label>
-                    <select name="property_type" class="form-select">
-                        <option value="">All Types</option>
-                        {% for type, display in property_types %}
-                        <option value="{{ type }}" {% if selected_type == type %}selected{% endif %}>{{ display }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Price Range</label>
-                    <div class="input-group">
-                        <input type="number" name="min_price" class="form-control" placeholder="Min" value="{{ min_price }}">
-                        <span class="input-group-text">to</span>
-                        <input type="number" name="max_price" class="form-control" placeholder="Max" value="{{ max_price }}">
-                    </div>
-                </div>
-
-                <div class="col-md-2 align-self-end">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
-                </div>
-            </form>
-        </div>
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="panel p-6 lg:p-8 section-fade">
+        <span class="badge badge-primary mb-3">Property search</span>
+        <h1 class="font-display text-4xl font-semibold">Refine by place, dates, and stay style.</h1>
+        <form method="get" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6" data-loading-form="true">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name, vibe, or area" class="input-shell xl:col-span-2">
+            <select name="property_type" class="input-shell">
+                <option value="">Any type</option>
+                {% for key, label in property_types.items %}<option value="{{ key }}" {% if selected_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+            <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min price" class="input-shell">
+            <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max price" class="input-shell">
+            <input type="number" name="guests" value="{{ guests }}" placeholder="Guests" class="input-shell">
+            <input type="date" name="check_in" value="{{ check_in }}" class="input-shell">
+            <input type="date" name="check_out" value="{{ check_out }}" class="input-shell">
+            <button type="submit" class="btn-bay xl:col-span-2"><span data-submit-text><i class="fa-solid fa-sliders"></i>Apply filters</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Filtering</span></button>
+        </form>
     </div>
-
-    <div class="row">
-        {% if properties %}
-            {% for property in properties %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100">
-                    {% if property.images.first %}
-                    <img src="{{ property.images.first.image.url }}" class="card-img-top property-image" alt="{{ property.name }}">
-                    {% else %}
-                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                        <span class="text-muted">No image available</span>
-                    </div>
-                    {% endif %}
-
-                    <div class="card-body">
-                        <h5 class="card-title">{{ property.name }}</h5>
-                        <p class="card-text text-muted">{{ property.property_type|title }} · {{ property.address }}</p>
-
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="fs-5">Ksh{{ property.price_per_night }} <small class="text-muted">/ night</small></span>
-                            <a href="{% url 'property_detail' property.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
-                        </div>
-                    </div>
-
-                    <div class="card-footer bg-white">
-                        <div class="d-flex justify-content-between text-muted">
-                            <span><i class="bi bi-people"></i> {{ property.max_guests }} guests</span>
-                            <span><i class="bi bi-door-closed"></i> {{ property.bedrooms }} bedrooms</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <h3 class="text-muted">No properties found</h3>
-                    <p>Try adjusting your search filters</p>
-                </div>
-            </div>
-        {% endif %}
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 section-fade">
+        {% for property in properties %}{% include 'partials/property_card.html' with property=property %}{% empty %}<div class="panel p-10 text-center text-slate-500 md:col-span-2 xl:col-span-3">No matching stays found yet.</div>{% endfor %}
     </div>
-</div>
+</section>
 {% endblock %}

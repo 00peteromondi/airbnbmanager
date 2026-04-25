@@ -1,430 +1,389 @@
 {% extends 'base.html' %}
-{% load static %}
 {% load humanize %}
-
-{% block title %}{{ property.name }} - Aurban Rentals{% endblock %}
-
+{% load cloudinary %}
+{% load property_extras %}
+{% block title %}{{ property.name }} | BayStays{% endblock %}
 {% block extra_css %}
-<style>
-    .property-detail-container {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
-    
-    .property-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-    
-    .carousel-container {
-        position: relative;
-        height: 400px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .carousel-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .carousel-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .feature-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-    
-    .amenity-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        background: #f8fafc;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-    }
-    
-    .amenity-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border-color: #667eea;
-    }
-    
-    .booking-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 2rem;
-    }
-    
-    .price-breakdown {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .price-row.total {
-        border-bottom: none;
-        border-top: 2px solid #e2e8f0;
-        font-weight: 600;
-        font-size: 1.125rem;
-        margin-top: 0.5rem;
-        padding-top: 1rem;
-    }
-    
-    .host-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1a202c;
-        margin-bottom: 1rem;
-        position: relative;
-    }
-    
-    .section-title::after {
-        content: '';
-        position: absolute;
-        bottom: -0.5rem;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 {% endblock %}
-
 {% block content %}
-<div class="property-detail-container">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="flex items-center space-x-2">
-                <li>
-                    <a href="{% url 'core:properties_list' %}" class="text-gray-500 hover:text-gray-700">Properties</a>
-                </li>
-                <li>
-                    <span class="text-gray-400">/</span>
-                </li>
-                <li>
-                    <span class="text-gray-700 font-medium">{{ property.name }}</span>
-                </li>
-            </ol>
-        </nav>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column - Property Details -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Image Carousel -->
-                <div class="property-card">
-                    <div class="carousel-container">
-                        {% if property.images.all %}
-                            <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    {% for image in property.images.all %}
-                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                        <img src="{{ image.image.url }}" class="carousel-image" alt="{{ image.caption|default:property.name }}">
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon bg-black/30 rounded-full p-4"></span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon bg-black/30 rounded-full p-4"></span>
-                                </button>
-                            </div>
-                        {% else %}
-                            <div class="carousel-placeholder">
-                                <div class="text-center text-white">
-                                    <i class="fas fa-home text-6xl mb-4"></i>
-                                    <p class="text-xl font-semibold">No images available</p>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="p-6">
-                        <!-- Property Header -->
-                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6">
-                            <div class="flex-1">
-                                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ property.name }}</h1>
-                                <div class="flex items-center text-gray-600 mb-4">
-                                    <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
-                                    <span>{{ property.address }}, {{ property.city }}</span>
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="feature-badge">{{ property.property_type|title }}</span>
-                                    <span class="feature-badge">{{ property.bedrooms }} bedroom{{ property.bedrooms|pluralize }}</span>
-                                    <span class="feature-badge">{{ property.bathrooms }} bathroom{{ property.bathrooms|pluralize }}</span>
-                                    <span class="feature-badge">Up to {{ property.max_guests }} guests</span>
-                                </div>
-                            </div>
-                            <div class="mt-4 sm:mt-0">
-                                <div class="text-3xl font-bold text-gray-900">
-                                    Ksh{{ property.price_per_night|intcomma }}
-                                    <span class="text-lg font-normal text-gray-600">/ night</span>
-                                </div>
-                                <div class="flex items-center text-yellow-500 mt-1">
-                                    <i class="fas fa-star"></i>
-                                    <span class="ml-1 text-gray-700">{{ property.average_rating|default:"4.5" }}</span>
-                                    <span class="text-gray-500 text-sm ml-1">({{ property.review_set.count }} reviews)</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Property Description -->
-                        <div class="mb-8">
-                            <h2 class="section-title">Description</h2>
-                            <p class="text-gray-700 leading-relaxed text-lg">{{ property.description }}</p>
-                        </div>
-
-                        <!-- Amenities -->
-                        <div class="mb-8">
-                            <h2 class="section-title">Amenities</h2>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {% for amenity in property.amenities %}
-                                <div class="amenity-item">
-                                    <i class="fas fa-check text-green-500 mr-3"></i>
-                                    <span class="text-gray-700 capitalize">{{ amenity }}</span>
-                                </div>
-                                {% empty %}
-                                <div class="col-span-full text-center py-8">
-                                    <i class="fas fa-concierge-bell text-gray-400 text-4xl mb-4"></i>
-                                    <p class="text-gray-500">No amenities listed</p>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Host Information -->
-                        <div class="border-t border-gray-200 pt-8">
-                            <h2 class="section-title">Hosted by {{ property.owner.get_display_name }}</h2>
-                            <div class="flex items-center space-x-4">
-                                {% if property.owner.profile_picture %}
-                                    <img src="{{ property.owner.profile_picture.url }}" alt="{{ property.owner.get_display_name }}" class="host-avatar">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div class="space-y-6 section-fade">
+            <div class="panel overflow-hidden">
+                {% if property.images.all %}
+                    <div class="grid gap-2 md:grid-cols-[1.3fr_0.7fr]">
+                        {% for image in property.images.all|slice:':5' %}
+                            <button
+                                type="button"
+                                class="gallery-thumb relative {% if forloop.first %}md:row-span-2{% endif %}"
+                                data-open-lightbox="property-lightbox"
+                                data-image-src="{{ image.image.url }}"
+                                data-image-alt="{{ image.caption|default:property.name }}"
+                                data-image-caption="{{ image.caption|default:property.name }}"
+                            >
+                                {% if forloop.first %}
+                                    {% cloudinary image.image class="h-[28rem] w-full object-cover" %}
                                 {% else %}
-                                    <div class="host-avatar bg-gray-300 flex items-center justify-center">
-                                        <i class="fas fa-user text-gray-600 text-2xl"></i>
-                                    </div>
+                                    {% cloudinary image.image class="h-[13.75rem] w-full object-cover" %}
                                 {% endif %}
-                                <div>
-                                    <h3 class="text-xl font-semibold text-gray-900">{{ property.owner.get_display_name }}</h3>
-                                    <p class="text-gray-600">Joined {{ property.owner.date_joined|date:"F Y" }}</p>
-                                    <div class="flex items-center mt-2">
-                                        <span class="text-yellow-500 mr-1">
-                                            <i class="fas fa-star"></i>
-                                        </span>
-                                        <span class="text-gray-700">
-                                            {{ property.owner.host_rating|default:"4.8" }} 
-                                            ({{ property.owner.host_review_count|default:"24" }} reviews)
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reviews Section -->
-                {% if property.review_set.exists %}
-                <div class="property-card p-6">
-                    <h2 class="section-title">Guest Reviews</h2>
-                    <div class="space-y-6">
-                        {% for review in property.review_set.all %}
-                        <div class="border-b border-gray-200 pb-6 last:border-b-0">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-user text-gray-600"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">{{ review.user.get_display_name }}</h4>
-                                    <div class="flex items-center">
-                                        <div class="flex text-yellow-500">
-                                            {% for i in "12345" %}
-                                                {% if forloop.counter <= review.rating %}
-                                                    <i class="fas fa-star"></i>
-                                                {% else %}
-                                                    <i class="far fa-star"></i>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                        <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:"F Y" }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-gray-700">{{ review.comment }}</p>
-                        </div>
+                                <span class="absolute left-4 bottom-4 badge badge-dark bg-white/85 text-slate-900"><i class="fa-solid fa-expand"></i>Open</span>
+                            </button>
                         {% endfor %}
                     </div>
-                </div>
+                {% else %}
+                    <div class="h-[28rem] bg-gradient-to-br from-blue-100 via-white to-red-50 flex items-center justify-center text-slate-500 text-5xl"><i class="fa-solid fa-house"></i></div>
                 {% endif %}
             </div>
 
-            <!-- Right Column - Booking Card -->
-            <div class="lg:col-span-1">
-                <div class="booking-card p-6">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Book Your Stay</h3>
-                    
-                    <form method="post" action="{% url 'bookings:create_booking' property.id %}" id="booking-form">
-                        {% csrf_token %}
-                        
-                        <!-- Date Selection -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Select Dates</label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <input type="date" name="check_in_date" 
-                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                           required>
-                                    <p class="text-xs text-gray-500 mt-1">Check-in</p>
-                                </div>
-                                <div>
-                                    <input type="date" name="check_out_date" 
-                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                           required>
-                                    <p class="text-xs text-gray-500 mt-1">Check-out</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Guest Selection -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Number of Guests</label>
-                            <select name="num_guests" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                {% for i in guest_range %}
-                                <option value="{{ i }}">{{ i }} guest{{ i|pluralize }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Special Requests -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Special Requests</label>
-                            <textarea name="special_requests" 
-                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="3"
-                                      placeholder="Any special requirements or requests..."></textarea>
-                        </div>
-
-                        <!-- Price Breakdown -->
-                        <div class="price-breakdown mb-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Price Breakdown</h4>
-                            <div class="price-row">
-                                <span>Ksh{{ property.price_per_night|intcomma }} × <span id="nights-count">0</span> nights</span>
-                                <span>Ksh <span id="subtotal">0</span></span>
-                            </div>
-                            <div class="price-row">
-                                <span>Service fee</span>
-                                <span>Ksh <span id="service-fee">0</span></span>
-                            </div>
-                            <div class="price-row total">
-                                <span>Total</span>
-                                <span>Ksh <span id="total-price">0</span></span>
-                            </div>
-                        </div>
-
-                        <!-- Book Button -->
-                        <button type="submit" 
-                                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                            <i class="fas fa-calendar-check mr-2"></i>
-                            Request to Book
-                        </button>
-
-                        <!-- Security Note -->
-                        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div class="flex items-center text-blue-700">
-                                <i class="fas fa-shield-alt mr-2"></i>
-                                <span class="text-sm">Your booking is protected by our secure payment system</span>
-                            </div>
-                        </div>
-                    </form>
+            <div class="panel p-6 lg:p-8">
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <span class="badge badge-primary mb-3">BayStays signature stay</span>
+                        <h1 class="font-display text-4xl font-semibold">{{ property.name }}</h1>
+                        <p class="mt-3 text-slate-600"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i>{{ property.address }}, {{ property.city }}, {{ property.country }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-display text-4xl font-semibold">KES {{ property.price_per_night|intcomma }}</p>
+                        <p class="text-sm text-slate-500">per night</p>
+                    </div>
                 </div>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    <span class="badge badge-dark"><i class="fa-solid fa-user-group"></i>{{ property.max_guests }} guests</span>
+                    <span class="badge badge-dark"><i class="fa-solid fa-bed"></i>{{ property.bedrooms }} bedrooms</span>
+                    <span class="badge badge-dark"><i class="fa-solid fa-bath"></i>{{ property.bathrooms }} bathrooms</span>
+                    <span class="badge badge-warm"><i class="fa-solid fa-star"></i><span data-average-rating-display>{{ property.average_rating|floatformat:1 }}</span></span>
+                    <span class="badge badge-blue"><i class="fa-solid fa-house-chimney"></i>{{ property.property_type|title }}</span>
+                </div>
+                <div class="mt-6 flex items-center gap-4 flex-wrap">
+                    <span class="rating-meter" style="--rating: {{ property.average_rating|floatformat:1 }}; --star-size: 1.55rem; --star-spacing: 0.32rem;"></span>
+                    <div>
+                        <p class="font-display text-2xl font-semibold"><span data-average-rating-display>{{ property.average_rating|floatformat:1 }}</span> out of 5</p>
+                        <p class="text-sm text-slate-500"><span data-reviews-count-display>{{ reviews_count }} review{{ reviews_count|pluralize }}</span> across recent BayStays stays</p>
+                    </div>
+                </div>
+                <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Sleep setup</p>
+                        <p class="mt-2 font-semibold text-slate-900"><i class="fa-solid fa-bed text-red-500 mr-2"></i>{{ property.beds }} bed{{ property.beds|pluralize }}</p>
+                    </div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Footprint</p>
+                        <p class="mt-2 font-semibold text-slate-900"><i class="fa-solid fa-ruler-combined text-blue-500 mr-2"></i>{% if property.sqft %}{{ property.sqft|intcomma }} sq ft{% else %}Comfortably planned{% endif %}</p>
+                    </div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Area</p>
+                        <p class="mt-2 font-semibold text-slate-900"><i class="fa-solid fa-map text-orange-500 mr-2"></i>{{ property.state }}, {{ property.country }}</p>
+                    </div>
+                    <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Review status</p>
+                        <p class="mt-2 font-semibold text-slate-900"><i class="fa-solid fa-comments text-green-600 mr-2"></i><span data-reviews-count-display>{{ reviews_count }} review{{ reviews_count|pluralize }}</span></p>
+                    </div>
+                </div>
+                <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+                    <div>
+                        <h2 class="font-display text-2xl font-semibold mb-3">About this stay</h2>
+                        <p class="text-slate-600 leading-7">{{ property.description }}</p>
+                    </div>
+                    <div class="panel p-5 bg-slate-50">
+                        <h3 class="font-semibold mb-3">Amenities</h3>
+                        <div class="grid gap-3 sm:grid-cols-2 text-sm text-slate-600">
+                            {% for code, label, icon in amenities_display %}
+                                <div class="rounded-[0.9rem] bg-white px-4 py-3 border border-slate-100"><i class="{{ icon }} text-red-500 mr-2"></i>{{ label }}</div>
+                            {% empty %}
+                                <div class="empty-state rounded-[0.9rem] sm:col-span-2 px-6">
+                                    <div>
+                                        <i class="fa-solid fa-layer-group text-2xl text-red-500"></i>
+                                        <p class="mt-3 font-semibold text-slate-800">Amenities will appear here</p>
+                                        <p class="text-sm text-slate-500 mt-1">Hosts can enrich the stay with comfort details and facility highlights.</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="panel p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-share-nodes"></i></div>
+                        <div>
+                            <h2 class="font-display text-xl font-semibold">Share this stay</h2>
+                            <p class="text-sm text-slate-500">Send the listing link instantly.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-3">
+                        <button type="button" class="btn-bay-ghost flex-1" data-copy-share-link data-share-url="{{ request.build_absolute_uri }}"><i class="fa-solid fa-link"></i>Copy link</button>
+                        <button type="button" class="btn-icon" data-open-modal="share-modal" aria-label="Share stay"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <div class="panel p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-user-shield"></i></div>
+                        <div>
+                            <h2 class="font-display text-xl font-semibold">Hosted with care</h2>
+                            <p class="text-sm text-slate-500">Trust and coordination signals.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-3 text-sm text-slate-600">
+                        <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span>Email verification</span><span class="badge {% if property.owner.email_verified %}badge-success{% else %}badge-warning{% endif %}">{% if property.owner.email_verified %}Verified{% else %}Pending{% endif %}</span></div>
+                        <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span>Phone verification</span><span class="badge {% if property.owner.phone_verified %}badge-success{% else %}badge-warning{% endif %}">{% if property.owner.phone_verified %}Verified{% else %}Pending{% endif %}</span></div>
+                    </div>
+                </div>
+                <div class="panel p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-amber-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-star"></i></div>
+                        <div>
+                            <h2 class="font-display text-xl font-semibold">Guest sentiment</h2>
+                            <p class="text-sm text-slate-500">How this stay is landing.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="star-row" aria-hidden="true">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="mt-2 text-2xl font-display font-semibold" data-average-rating-display>{{ property.average_rating|floatformat:1 }}</p>
+                        <p class="text-sm text-slate-500" data-reviews-count-display>{{ reviews_count }} review{{ reviews_count|pluralize }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <button type="button" class="accordion-toggle w-full flex items-center justify-between text-left" aria-expanded="false" aria-controls="stay-accordion">
+                    <div>
+                        <h2 class="font-display text-2xl font-semibold">Stay details and policies</h2>
+                        <p class="text-sm text-slate-500 mt-1">Timing, arrival confidence, and the practical details guests look for.</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down accordion-icon transition-transform"></i>
+                </button>
+                <div id="stay-accordion" class="accordion-panel mt-5">
+                    <div class="grid gap-4 md:grid-cols-3 text-sm text-slate-600">
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4"><strong class="block text-slate-900 mb-1"><i class="fa-solid fa-door-open mr-2 text-red-500"></i>Check-in</strong>{{ property.check_in_time }}</div>
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4"><strong class="block text-slate-900 mb-1"><i class="fa-solid fa-person-walking-arrow-right mr-2 text-orange-500"></i>Check-out</strong>{{ property.check_out_time }}</div>
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4"><strong class="block text-slate-900 mb-1"><i class="fa-solid fa-map-location-dot mr-2 text-blue-500"></i>Location confidence</strong>Clear town and address details help guests arrive smoothly.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8 section-fade">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-primary mb-3">Availability clarity</span>
+                        <h2 class="font-display text-3xl font-semibold">Booked and blocked dates</h2>
+                        <p class="text-sm text-slate-500 mt-2">BayStays surfaces likely unavailable periods early so guests can avoid overlapping requests.</p>
+                    </div>
+                    {% if has_existing_booking %}
+                        <div class="inline-note rounded-[0.7rem] px-4 py-3 text-sm text-slate-600">
+                            <i class="fa-solid fa-circle-check mr-2 text-green-600"></i>You already have a BayStays booking tied to this listing.
+                        </div>
+                    {% endif %}
+                </div>
+                {% if unavailable_periods %}
+                    <div class="grid gap-3 md:grid-cols-2">
+                        {% for booking in unavailable_periods %}
+                            <div class="rounded-[0.7rem] bg-slate-50 px-4 py-4 text-sm text-slate-600 border border-slate-100">
+                                <p class="font-semibold text-slate-900"><i class="fa-solid fa-calendar-xmark mr-2 text-red-500"></i>{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
+                                <p class="mt-1">Status: {{ booking.status|title }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                        <div>
+                            <i class="fa-solid fa-calendar-check text-2xl text-green-600"></i>
+                            <p class="mt-3 font-semibold text-slate-800">No blocked periods are currently showing</p>
+                            <p class="text-sm text-slate-500 mt-1">That usually means this stay has open inventory for the dates you are considering.</p>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if existing_guest_bookings %}
+                    <div class="mt-5 space-y-3">
+                        {% for booking in existing_guest_bookings %}
+                            <div class="rounded-[0.7rem] bg-red-50/65 border border-red-100 px-4 py-4 text-sm text-slate-700">
+                                <strong class="text-slate-900">Your existing stay:</strong> {{ booking.check_in_date }} to {{ booking.check_out_date }} · {{ booking.status|title }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="panel p-6 lg:p-8 section-fade">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-blue mb-3">Location detail</span>
+                        <h2 class="font-display text-3xl font-semibold">See where the stay sits</h2>
+                        <p class="text-sm text-slate-500 mt-2">BayStays keeps the search page map-free for speed, then shows the exact pinned context here where it matters most.</p>
+                    </div>
+                    <div class="inline-note rounded-[0.95rem] px-4 py-3 text-sm text-slate-600">
+                        <i class="fa-solid fa-location-crosshairs mr-2 text-red-500"></i>{{ property.address }}
+                    </div>
+                </div>
+                {% if property.latitude and property.longitude %}
+                    <div class="map-shell">
+                        <div class="property-map" data-property-map data-lat="{{ property.latitude }}" data-lng="{{ property.longitude }}"></div>
+                    </div>
+                {% else %}
+                    <div class="empty-state empty-state--compact rounded-[1rem] px-6">
+                        <div>
+                            <i class="fa-solid fa-map-location-dot text-3xl text-red-500"></i>
+                            <p class="mt-3 font-semibold text-slate-800">Exact pin coming soon</p>
+                            <p class="text-sm text-slate-500 mt-1">The host has not locked in coordinates yet, but the full address and local area details are already available above.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="panel p-6 lg:p-8 section-fade">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-warm mb-3">Ratings and reviews</span>
+                        <h2 class="font-display text-3xl font-semibold">What guests are saying</h2>
+                    </div>
+                    <span class="badge badge-blue"><i class="fa-solid fa-message"></i><span data-reviews-count-display>{{ reviews_count }} review{{ reviews_count|pluralize }}</span></span>
+                </div>
+                <div id="review-feedback" class="hidden"></div>
+                {% if can_review %}
+                    <form method="post" action="{% url 'properties:submit_review' property.id %}" class="space-y-5 mb-6" data-async-review>
+                        {% csrf_token %}
+                        <div class="panel p-5 bg-slate-50" data-rating-meter-control>
+                            <div class="flex items-center justify-between gap-4 flex-wrap">
+                                <div>
+                                    <label class="mb-2">Your rating</label>
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <span class="rating-meter" data-rating-meter style="--rating: {{ current_user_rating|default:0|floatformat:1 }}; --star-size: 1.8rem; --star-spacing: 0.35rem;"></span>
+                                        <span class="font-semibold text-slate-700" data-rating-value>{% if current_user_rating %}{{ current_user_rating|floatformat:1 }} / 5{% else %}Select your rating{% endif %}</span>
+                                    </div>
+                                </div>
+                                <div class="badge badge-primary"><i class="fa-solid fa-wand-magic-sparkles"></i>Tap stars to rate</div>
+                            </div>
+                            <input type="hidden" name="rating" value="{{ current_user_rating|default:0|floatformat:1 }}" data-rating-input>
+                            <div class="rating-picker mt-5" data-rating-picker>
+                                {% for label in '12345' %}
+                                    <button type="button" class="rating-picker__star" data-rating-star data-star-index="{{ forloop.counter }}" aria-label="Rate {{ forloop.counter }} stars">
+                                        <i class="fa-solid fa-star"></i>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            <p class="mt-3 text-sm text-slate-500">Tap once for a half star, twice for a full star, and a third tap steps back down.</p>
+                        </div>
+                        <div><label for="{{ review_form.comment.id_for_label }}">Your review</label>{{ review_form.comment }}</div>
+                        <div class="flex items-end"><button type="submit" class="btn-bay"><span data-submit-text><i class="fa-solid fa-star"></i>Submit review</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving review</span></button></div>
+                    </form>
+                {% elif user.is_authenticated %}
+                    <div class="inline-note rounded-[0.95rem] px-4 py-4 text-sm text-slate-600 mb-6"><i class="fa-solid fa-lock mr-2 text-red-500"></i>Reviews are available after you’ve booked this stay.</div>
+                {% else %}
+                    <div class="inline-note rounded-[0.95rem] px-4 py-4 text-sm text-slate-600 mb-6"><i class="fa-solid fa-right-to-bracket mr-2 text-red-500"></i>Sign in to rate and review BayStays properties.</div>
+                {% endif %}
+                <div id="reviews-list" class="space-y-4">
+                    {% for review in reviews %}
+                        <article class="rounded-[0.95rem] border border-slate-100 bg-slate-50 p-5" data-review-id="{{ review.id }}">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold">{{ review.user.get_display_name }}</p>
+                                    <p class="text-sm text-slate-500">{{ review.created_at|date:"M d, Y" }}</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="rating-meter" style="--rating: {{ review.rating|floatformat:1 }};"></span>
+                                    <span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ review.rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-slate-600">{{ review.comment }}</p>
+                        </article>
+                    {% empty %}
+                        <div class="empty-state rounded-[0.95rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-comments text-2xl text-red-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No reviews yet</p>
+                                <p class="text-sm text-slate-500 mt-1">The first guest review will appear here once someone shares their stay experience.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <aside class="section-fade">
+            <div class="panel p-6 lg:p-8 sticky top-28">
+                <span class="badge badge-warm mb-3">Ready to book</span>
+                <h2 class="font-display text-3xl font-semibold">Reserve this BayStays home</h2>
+                <p class="mt-2 text-slate-600">Booking now happens right here with live totals and smoother submission, so guests don’t get bounced away from the stay they’re evaluating.</p>
+                <div class="mt-6 space-y-3 text-sm text-slate-600">
+                    <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span><i class="fa-solid fa-shield-halved mr-2 text-red-500"></i>Trust signal</span><span class="badge {% if property.owner.email_verified %}badge-success{% else %}badge-warning{% endif %}">{% if property.owner.email_verified %}Verified host email{% else %}Host verification pending{% endif %}</span></div>
+                    <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span><i class="fa-solid fa-clock mr-2 text-blue-500"></i>Booking window</span><span>At least one day ahead</span></div>
+                    <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span><i class="fa-solid fa-camera mr-2 text-orange-500"></i>Gallery viewing</span><span>Tap any photo to enlarge</span></div>
+                </div>
+                <div id="booking-feedback" class="hidden mt-5"></div>
+                <div id="availability-feedback" class="hidden mb-4"></div>
+                <form method="post" action="{% url 'bookings:create_booking' property.id %}" class="mt-5 space-y-4" data-loading-form="true" data-booking-calculator data-nightly-rate="{{ property.price_per_night }}" data-async-booking data-unavailable-ranges='{{ unavailable_periods_json|safe }}'>
+                    {% csrf_token %}
+                    <div>
+                        <label for="{{ booking_form.check_in_date.id_for_label }}">Check-in</label>
+                        {{ booking_form.check_in_date }}
+                    </div>
+                    <div>
+                        <label for="{{ booking_form.check_out_date.id_for_label }}">Check-out</label>
+                        {{ booking_form.check_out_date }}
+                    </div>
+                    <div>
+                        <label for="{{ booking_form.num_guests.id_for_label }}">Guests</label>
+                        {{ booking_form.num_guests }}
+                    </div>
+                    <div>
+                        <label for="{{ booking_form.special_requests.id_for_label }}">Special requests</label>
+                        {{ booking_form.special_requests }}
+                    </div>
+                    <div class="rounded-[0.95rem] bg-red-50/55 border border-red-100 px-4 py-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Stay total</p>
+                                <p class="font-display text-2xl font-semibold mt-2" data-booking-total>KES 0</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-slate-500">Length of stay</p>
+                                <p class="font-semibold" data-booking-nights>0 nights</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-bay w-full"><span data-submit-text><i class="fa-solid fa-calendar-check"></i>Request booking</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Sending request</span></button>
+                </form>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<div id="property-lightbox" class="lightbox-shell fixed inset-0 z-[96]">
+    <div class="absolute inset-0 bg-slate-950/80" data-close-lightbox></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="modal-panel max-w-5xl w-full">
+            <div class="flex justify-end mb-3">
+                <button type="button" class="btn-icon bg-white text-slate-900" data-close-lightbox aria-label="Close image viewer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="rounded-[1rem] overflow-hidden bg-white shadow-2xl">
+                <img src="" alt="" data-lightbox-image class="w-full max-h-[78vh] object-cover">
+                <div class="px-5 py-4 text-slate-700" data-lightbox-caption></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="share-modal" class="modal-shell fixed inset-0 z-[97]">
+    <div class="absolute inset-0 bg-slate-950/70" data-close-modal></div>
+    <div class="min-h-full flex items-center justify-center p-4">
+        <div class="modal-panel panel max-w-lg w-full p-8 relative surface-tint">
+            <button type="button" data-close-modal class="absolute right-5 top-5 text-slate-400 hover:text-slate-800"><i class="fa-solid fa-xmark"></i></button>
+            <span class="badge badge-primary mb-4">Share this stay</span>
+            <h2 class="font-display text-3xl font-semibold mb-3">Send it to someone else</h2>
+            <p class="text-slate-600 mb-5">Copy the listing link or use your device’s share flow if it’s available.</p>
+            <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600 break-all">{{ request.build_absolute_uri }}</div>
+            <div class="mt-5 flex gap-3">
+                <button type="button" class="btn-bay flex-1" data-copy-share-link data-share-url="{{ request.build_absolute_uri }}"><i class="fa-solid fa-link"></i>Copy link</button>
+                <button type="button" class="btn-bay-ghost flex-1" data-native-share data-share-title="{{ property.name }}" data-share-text="Take a look at this BayStays property." data-share-url="{{ request.build_absolute_uri }}"><i class="fa-solid fa-paper-plane"></i>Share</button>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
 {% block extra_scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkInInput = document.querySelector('input[name="check_in_date"]');
-        const checkOutInput = document.querySelector('input[name="check_out_date"]');
-        const nightsCount = document.getElementById('nights-count');
-        const subtotal = document.getElementById('subtotal');
-        const serviceFee = document.getElementById('service-fee');
-        const totalPrice = document.getElementById('total-price');
-        
-        const pricePerNight = {{ property.price_per_night }};
-        
-        // Set minimum dates
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const formatDate = (date) => date.toISOString().split('T')[0];
-        
-        checkInInput.min = formatDate(tomorrow);
-        checkOutInput.min = formatDate(tomorrow);
-        
-        function calculatePrice() {
-            const checkIn = new Date(checkInInput.value);
-            const checkOut = new Date(checkOutInput.value);
-            
-            if (checkIn && checkOut && checkOut > checkIn) {
-                const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-                const calculatedSubtotal = pricePerNight * nights;
-                const calculatedServiceFee = calculatedSubtotal * 0.1; // 10% service fee
-                const calculatedTotal = calculatedSubtotal + calculatedServiceFee;
-                
-                nightsCount.textContent = nights;
-                subtotal.textContent = calculatedSubtotal.toLocaleString();
-                serviceFee.textContent = calculatedServiceFee.toLocaleString();
-                totalPrice.textContent = calculatedTotal.toLocaleString();
-            } else {
-                nightsCount.textContent = '0';
-                subtotal.textContent = '0';
-                serviceFee.textContent = '0';
-                totalPrice.textContent = '0';
-            }
-        }
-        
-        checkInInput.addEventListener('change', calculatePrice);
-        checkOutInput.addEventListener('change', calculatePrice);
-        
-        // Initialize price calculation
-        calculatePrice();
-    });
-</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}

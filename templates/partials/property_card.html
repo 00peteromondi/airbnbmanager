@@ -1,0 +1,57 @@
+{% load cloudinary %}
+{% load property_extras %}
+{% load humanize %}
+<article class="panel panel-hover overflow-hidden h-full flex flex-col">
+    <div class="relative">
+        {% if property.images.first %}
+            {% cloudinary property.images.first.image class="h-64 w-full object-cover" %}
+        {% else %}
+            <div class="h-64 w-full bg-gradient-to-br from-sky-200 via-cyan-100 to-amber-100 flex items-center justify-center text-slate-500 text-4xl">
+                <i class="fa-solid fa-house"></i>
+            </div>
+        {% endif %}
+        <div class="absolute left-4 top-4 flex gap-2">
+            <span class="badge badge-primary">{{ property.property_type|title }}</span>
+            {% if property.average_rating %}<span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ property.average_rating|floatformat:1 }}</span>{% endif %}
+        </div>
+    </div>
+    <div class="p-5 flex-1 flex flex-col">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="font-display text-xl font-semibold">{{ property.name }}</h3>
+                <p class="mt-2 text-sm text-slate-500"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i>{{ property.city }}, {{ property.country }}</p>
+            </div>
+            <div class="text-right">
+                <p class="font-display text-xl font-semibold text-slate-900">KES {{ property.price_per_night|intcomma }}</p>
+                <p class="text-xs uppercase tracking-[0.24em] text-slate-400">per night</p>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="rating-meter" style="--rating: {{ property.average_rating|default:0|floatformat:1 }};"></span>
+                <span class="text-sm font-semibold text-slate-700">{{ property.average_rating|default:0|floatformat:1 }}</span>
+            </div>
+            <span class="text-xs uppercase tracking-[0.18em] text-slate-400">BayStays pick</span>
+        </div>
+        <p class="mt-4 text-sm leading-6 text-slate-600">{{ property.description|truncatewords:20 }}</p>
+        <div class="mt-4 flex flex-wrap gap-2 text-sm text-slate-500">
+            <span class="badge badge-dark"><i class="fa-solid fa-user-group"></i>{{ property.max_guests }} guests</span>
+            <span class="badge badge-dark"><i class="fa-solid fa-bed"></i>{{ property.bedrooms }} beds</span>
+            <span class="badge badge-dark"><i class="fa-solid fa-bath"></i>{{ property.bathrooms }} baths</span>
+            {% for amenity in property.amenities|slice:':2' %}
+                <span class="badge badge-blue"><i class="{{ amenity|amenity_icon }}"></i>{{ amenity|amenity_label }}</span>
+            {% endfor %}
+        </div>
+        {% if property.id in user_booked_property_ids %}
+            <div class="mt-4 inline-note rounded-[0.7rem] px-4 py-3 text-sm text-slate-600">
+                <i class="fa-solid fa-circle-check mr-2 text-green-600"></i>You already have a booking linked to this stay.
+            </div>
+        {% endif %}
+        <div class="mt-6 flex gap-3">
+            <a href="{% url 'properties:property_detail' property.id %}" class="btn-bay flex-1"><i class="fa-solid fa-eye"></i>View stay</a>
+            {% if user.is_authenticated and user.role == 'guest' or user.is_authenticated and user.role == 'both' %}
+                <a href="{% url 'bookings:create_booking' property.id %}" class="btn-bay-ghost"><i class="fa-regular fa-calendar-check"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</article>

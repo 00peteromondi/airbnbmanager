@@ -7,6 +7,11 @@ class CustomUserCreationForm(UserCreationForm):
         model = CustomUser
         fields = ('email', 'username', 'phone_number')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'input-shell'
+
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = CustomUser

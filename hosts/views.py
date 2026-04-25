@@ -31,7 +31,7 @@ class HostRegistrationView(LogoutRequiredMixin, View):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, "Registration successful! Welcome to Aurban.")
+            messages.success(request, "Registration successful! Welcome to BayStays.")
             return redirect('users:role_selection')
         messages.error(request, "Registration failed. Invalid information.")
         return render(request, 'hosts/register.html', {'form': form})
@@ -190,4 +190,4 @@ def property_bookings(request):
         'stats': stats,
         'properties': properties,
     }
-    return render(request, 'hosts/property_bookings.html', context)
+    return render(request, 'hosts/owner_bookings.html', context)

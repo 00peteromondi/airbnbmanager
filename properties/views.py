@@ -1,17 +1,44 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Property
+from .models import Property, Review
 from bookings.models import Booking
 from django.shortcuts import get_object_or_404, render, redirect
 
 
 from bookings.forms import BookingForm
+from .forms import ReviewForm
 from django.db.models import Sum
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Avg
 from datetime import datetime
+import json
 from bookings.utils import check_property_availability, get_available_properties
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.contrib import messages
+
+AMENITY_ICONS = {
+    'wifi': 'fa-solid fa-wifi',
+    'kitchen': 'fa-solid fa-kitchen-set',
+    'parking': 'fa-solid fa-square-parking',
+    'pool': 'fa-solid fa-person-swimming',
+    'gym': 'fa-solid fa-dumbbell',
+    'ac': 'fa-solid fa-fan',
+    'heating': 'fa-solid fa-temperature-high',
+    'tv': 'fa-solid fa-tv',
+    'washer': 'fa-solid fa-soap',
+    'dryer': 'fa-solid fa-wind',
+    'breakfast': 'fa-solid fa-mug-hot',
+    'workspace': 'fa-solid fa-laptop',
+    'fireplace': 'fa-solid fa-fire',
+    'balcony': 'fa-solid fa-umbrella-beach',
+    'garden': 'fa-solid fa-seedling',
+    'bbq': 'fa-solid fa-fire-burner',
+    'hot_tub': 'fa-solid fa-hot-tub-person',
+    'security': 'fa-solid fa-shield-halved',
+    'elevator': 'fa-solid fa-elevator',
+    'accessible': 'fa-solid fa-wheelchair',
+}
 
 class PropertyListView(ListView):
     model = Property
@@ -52,19 +79,100 @@ class PropertyDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['booking_form'] = BookingForm(initial={
-            'property': self.object,
-            'num_guests': 1
+        booking_form = BookingForm(initial={'property': self.object, 'num_guests': 1})
+        booking_form.fields['num_guests'].widget.attrs.update({
+            'min': 1,
+            'max': self.object.max_guests,
         })
-        # Add guest range for the select dropdown
+        reviews = self.object.reviews.select_related('user')
+        user_review = None
+        can_review = False
+        existing_guest_bookings = Booking.objects.none()
+        if self.request.user.is_authenticated:
+            user_review = reviews.filter(user=self.request.user).first()
+            can_review = Booking.objects.filter(
+                property=self.object,
+                guest=self.request.user,
+            ).exclude(status='cancelled').exists()
+            existing_guest_bookings = Booking.objects.filter(
+                property=self.object,
+                guest=self.request.user,
+            ).exclude(status='cancelled').order_by('-check_in_date')
+
+        unavailable_bookings = Booking.objects.filter(
+            property=self.object,
+            status__in=['confirmed', 'pending', 'checked_in']
+        ).order_by('check_in_date')
+
+        context['booking_form'] = booking_form
+        context['review_form'] = ReviewForm(instance=user_review)
+        context['reviews'] = reviews[:6]
+        context['reviews_count'] = reviews.count()
         context['guest_range'] = range(1, self.object.max_guests + 1)
-        
-        # Add amenities in a format that's easy to display
+        context['can_review'] = can_review
+        context['current_user_rating'] = user_review.rating if user_review else 0
+        context['rating_choices'] = Review._meta.get_field('rating').choices
+        context['existing_guest_bookings'] = existing_guest_bookings[:4]
+        context['has_existing_booking'] = existing_guest_bookings.exists()
+        context['unavailable_periods'] = unavailable_bookings[:6]
+        context['unavailable_periods_json'] = json.dumps([
+            {
+                'check_in': booking.check_in_date.isoformat(),
+                'check_out': booking.check_out_date.isoformat(),
+                'status': booking.status,
+            }
+            for booking in unavailable_bookings
+        ])
         context['amenities_display'] = [
-            (amenity, dict(Property.AMENITY_CHOICES).get(amenity, amenity))
+            (
+                amenity,
+                dict(Property.AMENITY_CHOICES).get(amenity, amenity),
+                AMENITY_ICONS.get(amenity, 'fa-solid fa-circle-check'),
+            )
             for amenity in self.object.amenities
         ]
         return context
+
+
+@login_required
+def submit_review(request, property_id):
+    property = get_object_or_404(Property, pk=property_id, is_active=True)
+    if request.method != 'POST':
+        return redirect('properties:property_detail', property_id=property.id)
+
+    if not Booking.objects.filter(property=property, guest=request.user).exclude(status='cancelled').exists():
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'ok': False, 'errors': {'review': ['You can only review stays you have booked.']}}, status=403)
+        messages.error(request, "You can only review stays you have booked.")
+        return redirect('properties:property_detail', property_id=property.id)
+
+    review = Review.objects.filter(property=property, user=request.user).first()
+    form = ReviewForm(request.POST, instance=review)
+    if form.is_valid():
+        review = form.save(commit=False)
+        review.property = property
+        review.user = request.user
+        review.save()
+        property.average_rating = property.reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+        property.save(update_fields=['average_rating'])
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'message': 'Review saved successfully.',
+                'review_id': review.id,
+                'rating': f"{review.rating:.1f}",
+                'comment': review.comment,
+                'reviewer': request.user.get_display_name(),
+                'created_at': review.created_at.strftime('%b %d, %Y'),
+                'reviews_count': property.reviews.count(),
+                'average_rating': f"{property.average_rating:.1f}",
+            })
+        messages.success(request, "Review saved successfully.")
+    else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+        messages.error(request, "Please review the rating details and try again.")
+    return redirect('properties:property_detail', property_id=property.id)
 
 from django.db.models import Q
 from datetime import datetime

@@ -1,133 +1,126 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Aurban Rentals | Our Properties{% endblock %}
-
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Explore BayStays{% endblock %}
 {% block content %}
-<!-- Properties Page Content Start -->
-<div class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <!-- Page Header -->
-        <div class="text-center mb-12 fade-in-section">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Find Your Perfect Stay</h1>
-            <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Explore our curated collection of urban rentals. Your next adventure is just a search away.</p>
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="panel p-6 lg:p-8 section-fade surface-tint">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+                <span class="badge badge-primary mb-3">Explore BayStays</span>
+                <h1 class="font-display text-4xl font-semibold">Find stays with clearer context, better filters, and calmer arrival planning.</h1>
+                <p class="mt-3 text-slate-600 max-w-3xl">Search by shoreline town, exact address suggestions, guest fit, dates, budget, and stay style without leaving the page. BayStays keeps the discovery flow rich enough for guests, hosts scouting comps, and first-time visitors who just want clarity fast.</p>
+            </div>
+            <button type="button" class="btn-bay-ghost" data-open-modal="support-modal"><i class="fa-solid fa-circle-info"></i>How discovery works</button>
         </div>
 
-        <!-- Filter and Search Bar -->
-        <form method="GET" action="{% url 'core:properties_list' %}">
-            <div class="bg-white p-6 rounded-xl shadow-lg mb-12 fade-in-section">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 items-end">
-                    <!-- Location -->
-                    <div class="col-span-full md:col-span-2">
-                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Where to?</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-map-marker-alt text-gray-400"></i>
-                            </div>
-                            <input type="text" id="location" name="location" placeholder="e.g., Nairobi, Kenya" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ location|default:'' }}">
-                        </div>
-                    </div>
-                    <!-- Check-in Date -->
-                    <div>
-                        <label for="check-in" class="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
-                        <input type="date" id="check-in" name="check-in" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" value="{{ check_in|default:'' }}">
-                    </div>
-                    <!-- Check-out Date -->
-                    <div>
-                        <label for="check-out" class="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
-                        <input type="date" id="check-out" name="check-out" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" value="{{ check_out|default:'' }}">
-                    </div>
-                    <!-- Guests -->
-                    <div>
-                        <label for="guests" class="block text-sm font-medium text-gray-700 mb-1">Guests</label>
-                        <select id="guests" name="guests" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
-                            <option {% if guests == 'All Guests' %}selected{% endif %}>All Guests</option>
-                            <option {% if guests == '1 Guest' %}selected{% endif %}>1 Guest</option>
-                            <option {% if guests == '2 Guests' %}selected{% endif %}>2 Guests</option>
-                            <option {% if guests == '3 Guests' %}selected{% endif %}>3 Guests</option>
-                            <option {% if guests == '4+ Guests' %}selected{% endif %}>4+ Guests</option>
-                        </select>
-                    </div>
-                    <!-- Property Type -->
-                    <div>
-                        <label for="property-type" class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                        <select id="property-type" name="property-type" class="w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
-                            <option {% if property_type == 'All Types' %}selected{% endif %}>All Types</option>
-                            <option {% if property_type == 'Apartment' %}selected{% endif %}>Apartment</option>
-                            <option {% if property_type == 'Villa' %}selected{% endif %}>Villa</option>
-                            <option {% if property_type == 'Loft' %}selected{% endif %}>Loft</option>
-                            <option {% if property_type == 'Studio' %}selected{% endif %}>Studio</option>
-                        </select>
-                    </div>
-                    <!-- Search Button -->
-                    <div class="col-span-full md:col-span-2 xl:col-span-1 flex items-end">
-                        <button type="submit" class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center space-x-2">
-                            <span><i class="fas fa-search"></i></span>
-                            <span>Search</span>
-                        </button>
-                    </div>
+        <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="panel px-5 py-5">
+                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Matching stays</p>
+                <p class="font-display text-3xl font-semibold mt-2" data-results-count>{{ results_count }}</p>
+                <p class="text-sm text-slate-500 mt-2">Current results for this filter mix.</p>
+            </div>
+            <div class="panel px-5 py-5">
+                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Average nightly rate</p>
+                <p class="font-display text-3xl font-semibold mt-2" data-results-price>KES {{ avg_price|default:0|floatformat:0|intcomma }}</p>
+                <p class="text-sm text-slate-500 mt-2">Useful for comparing budget expectations.</p>
+            </div>
+            <div class="panel px-5 py-5">
+                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Average guest score</p>
+                <div class="mt-2 flex items-center gap-3">
+                    <span class="rating-meter" style="--rating: {{ avg_rating|default:0|floatformat:1 }};"></span>
+                    <span class="font-display text-2xl font-semibold" data-results-rating>{{ avg_rating|default:0|floatformat:1 }}</span>
                 </div>
+                <p class="text-sm text-slate-500 mt-2">A quick read on quality across the current set.</p>
+            </div>
+            <div class="panel px-5 py-5">
+                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Strongest destination</p>
+                <p class="font-display text-3xl font-semibold mt-2" data-results-destination>{% if top_destination %}{{ top_destination }}{% else %}Flexible{% endif %}</p>
+                <p class="text-sm text-slate-500 mt-2">Where BayStays has the best current spread.</p>
+            </div>
+        </div>
+
+        <form method="get" action="{% url 'core:properties_list' %}" class="mt-6 grid gap-4 lg:grid-cols-12" data-explore-form>
+            <div class="lg:col-span-4 location-autocomplete" data-location-autocomplete>
+                <label for="id_location">Location</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-location-dot"></i></span>
+                    <input id="id_location" type="text" name="location" value="{{ location|default:'' }}" placeholder="Town, shoreline area, or address" class="input-shell pl-11" autocomplete="off" data-location-input>
+                </div>
+                <input type="hidden" name="location_lat" value="{{ location_lat|default:'' }}">
+                <input type="hidden" name="location_lng" value="{{ location_lng|default:'' }}">
+                <div class="location-suggestions hidden" data-location-suggestions></div>
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_property_type">Stay type</label>
+                <select id="id_property_type" name="property-type" class="input-shell">
+                    <option value="">Any stay type</option>
+                    <option value="apartment" {% if property_type == 'apartment' %}selected{% endif %}>Apartment</option>
+                    <option value="house" {% if property_type == 'house' %}selected{% endif %}>House</option>
+                    <option value="villa" {% if property_type == 'villa' %}selected{% endif %}>Villa</option>
+                    <option value="condo" {% if property_type == 'condo' %}selected{% endif %}>Condo</option>
+                    <option value="loft" {% if property_type == 'loft' %}selected{% endif %}>Loft</option>
+                    <option value="studio" {% if property_type == 'studio' %}selected{% endif %}>Studio</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_guests">Guests</label>
+                <select id="id_guests" name="guests" class="input-shell">
+                    <option value="">Any guest count</option>
+                    <option value="1 Guest" {% if guests == '1 Guest' %}selected{% endif %}>1 Guest</option>
+                    <option value="2 Guests" {% if guests == '2 Guests' %}selected{% endif %}>2 Guests</option>
+                    <option value="3 Guests" {% if guests == '3 Guests' %}selected{% endif %}>3 Guests</option>
+                    <option value="4+ Guests" {% if guests == '4+ Guests' %}selected{% endif %}>4+ Guests</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_sort">Sort</label>
+                <select id="id_sort" name="sort" class="input-shell">
+                    <option value="recommended" {% if sort == 'recommended' %}selected{% endif %}>Recommended</option>
+                    <option value="top_rated" {% if sort == 'top_rated' %}selected{% endif %}>Top rated</option>
+                    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: low to high</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: high to low</option>
+                    <option value="most_guests" {% if sort == 'most_guests' %}selected{% endif %}>Best for groups</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_check_in">Check-in</label>
+                <input id="id_check_in" type="date" name="check_in" value="{{ check_in|default:'' }}" class="input-shell">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_check_out">Check-out</label>
+                <input id="id_check_out" type="date" name="check_out" value="{{ check_out|default:'' }}" class="input-shell">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_min_price">Min price</label>
+                <input id="id_min_price" type="number" name="min_price" value="{{ min_price|default:'' }}" placeholder="0" class="input-shell">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="id_max_price">Max price</label>
+                <input id="id_max_price" type="number" name="max_price" value="{{ max_price|default:'' }}" placeholder="Any" class="input-shell">
+            </div>
+            <div class="lg:col-span-4 flex items-end gap-3">
+                <button type="submit" class="btn-bay flex-1">
+                    <span data-submit-text><i class="fa-solid fa-magnifying-glass"></i>Refresh stays</span>
+                    <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Refreshing</span>
+                </button>
+                <a href="{% url 'core:properties_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-rotate-left"></i>Reset</a>
             </div>
         </form>
+    </div>
 
-        <!-- Property Listings Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for listing in properties %}
-            <div class="bg-white rounded-xl shadow-md overflow-hidden property-card fade-in-section">
-                <!-- Assuming you have an image URL field or a placeholder -->
-                <img class="h-56 w-full object-cover" src="https://placehold.co/600x400/E5E7EB/4B5563?text=Property" alt="{{ listing.name }}">
-                <div class="p-6">
-                    <!-- Displaying the property type dynamically -->
-                    <div class="uppercase tracking-wide text-sm text-red-500 font-semibold">{{ listing.property_type }}</div>
-                    <a href="#" class="block mt-1 text-lg leading-tight font-bold text-black hover:underline">{{ listing.name }}</a>
-                    <p class="mt-2 text-gray-500">{{ listing.city }}</p>
-                    <div class="mt-4 flex items-center text-gray-600">
-                        <!-- Displaying the new fields from the model -->
-                        <span class="flex items-center mr-4"><i class="fas fa-bed mr-2"></i> {{ listing.beds }} Beds</span>
-                        <span class="flex items-center mr-4"><i class="fas fa-bath mr-2"></i> {{ listing.bathrooms }} Baths</span>
-                        <span class="flex items-center"><i class="fas fa-ruler-combined mr-2"></i> {{ listing.sqft }} sqft</span>
-                    </div>
-                     <div class="mt-4 flex justify-between items-center">
-                        <p class="text-xl font-bold text-gray-900">${{ listing.price_per_night }}<span class="text-sm font-normal text-gray-500">/night</span></p>
-                        <a href="#" class="px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 transition duration-300 flex items-center space-x-2">
-                            <i class="fas fa-info-circle"></i>
-                            <span>View Details</span>
-                        </a>
-                    </div>
+    <div class="results-shell section-fade">
+        <div class="results-overlay" data-results-overlay>
+            <div class="panel px-6 py-5 flex items-center gap-4">
+                <span class="spinner spinner-dark spinner-lg"></span>
+                <div>
+                    <p class="font-semibold">Refreshing BayStays matches</p>
+                    <p class="text-sm text-slate-500">Filtering places, dates, and guest fit.</p>
                 </div>
             </div>
-            {% empty %}
-            <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20">
-                <i class="fas fa-search-dollar text-8xl text-gray-400 mb-4"></i>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">No properties found</h2>
-                <p class="text-lg text-gray-600">Try adjusting your search filters to find a perfect match.</p>
-            </div>
-            {% endfor %}
         </div>
-
-        <!-- Pagination -->
-        <div class="mt-16 flex justify-center items-center space-x-1 fade-in-section">
-            {% if page_obj.has_previous %}
-                <a href="?page=1&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
-                    &laquo; First
-                </a>
-                <a href="?page={{ page_obj.previous_page_number }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
-                    Previous
-                </a>
-            {% endif %}
-            
-            <span class="px-4 py-2 font-bold bg-red-500 text-white rounded-lg">{{ page_obj.number }}</span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
-                    Next
-                </a>
-                <a href="?page={{ page_obj.paginator.num_pages }}&location={{ location|default:'' }}&property-type={{ property_type|default:'' }}&guests={{ guests|default:'' }}" class="pagination-link px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200">
-                    Last &raquo;
-                </a>
-            {% endif %}
+        <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3" data-explore-results>
+            {% include 'core/_property_results.html' with properties=properties %}
         </div>
     </div>
-</div>
-<!-- Properties Page Content End -->
+</section>
 {% endblock %}
