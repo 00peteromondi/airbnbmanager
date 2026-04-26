@@ -141,14 +141,26 @@ class OwnerBookingListView(LoginRequiredMixin, ListView):
 def update_booking_status(request, booking_id, status):
     if request.method == 'POST':
         booking = get_object_or_404(Booking, id=booking_id, property__owner=request.user)
-        valid_statuses = ['confirmed', 'cancelled']
+        valid_statuses = ['pending', 'confirmed', 'cancelled', 'checked_in', 'checked_out', 'completed']
+        next_url = request.POST.get('next')
 
         if status in valid_statuses:
             booking.status = status
-            booking.save()
-            messages.success(request, f'Booking has been {status} successfully!')
+            booking.save(update_fields=['status', 'updated_at'])
+            status_labels = {
+                'pending': 'moved back to pending review',
+                'confirmed': 'confirmed',
+                'cancelled': 'cancelled',
+                'checked_in': 'marked as checked in',
+                'checked_out': 'marked as checked out',
+                'completed': 'marked as completed',
+            }
+            messages.success(request, f"{booking.guest.get_display_name()}'s booking for {booking.property.name} was {status_labels.get(status, status)}.")
         else:
             messages.error(request, 'Invalid status')
+
+        if next_url:
+            return redirect(next_url)
 
     return redirect('hosts:property_bookings')
 

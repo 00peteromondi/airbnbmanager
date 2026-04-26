@@ -1,7 +1,6 @@
 from django.db import models
 from users.models import CustomUser
 from datetime import time
-from cloudinary.models import CloudinaryField
 
 class Property(models.Model):
     PROPERTY_TYPES = (
@@ -70,7 +69,7 @@ class Property(models.Model):
 
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, related_name='images', on_delete=models.CASCADE)
-    image = CloudinaryField('property_images', folder='airbnb_manager/properties/')
+    image = models.ImageField(upload_to='property_images/')
     caption = models.CharField(max_length=100, blank=True)
     is_primary = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)

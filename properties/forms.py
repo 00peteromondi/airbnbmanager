@@ -18,6 +18,7 @@ class PropertyForm(forms.ModelForm):
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
+            'address': forms.TextInput(),
             'check_in_time': forms.TimeInput(attrs={'type': 'time'}),
             'check_out_time': forms.TimeInput(attrs={'type': 'time'}),
             'latitude': forms.HiddenInput(),
@@ -40,10 +41,33 @@ class PropertyForm(forms.ModelForm):
             'data-location-input': 'true',
             'data-location-address': 'true',
             'autocomplete': 'off',
+            'placeholder': 'Start typing for address suggestions',
         })
         self.fields['city'].widget.attrs['data-location-city'] = 'true'
         self.fields['state'].widget.attrs['data-location-state'] = 'true'
         self.fields['country'].widget.attrs['data-location-country'] = 'true'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        address = (cleaned_data.get('address') or '').strip()
+        city = (cleaned_data.get('city') or '').strip()
+        state = (cleaned_data.get('state') or '').strip()
+        country = (cleaned_data.get('country') or '').strip()
+        latitude = cleaned_data.get('latitude')
+        longitude = cleaned_data.get('longitude')
+
+        if address and (latitude in (None, '') or longitude in (None, '')):
+            self.add_error('address', 'Choose a suggested location or click the map so this listing is pinned to a real place.')
+
+        if latitude not in (None, ''):
+            if not city:
+                self.add_error('city', 'Town or city should come from the selected map location.')
+            if not state:
+                self.add_error('state', 'Region should come from the selected map location.')
+            if not country:
+                self.add_error('country', 'Country should come from the selected map location.')
+
+        return cleaned_data
     
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -59,12 +83,29 @@ class PropertyImageForm(forms.ModelForm):
     class Meta:
         model = PropertyImage
         fields = ['image', 'caption', 'is_primary']
+        widgets = {
+            'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['image'].required = True
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'input-shell'
+        self.fields['image'].required = not bool(self.instance and self.instance.pk)
+        for name, field in self.fields.items():
+            if name == 'is_primary':
+                continue
+            existing = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = (existing + ' input-shell').strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        image = cleaned_data.get('image')
+        caption = (cleaned_data.get('caption') or '').strip()
+        is_primary = cleaned_data.get('is_primary')
+
+        if not image and not self.instance.pk and (caption or is_primary):
+            self.add_error('image', 'Choose an image file for this gallery slot or clear the extra details.')
+
+        return cleaned_data
 
 PropertyImageFormSet = forms.inlineformset_factory(
     Property,

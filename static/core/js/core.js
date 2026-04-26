@@ -92,6 +92,40 @@
         };
     };
 
+    const formatLocationAddress = (item) => {
+        const address = item?.address || {};
+        const primaryLine = [
+            address.house_number,
+            address.road || address.pedestrian || address.cycleway || address.footway,
+        ].filter(Boolean).join(' ').trim();
+
+        if (primaryLine) {
+            return primaryLine;
+        }
+
+        return [
+            address.neighbourhood,
+            address.suburb,
+            address.hamlet,
+            address.quarter,
+            item?.name,
+            item?.display_name?.split(',')?.[0],
+        ].find(Boolean) || '';
+    };
+
+    const getLocationPayload = (item) => {
+        const address = item?.address || {};
+        return {
+            lat: item?.lat || '',
+            lng: item?.lon || '',
+            address: formatLocationAddress(item) || item?.display_name || '',
+            city: address.city || address.town || address.village || address.municipality || '',
+            state: address.state || address.county || '',
+            country: address.country || '',
+            displayName: item?.display_name || '',
+        };
+    };
+
     const closeClosest = (selector, source) => {
         const shell = source.closest(selector);
         if (shell) {
@@ -119,27 +153,100 @@
         button.addEventListener('click', () => closeClosest('.modal-shell', button));
     });
 
-    document.querySelectorAll('[data-open-lightbox]').forEach((trigger) => {
-        trigger.addEventListener('click', () => {
-            const shell = document.getElementById(trigger.dataset.openLightbox);
-            if (!shell) {
-                return;
-            }
-            const image = shell.querySelector('[data-lightbox-image]');
-            const caption = shell.querySelector('[data-lightbox-caption]');
-            if (image && trigger.dataset.imageSrc) {
-                image.src = trigger.dataset.imageSrc;
-                image.alt = trigger.dataset.imageAlt || 'Listing image';
+    document.querySelectorAll('.lightbox-shell').forEach((shell) => {
+        const image = shell.querySelector('[data-lightbox-image]');
+        const caption = shell.querySelector('[data-lightbox-caption]');
+        const prevButton = shell.querySelector('[data-lightbox-prev]');
+        const nextButton = shell.querySelector('[data-lightbox-next]');
+        const thumbnails = Array.from(shell.querySelectorAll('[data-lightbox-thumb]'));
+        const galleryId = shell.id;
+        const triggers = Array.from(document.querySelectorAll(`[data-open-lightbox="${galleryId}"]`));
+        const slides = thumbnails.length ? thumbnails.map((thumb) => ({
+            src: thumb.dataset.imageSrc || '',
+            alt: thumb.dataset.imageAlt || 'Listing image',
+            caption: thumb.dataset.imageCaption || thumb.dataset.imageAlt || 'BayStays stay image',
+        })) : triggers.map((trigger) => ({
+            src: trigger.dataset.imageSrc || '',
+            alt: trigger.dataset.imageAlt || 'Listing image',
+            caption: trigger.dataset.imageCaption || trigger.dataset.imageAlt || 'BayStays stay image',
+        }));
+
+        if (!slides.length) {
+            return;
+        }
+
+        let activeIndex = 0;
+
+        const syncGallery = (nextIndex) => {
+            activeIndex = Math.max(0, Math.min(nextIndex, slides.length - 1));
+            const slide = slides[activeIndex];
+            if (image) {
+                image.src = slide.src;
+                image.alt = slide.alt;
             }
             if (caption) {
-                caption.textContent = trigger.dataset.imageCaption || trigger.dataset.imageAlt || 'BayStays stay image';
+                caption.textContent = slide.caption;
             }
-            shell.classList.add('is-open');
-        });
-    });
+            thumbnails.forEach((thumb) => {
+                const thumbIndex = Number(thumb.dataset.lightboxIndex || 0);
+                const isActive = thumbIndex === activeIndex;
+                thumb.classList.toggle('is-active', isActive);
+                if (isActive) {
+                    thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            });
+            if (prevButton) {
+                prevButton.disabled = activeIndex === 0;
+            }
+            if (nextButton) {
+                nextButton.disabled = activeIndex === slides.length - 1;
+            }
+        };
 
-    document.querySelectorAll('[data-close-lightbox]').forEach((button) => {
-        button.addEventListener('click', () => closeClosest('.lightbox-shell', button));
+        const openGallery = (index) => {
+            syncGallery(index);
+            shell.classList.add('is-open');
+            document.body.classList.add('lightbox-open');
+            document.documentElement.classList.add('lightbox-open');
+        };
+
+        const closeGallery = () => {
+            shell.classList.remove('is-open');
+            document.body.classList.remove('lightbox-open');
+            document.documentElement.classList.remove('lightbox-open');
+        };
+
+        triggers.forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+                openGallery(Number(trigger.dataset.lightboxIndex || 0));
+            });
+        });
+
+        thumbnails.forEach((thumb) => {
+            thumb.addEventListener('click', () => {
+                syncGallery(Number(thumb.dataset.lightboxIndex || 0));
+            });
+        });
+
+        prevButton?.addEventListener('click', () => syncGallery(activeIndex - 1));
+        nextButton?.addEventListener('click', () => syncGallery(activeIndex + 1));
+
+        shell.querySelectorAll('[data-close-lightbox]').forEach((button) => {
+            button.addEventListener('click', closeGallery);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (!shell.classList.contains('is-open')) {
+                return;
+            }
+            if (event.key === 'Escape') {
+                closeGallery();
+            } else if (event.key === 'ArrowLeft' && activeIndex > 0) {
+                syncGallery(activeIndex - 1);
+            } else if (event.key === 'ArrowRight' && activeIndex < slides.length - 1) {
+                syncGallery(activeIndex + 1);
+            }
+        });
     });
 
     document.querySelectorAll('.accordion-toggle').forEach((button) => {
@@ -267,6 +374,34 @@
     });
 
     const gallerySlots = Array.from(document.querySelectorAll('[data-image-slot]'));
+    const syncGalleryAddButton = () => {
+        const addImageButton = document.querySelector('[data-add-image-slot]');
+        if (!addImageButton) {
+            return;
+        }
+        const hasHiddenSlots = gallerySlots.some((slot) => slot.dataset.slotVisible !== 'true');
+        addImageButton.toggleAttribute('disabled', !hasHiddenSlots);
+        addImageButton.classList.toggle('opacity-50', !hasHiddenSlots);
+        addImageButton.classList.toggle('cursor-not-allowed', !hasHiddenSlots);
+    };
+
+    const setSlotEnabledState = (slot, enabled) => {
+        slot.dataset.slotVisible = enabled ? 'true' : 'false';
+        slot.classList.toggle('hidden', !enabled);
+        slot.classList.toggle('opacity-60', false);
+        slot.querySelectorAll('input, textarea, select').forEach((field) => {
+            if (field.type === 'hidden') {
+                return;
+            }
+            if (field.type === 'checkbox' && field.name.endsWith('-DELETE')) {
+                field.disabled = !enabled;
+                return;
+            }
+            field.disabled = !enabled;
+        });
+        syncGalleryAddButton();
+    };
+
     gallerySlots.forEach((slot) => {
         const input = slot.querySelector('input[type="file"]');
         const preview = slot.querySelector('[data-image-preview]');
@@ -304,6 +439,7 @@
         });
 
         resetButton?.addEventListener('click', () => {
+            const isExisting = slot.querySelector('input[name$="-id"]')?.value;
             if (input) {
                 input.value = '';
             }
@@ -314,8 +450,24 @@
                 preview.classList.add('hidden');
                 emptyState.classList.remove('hidden');
             }
-            slot.classList.add('opacity-60');
+            if (caption) {
+                caption.value = '';
+            }
+            const primaryToggle = slot.querySelector('input[type="checkbox"][name$="-is_primary"]');
+            if (primaryToggle) {
+                primaryToggle.checked = false;
+            }
+            if (title) {
+                title.textContent = isExisting ? 'Existing gallery image' : 'New gallery image';
+            }
+            if (isExisting) {
+                slot.classList.add('opacity-60');
+            } else {
+                setSlotEnabledState(slot, false);
+            }
         });
+
+        setSlotEnabledState(slot, slot.dataset.slotVisible === 'true');
     });
 
     const addImageButton = document.querySelector('[data-add-image-slot]');
@@ -325,15 +477,15 @@
             if (!nextHidden) {
                 return;
             }
-            nextHidden.dataset.slotVisible = 'true';
-            nextHidden.classList.remove('hidden');
-            nextHidden.querySelector('input[type="file"]')?.focus();
-            if (!gallerySlots.find((slot) => slot.dataset.slotVisible !== 'true')) {
-                addImageButton.setAttribute('disabled', 'disabled');
-                addImageButton.classList.add('opacity-50', 'cursor-not-allowed');
+            const deleteToggle = nextHidden.querySelector('input[type="checkbox"][name$="-DELETE"]');
+            if (deleteToggle) {
+                deleteToggle.checked = false;
             }
+            setSlotEnabledState(nextHidden, true);
+            nextHidden.querySelector('input[type="file"]')?.focus();
         });
     }
+    syncGalleryAddButton();
 
     document.querySelectorAll('[data-profile-photo-preview]').forEach((wrapper) => {
         const input = wrapper.querySelector('input[type="file"]');
@@ -366,6 +518,52 @@
         const submitButton = getSubmitButton(bookingCalculator);
         const rate = Number(bookingCalculator.dataset.nightlyRate || 0);
         const unavailableRanges = JSON.parse(bookingCalculator.dataset.unavailableRanges || '[]');
+        const todayIso = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+
+        const normalizeBlockedRanges = () => unavailableRanges.map((range) => {
+            const start = new Date(range.check_in);
+            const end = new Date(range.check_out);
+            end.setDate(end.getDate() - 1);
+            return {
+                from: start,
+                to: end,
+            };
+        }).filter((range) => range.from <= range.to);
+
+        const blockedRanges = normalizeBlockedRanges();
+        let checkInPicker = null;
+        let checkOutPicker = null;
+
+        const dispatchInputUpdate = (input) => {
+            input?.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        if (typeof window.flatpickr !== 'undefined' && checkIn && checkOut) {
+            checkInPicker = window.flatpickr(checkIn, {
+                dateFormat: 'Y-m-d',
+                minDate: todayIso,
+                disable: blockedRanges,
+                onChange: (selectedDates, dateStr) => {
+                    if (checkOutPicker) {
+                        const nextMin = selectedDates[0] ? new Date(selectedDates[0].getTime() + 86400000) : todayIso;
+                        checkOutPicker.set('minDate', nextMin);
+                        if (checkOut.value && selectedDates[0] && new Date(checkOut.value) <= selectedDates[0]) {
+                            checkOutPicker.clear();
+                        }
+                    }
+                    dispatchInputUpdate(checkIn);
+                },
+            });
+
+            checkOutPicker = window.flatpickr(checkOut, {
+                dateFormat: 'Y-m-d',
+                minDate: todayIso,
+                disable: blockedRanges,
+                onChange: () => {
+                    dispatchInputUpdate(checkOut);
+                },
+            });
+        }
 
         const updateQuote = () => {
             const start = checkIn?.value ? new Date(checkIn.value) : null;
@@ -641,6 +839,7 @@
         const cityField = wrapper.querySelector('[data-location-city]');
         const stateField = wrapper.querySelector('[data-location-state]');
         const countryField = wrapper.querySelector('[data-location-country]');
+        const hostForm = wrapper.closest('form');
         let activeRequest = 0;
 
         const hideSuggestions = () => {
@@ -651,29 +850,41 @@
             suggestions.classList.add('hidden');
         };
 
-        const applySuggestion = (item) => {
-            const address = item.address || {};
+        const dispatchLocationUpdate = (payload) => {
+            hostForm?.dispatchEvent(new CustomEvent('baystays:location-updated', {
+                bubbles: true,
+                detail: payload,
+            }));
+        };
+
+        const applyLocationPayload = (payload) => {
             if (input) {
-                input.value = item.display_name || input.value;
+                input.value = payload.address || input.value;
             }
             if (addressField && addressField !== input) {
-                addressField.value = item.display_name || addressField.value;
+                addressField.value = payload.address || addressField.value;
             }
             if (cityField) {
-                cityField.value = address.city || address.town || address.village || address.municipality || cityField.value;
+                cityField.value = payload.city || '';
             }
             if (stateField) {
-                stateField.value = address.state || address.county || stateField.value;
+                stateField.value = payload.state || '';
             }
             if (countryField) {
-                countryField.value = address.country || countryField.value;
+                countryField.value = payload.country || '';
             }
             if (hiddenLat) {
-                hiddenLat.value = item.lat || '';
+                hiddenLat.value = payload.lat || '';
             }
             if (hiddenLng) {
-                hiddenLng.value = item.lon || '';
+                hiddenLng.value = payload.lng || '';
             }
+            dispatchLocationUpdate(payload);
+            hideSuggestions();
+        };
+
+        const applySuggestion = (item) => {
+            applyLocationPayload(getLocationPayload(item));
             hideSuggestions();
         };
 
@@ -730,9 +941,38 @@
             if (hiddenLng) {
                 hiddenLng.value = '';
             }
+            if (cityField) {
+                cityField.value = '';
+            }
+            if (stateField) {
+                stateField.value = '';
+            }
+            if (countryField) {
+                countryField.value = '';
+            }
+            dispatchLocationUpdate({
+                lat: '',
+                lng: '',
+                address: input.value || '',
+                city: '',
+                state: '',
+                country: '',
+            });
             fetchSuggestions();
         });
         input?.addEventListener('focus', fetchSuggestions);
+        [cityField, stateField, countryField].forEach((field) => {
+            field?.addEventListener('input', () => {
+                dispatchLocationUpdate({
+                    lat: hiddenLat?.value || '',
+                    lng: hiddenLng?.value || '',
+                    address: input?.value || addressField?.value || '',
+                    city: cityField?.value || '',
+                    state: stateField?.value || '',
+                    country: countryField?.value || '',
+                });
+            });
+        });
         document.addEventListener('click', (event) => {
             if (!wrapper.contains(event.target)) {
                 hideSuggestions();
@@ -817,11 +1057,166 @@
         node.dataset.mapReady = 'true';
     });
 
+    const initListingMaps = () => document.querySelectorAll('[data-listing-map]').forEach((node) => {
+        if (typeof window.L === 'undefined' || node.dataset.mapReady === 'true') {
+            return;
+        }
+
+        const form = node.closest('form');
+        const latInput = form?.querySelector('input[name="latitude"]');
+        const lngInput = form?.querySelector('input[name="longitude"]');
+        const addressInput = form?.querySelector('[data-location-address], input[name="address"]');
+        const cityInput = form?.querySelector('[data-location-city], input[name="city"]');
+        const stateInput = form?.querySelector('[data-location-state], input[name="state"]');
+        const countryInput = form?.querySelector('[data-location-country], input[name="country"]');
+        const summaryText = form?.querySelector('[data-location-summary-text]');
+
+        const initialLat = Number(latInput?.value || node.dataset.lat);
+        const initialLng = Number(lngInput?.value || node.dataset.lng);
+        const hasInitialCoordinates = Number.isFinite(initialLat) && Number.isFinite(initialLng);
+        const defaultCenter = [-0.0917, 34.768];
+        const map = window.L.map(node, {
+            zoomControl: false,
+            scrollWheelZoom: false,
+        }).setView(hasInitialCoordinates ? [initialLat, initialLng] : defaultCenter, hasInitialCoordinates ? 14 : 6);
+
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+        }).addTo(map);
+
+        const marker = window.L.circleMarker(hasInitialCoordinates ? [initialLat, initialLng] : [-0.0917, 34.768], {
+            radius: 10,
+            color: '#cf2338',
+            fillColor: '#f97316',
+            fillOpacity: 0.9,
+            weight: 3,
+        }).addTo(map);
+
+        const syncSummary = (detail = {}) => {
+            if (!summaryText) {
+                return;
+            }
+            const address = detail.address || addressInput?.value || node.dataset.address || '';
+            const city = detail.city || cityInput?.value || node.dataset.city || '';
+            const state = detail.state || stateInput?.value || '';
+            const country = detail.country || countryInput?.value || node.dataset.country || '';
+            const fragments = [address, city, state, country].filter(Boolean);
+            summaryText.textContent = fragments.length
+                ? fragments.join(', ')
+                : 'Search for an address or choose a suggestion to lock in the same style of location data guests browse with in Explore Stays.';
+        };
+
+        const syncMap = (detail = {}) => {
+            const lat = Number(detail.lat || latInput?.value || node.dataset.lat);
+            const lng = Number(detail.lng || lngInput?.value || node.dataset.lng);
+            syncSummary(detail);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                marker.setStyle({ opacity: 0, fillOpacity: 0 });
+                map.setView(defaultCenter, 6);
+                return;
+            }
+            marker.setStyle({ opacity: 1, fillOpacity: 0.9 });
+            marker.setLatLng([lat, lng]);
+            map.flyTo([lat, lng], 14, {
+                animate: false,
+            });
+        };
+
+        const reverseGeocode = debounce(async (lat, lng) => {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                const payload = await response.json();
+                if (!payload || !payload.address) {
+                    return;
+                }
+                const locationPayload = getLocationPayload({
+                    ...payload,
+                    lat,
+                    lon: lng,
+                });
+                if (!locationPayload.address && payload.display_name) {
+                    locationPayload.address = payload.display_name.split(',')[0] || '';
+                }
+                form?.dispatchEvent(new CustomEvent('baystays:apply-location', {
+                    bubbles: true,
+                    detail: locationPayload,
+                }));
+            } catch (error) {
+                // Let the map interaction stay responsive even if reverse geocoding fails.
+            }
+        }, 220);
+
+        form?.addEventListener('baystays:location-updated', (event) => {
+            syncMap(event.detail || {});
+        });
+
+        form?.addEventListener('baystays:apply-location', (event) => {
+            const detail = event.detail || {};
+            if (latInput) {
+                latInput.value = detail.lat || '';
+            }
+            if (lngInput) {
+                lngInput.value = detail.lng || '';
+            }
+            if (addressInput) {
+                addressInput.value = detail.address || '';
+            }
+            if (cityInput) {
+                cityInput.value = detail.city || '';
+            }
+            if (stateInput) {
+                stateInput.value = detail.state || '';
+            }
+            if (countryInput) {
+                countryInput.value = detail.country || '';
+            }
+            syncMap(detail);
+        });
+
+        map.on('click', (event) => {
+            const lat = event.latlng.lat.toFixed(6);
+            const lng = event.latlng.lng.toFixed(6);
+            if (latInput) {
+                latInput.value = lat;
+            }
+            if (lngInput) {
+                lngInput.value = lng;
+            }
+            syncMap({
+                lat,
+                lng,
+                address: addressInput?.value || '',
+                city: cityInput?.value || '',
+                state: stateInput?.value || '',
+                country: countryInput?.value || '',
+            });
+            reverseGeocode(lat, lng);
+        });
+
+        syncMap({
+            lat: latInput?.value || node.dataset.lat,
+            lng: lngInput?.value || node.dataset.lng,
+            address: addressInput?.value || node.dataset.address,
+            city: cityInput?.value || node.dataset.city,
+            state: stateInput?.value || '',
+            country: countryInput?.value || node.dataset.country,
+        });
+        window.setTimeout(() => map.invalidateSize(), 120);
+        node.dataset.mapReady = 'true';
+    });
+
     initPropertyMaps();
+    initListingMaps();
 
     window.addEventListener('pageshow', () => setLoader(false));
     window.addEventListener('load', () => {
         setLoader(false);
         initPropertyMaps();
+        initListingMaps();
     });
 })();

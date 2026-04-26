@@ -21,6 +21,7 @@ urlpatterns = [
     
     # Booking management
     path('bookings/', views.property_bookings, name='property_bookings'),
+    path('bookings/<int:booking_id>/<str:status>/', views.update_booking_status, name='update_booking_status'),
 
     # Default root URL
     path('', views.dashboard, name='home'),

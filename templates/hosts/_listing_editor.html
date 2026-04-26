@@ -1,0 +1,204 @@
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="panel p-6 lg:p-8 section-fade surface-tint">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+                <span class="badge badge-warm mb-3">Host studio</span>
+                <h1 class="font-display text-4xl font-semibold">{% if property %}Refine your stay{% else %}Create a BayStays listing{% endif %}</h1>
+                <p class="mt-3 text-slate-600 max-w-2xl">Build the listing with stronger hierarchy, image handling, guest-facing detail, and a map-backed location flow before you publish.</p>
+            </div>
+            <div class="panel px-4 py-4 min-w-[16rem]">
+                <p class="text-sm text-slate-500 uppercase tracking-[0.18em]">Publishing checklist</p>
+                <div class="mt-3 space-y-2 text-sm text-slate-600">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Name, story, and stay type</div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Location, map pin, and arrival detail</div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-600"></i>Gallery, captions, and cover image</div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-6" data-loading-form="true">
+            {% csrf_token %}
+
+            <div class="panel p-5">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-pen-ruler"></i></div>
+                    <div><h2 class="font-display text-2xl font-semibold">Listing identity</h2><p class="text-sm text-slate-500">Shape the first impression guests will see.</p></div>
+                </div>
+                <div class="grid gap-4 lg:grid-cols-2">
+                    <div class="lg:col-span-2"><label for="id_name">Stay name</label>{{ form.name }}{{ form.name.errors }}</div>
+                    <div><label for="id_property_type">Stay type</label>{{ form.property_type }}{{ form.property_type.errors }}</div>
+                    <div class="lg:col-span-2"><label for="id_description">Story and highlights</label>{{ form.description }}{{ form.description.errors }}</div>
+                </div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="h-11 w-11 rounded-[0.95rem] bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-location-crosshairs"></i></div>
+                    <div><h2 class="font-display text-2xl font-semibold">Location and timing</h2><p class="text-sm text-slate-500">Match the same place handling guests use in Explore Stays, then confirm the map pin.</p></div>
+                </div>
+                <div class="grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                    <div class="space-y-4">
+                        <div class="location-autocomplete" data-location-autocomplete>
+                            {{ form.latitude }}{{ form.longitude }}
+                            <label for="id_address">Address</label>
+                            <p class="mb-2 text-sm text-slate-500">Start typing for suggestions. Selecting a result or clicking the map will fill town, region, country, and the exact pin.</p>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-map-location-dot"></i></span>
+                                {{ form.address }}
+                            </div>
+                            <div class="location-suggestions hidden" data-location-suggestions></div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div><label for="id_city">Town or city</label>{{ form.city }}{{ form.city.errors }}</div>
+                            <div><label for="id_state">Region</label>{{ form.state }}{{ form.state.errors }}</div>
+                            <div><label for="id_country">Country</label>{{ form.country }}{{ form.country.errors }}</div>
+                            <div><label for="id_beds">Beds</label>{{ form.beds }}{{ form.beds.errors }}</div>
+                            <div><label for="id_sqft">Square feet</label>{{ form.sqft }}{{ form.sqft.errors }}</div>
+                            <div><label for="id_check_in_time">Check-in time</label>{{ form.check_in_time }}{{ form.check_in_time.errors }}</div>
+                            <div><label for="id_check_out_time">Check-out time</label>{{ form.check_out_time }}{{ form.check_out_time.errors }}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 listing-map-column">
+                        <div class="map-shell listing-map-shell">
+                            <div
+                                class="property-map listing-property-map"
+                                data-listing-map
+                                data-lat="{{ form.latitude.value|default_if_none:'' }}"
+                                data-lng="{{ form.longitude.value|default_if_none:'' }}"
+                                data-address="{{ form.address.value|default_if_none:'' }}"
+                                data-city="{{ form.city.value|default_if_none:'' }}"
+                                data-country="{{ form.country.value|default_if_none:'' }}"
+                            ></div>
+                        </div>
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600" data-location-summary>
+                            <p class="font-semibold text-slate-900">Map preview</p>
+                            <p class="mt-1" data-location-summary-text>Search for an address or choose a suggestion to lock in the same style of location data guests browse with in Explore Stays.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="h-11 w-11 rounded-[0.95rem] bg-amber-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                    <div><h2 class="font-display text-2xl font-semibold">Pricing and fit</h2><p class="text-sm text-slate-500">Clarify who the stay is for and how it is priced.</p></div>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div><label for="id_price_per_night">Nightly rate</label>{{ form.price_per_night }}{{ form.price_per_night.errors }}</div>
+                    <div><label for="id_max_guests">Guest capacity</label>{{ form.max_guests }}{{ form.max_guests.errors }}</div>
+                    <div><label for="id_bedrooms">Bedrooms</label>{{ form.bedrooms }}{{ form.bedrooms.errors }}</div>
+                    <div><label for="id_bathrooms">Bathrooms</label>{{ form.bathrooms }}{{ form.bathrooms.errors }}</div>
+                </div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-green-50 text-green-600 flex items-center justify-center"><i class="fa-solid fa-sparkles"></i></div>
+                        <div><h2 class="font-display text-2xl font-semibold">Amenities</h2><p class="text-sm text-slate-500">Choose the comforts guests will experience.</p></div>
+                    </div>
+                    <div class="badge badge-primary"><i class="fa-solid fa-sliders"></i>Filter-ready metadata</div>
+                </div>
+                <div class="check-grid amenity-row">{{ form.amenities }}</div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-images"></i></div>
+                        <div><h2 class="font-display text-2xl font-semibold">Gallery uploads</h2><p class="text-sm text-slate-500">Preview imagery before publish, manage primary images, and stage the gallery visually.</p></div>
+                    </div>
+                    <button type="button" class="btn-bay-ghost" data-add-image-slot><i class="fa-solid fa-plus"></i>Add image slot</button>
+                </div>
+                {% if image_formset.non_form_errors %}
+                    <div class="mb-4 rounded-[0.85rem] bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {{ image_formset.non_form_errors }}
+                    </div>
+                {% endif %}
+                {{ image_formset.management_form }}
+                <div class="grid gap-4 lg:grid-cols-2">
+                    {% for image_form in image_formset %}
+                        <div class="image-card p-4 {% if not image_form.instance.pk and not forloop.first %}hidden{% endif %}" data-image-slot data-slot-visible="{% if image_form.instance.pk or forloop.first %}true{% else %}false{% endif %}">
+                            <div class="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <p class="font-semibold" data-image-title>{% if image_form.instance.pk %}Existing gallery image{% else %}New gallery image{% endif %}</p>
+                                    <p class="text-sm text-slate-500">Cover, alternate angles, or detail shots.</p>
+                                </div>
+                                <button type="button" class="btn-icon" data-remove-image-slot aria-label="Remove image slot"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                            <div class="image-preview {% if not image_form.instance.pk %}hidden{% endif %}" data-image-preview>
+                                {% if image_form.instance.pk %}
+                                    <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.caption|default:property.name }}" data-image-preview-image>
+                                {% else %}
+                                    <img src="" alt="" data-image-preview-image>
+                                {% endif %}
+                            </div>
+                            <div class="image-dropzone p-5 text-center {% if image_form.instance.pk %}hidden{% endif %}" data-image-empty>
+                                <i class="fa-solid fa-camera-retro text-2xl text-red-500"></i>
+                                <p class="mt-3 font-semibold text-slate-700">Preview before publish</p>
+                                <p class="text-sm text-slate-500 mt-1">Upload a photo and BayStays will show it here instantly.</p>
+                            </div>
+                                <div class="mt-4 space-y-4">
+                                    {% if image_form.non_field_errors %}
+                                        <div class="rounded-[0.85rem] bg-red-50 px-4 py-3 text-sm text-red-700">
+                                            {{ image_form.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <label>Image file</label>
+                                        {{ image_form.image }}
+                                        {{ image_form.image.errors }}
+                                    </div>
+                                    <div>
+                                        <label>Caption</label>
+                                        {{ image_form.caption }}
+                                        {{ image_form.caption.errors }}
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.is_primary }} Primary image</label>
+                                        {% if image_form.instance.pk %}
+                                            <label class="flex items-center gap-2 rounded-[0.85rem] bg-slate-50 px-4 py-3 border border-slate-100">{{ image_form.DELETE }} Delete on save</label>
+                                        {% endif %}
+                                    </div>
+                                    {% for hidden in image_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="panel p-6">
+                    <span class="badge badge-primary mb-3">Host standards</span>
+                    <h2 class="font-display text-2xl font-semibold">What a strong listing needs</h2>
+                    <div class="mt-5 space-y-4 text-sm text-slate-600">
+                        <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Readable pricing</strong> guests should understand the nightly value instantly.</div></div>
+                        <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Useful imagery</strong> a cover image and 2-4 supporting angles make a huge difference.</div></div>
+                        <div class="flex gap-3"><i class="fa-solid fa-circle-check text-green-600 mt-1"></i><div><strong class="text-slate-900 block">Arrival confidence</strong> exact location detail and a map pin reduce booking hesitation.</div></div>
+                    </div>
+                </div>
+                <div class="panel p-6">
+                    <span class="badge badge-blue mb-3">Guest view</span>
+                    <h2 class="font-display text-2xl font-semibold">What this improves downstream</h2>
+                    <div class="mt-5 grid gap-3">
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-image text-red-500 mr-2"></i>Larger image browsing and lightbox viewing.</div>
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-location-dot text-blue-500 mr-2"></i>Sharper location context from search through booking.</div>
+                        <div class="rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i>Cleaner booking submissions with better guest notes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="inline-note rounded-[0.95rem] px-4 py-4 text-sm text-slate-600">
+                    <strong class="text-slate-900">Visibility note:</strong> guests now get clearer galleries, stronger trust signals, and smoother booking context from the details you set here.
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'hosts:dashboard' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-left"></i>Cancel</a>
+                    <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-floppy-disk"></i>{% if property %}Save changes{% else %}Publish stay{% endif %}</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving</span></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

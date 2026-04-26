@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% load cloudinary %}
 {% load property_extras %}
 {% block title %}{{ property.name }} | BayStays{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 {% endblock %}
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
@@ -16,18 +16,18 @@
                         {% for image in property.images.all|slice:':5' %}
                             <button
                                 type="button"
-                                class="gallery-thumb relative {% if forloop.first %}md:row-span-2{% endif %}"
+                                class="gallery-thumb relative {% if forloop.first %}md:row-span-2 gallery-thumb--feature{% endif %}"
                                 data-open-lightbox="property-lightbox"
+                                data-lightbox-index="{{ forloop.counter0 }}"
                                 data-image-src="{{ image.image.url }}"
                                 data-image-alt="{{ image.caption|default:property.name }}"
                                 data-image-caption="{{ image.caption|default:property.name }}"
                             >
-                                {% if forloop.first %}
-                                    {% cloudinary image.image class="h-[28rem] w-full object-cover" %}
-                                {% else %}
-                                    {% cloudinary image.image class="h-[13.75rem] w-full object-cover" %}
-                                {% endif %}
-                                <span class="absolute left-4 bottom-4 badge badge-dark bg-white/85 text-slate-900"><i class="fa-solid fa-expand"></i>Open</span>
+                                <span class="gallery-thumb__media {% if forloop.first %}gallery-thumb__media--feature{% endif %}">
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:property.name }}" class="gallery-thumb__image">
+                                </span>
+                                <span class="gallery-thumb__veil"></span>
+                                <span class="gallery-thumb__label"><i class="fa-solid fa-expand"></i>Open gallery</span>
                             </button>
                         {% endfor %}
                     </div>
@@ -320,10 +320,12 @@
                     <div>
                         <label for="{{ booking_form.check_in_date.id_for_label }}">Check-in</label>
                         {{ booking_form.check_in_date }}
+                        <p class="mt-2 text-xs text-slate-500">Blocked dates are shown directly in the calendar.</p>
                     </div>
                     <div>
                         <label for="{{ booking_form.check_out_date.id_for_label }}">Check-out</label>
                         {{ booking_form.check_out_date }}
+                        <p class="mt-2 text-xs text-slate-500">Select a departure date after your available check-in date.</p>
                     </div>
                     <div>
                         <label for="{{ booking_form.num_guests.id_for_label }}">Guests</label>
@@ -355,13 +357,37 @@
 <div id="property-lightbox" class="lightbox-shell fixed inset-0 z-[96]">
     <div class="absolute inset-0 bg-slate-950/80" data-close-lightbox></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="modal-panel max-w-5xl w-full">
-            <div class="flex justify-end mb-3">
-                <button type="button" class="btn-icon bg-white text-slate-900" data-close-lightbox aria-label="Close image viewer"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="rounded-[1rem] overflow-hidden bg-white shadow-2xl">
-                <img src="" alt="" data-lightbox-image class="w-full max-h-[78vh] object-cover">
-                <div class="px-5 py-4 text-slate-700" data-lightbox-caption></div>
+        <div class="modal-panel lightbox-panel max-w-5xl w-full">
+            <div class="lightbox-frame shadow-2xl">
+                <button type="button" class="lightbox-close" data-close-lightbox aria-label="Close image viewer"><i class="fa-solid fa-xmark"></i></button>
+                <figure class="lightbox-figure">
+                    <div class="lightbox-media">
+                        <button type="button" class="lightbox-nav lightbox-nav--prev" data-lightbox-prev aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+                        <img src="" alt="" data-lightbox-image class="lightbox-image">
+                        <button type="button" class="lightbox-nav lightbox-nav--next" data-lightbox-next aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <figcaption class="lightbox-caption" data-lightbox-caption></figcaption>
+                </figure>
+                <div class="lightbox-thumbs-shell">
+                    <div class="lightbox-thumbs" data-lightbox-thumbs>
+                        {% for image in property.images.all %}
+                            <button
+                                type="button"
+                                class="lightbox-thumb"
+                                data-lightbox-thumb
+                                data-lightbox-index="{{ forloop.counter0 }}"
+                                data-image-src="{{ image.image.url }}"
+                                data-image-alt="{{ image.caption|default:property.name }}"
+                                data-image-caption="{{ image.caption|default:property.name }}"
+                                aria-label="View image {{ forloop.counter }}"
+                            >
+                                <span class="lightbox-thumb__media">
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:property.name }}" class="lightbox-thumb__image">
+                                </span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -386,4 +412,5 @@
 {% endblock %}
 {% block extra_scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}

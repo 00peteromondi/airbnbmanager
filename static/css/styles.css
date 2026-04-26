@@ -34,6 +34,11 @@ body {
     min-height: 100vh;
 }
 
+html.lightbox-open,
+body.lightbox-open {
+    overflow: hidden;
+}
+
 body.auth-screen {
     background:
         linear-gradient(135deg, rgba(255, 232, 227, 0.98) 0%, rgba(255, 249, 245, 0.98) 42%, rgba(224, 244, 255, 0.95) 100%);
@@ -353,6 +358,8 @@ label {
     transition: transform 180ms ease;
     max-height: min(88vh, 56rem);
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }
 
 .modal-shell.is-open .modal-panel,
@@ -382,21 +389,44 @@ label {
     display: block;
 }
 
+.check-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+.check-grid > div,
+.check-grid > ul {
+    display: contents;
+}
+
+.check-grid li {
+    list-style: none;
+}
+
 .check-grid label {
     display: flex;
     align-items: center;
     gap: 0.7rem;
     border: 1px solid rgba(148, 163, 184, 0.18);
     border-radius: 0.7rem;
-    padding: 0.9rem 1rem;
+    padding: 0.82rem 1rem;
     background: rgba(255, 255, 255, 0.92);
     transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+    width: auto;
+    min-width: 11rem;
+    white-space: nowrap;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .check-grid label:hover {
     border-color: rgba(207, 35, 56, 0.2);
     background: rgba(255, 243, 241, 0.95);
     transform: translateY(-1px);
+}
+
+.check-grid input[type="checkbox"]:checked + * {
+    color: var(--bay-primary-strong);
 }
 
 .check-grid input[type="checkbox"] {
@@ -783,6 +813,23 @@ label {
     min-height: 20rem;
 }
 
+.listing-map-shell {
+    min-height: 100%;
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+}
+
+.listing-property-map {
+    min-height: 22rem;
+}
+
+.listing-map-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -839,13 +886,315 @@ label {
 }
 
 .gallery-thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: #0f172a;
+    isolation: isolate;
     cursor: pointer;
-    transition: transform 180ms ease, opacity 180ms ease;
+    transition: transform 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
 }
 
 .gallery-thumb:hover {
     transform: translateY(-2px);
-    opacity: 0.94;
+    opacity: 0.98;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
+.gallery-thumb__media {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+
+.gallery-thumb__media--feature {
+    aspect-ratio: 4 / 5;
+}
+
+.gallery-thumb__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transform: scale(1.01);
+    transition: transform 220ms ease;
+}
+
+.gallery-thumb:hover .gallery-thumb__image {
+    transform: scale(1.04);
+}
+
+.gallery-thumb__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.4));
+    pointer-events: none;
+}
+
+.gallery-thumb__label {
+    position: absolute;
+    left: 0.9rem;
+    bottom: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+.lightbox-panel {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    max-height: 100vh;
+    overflow: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.lightbox-panel::-webkit-scrollbar,
+.modal-panel::-webkit-scrollbar,
+body.lightbox-open::-webkit-scrollbar,
+html.lightbox-open::-webkit-scrollbar {
+    width: 5px;
+}
+
+.lightbox-panel::-webkit-scrollbar-track,
+.modal-panel::-webkit-scrollbar-track,
+body.lightbox-open::-webkit-scrollbar-track,
+html.lightbox-open::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lightbox-panel::-webkit-scrollbar-thumb,
+.modal-panel::-webkit-scrollbar-thumb,
+body.lightbox-open::-webkit-scrollbar-thumb,
+html.lightbox-open::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+}
+
+.lightbox-panel::-webkit-scrollbar-thumb:hover,
+.modal-panel::-webkit-scrollbar-thumb:hover,
+body.lightbox-open::-webkit-scrollbar-thumb:hover,
+html.lightbox-open::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.lightbox-frame {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(18px);
+    height: min(86vh, 52rem);
+    max-height: min(86vh, 52rem);
+    box-shadow: 0 32px 72px rgba(2, 6, 23, 0.48);
+}
+
+.lightbox-figure {
+    position: relative;
+    margin: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.lightbox-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 1.15rem 1.15rem 4.9rem;
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 34%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 1));
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(2, 6, 23, 0.72);
+    color: #ffffff;
+    box-shadow: 0 14px 28px rgba(2, 6, 23, 0.34);
+    backdrop-filter: blur(14px);
+    transform: translateY(-50%);
+    transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+.lightbox-nav:hover {
+    background: rgba(2, 6, 23, 0.86);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-nav:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.lightbox-nav--prev {
+    left: 0.95rem;
+}
+
+.lightbox-nav--next {
+    right: 0.95rem;
+}
+
+.lightbox-image {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+    border-radius: 0.6rem;
+    background: rgba(15, 23, 42, 0.5);
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.28);
+}
+
+.lightbox-caption {
+    position: absolute;
+    left: 1.15rem;
+    right: 1.15rem;
+    bottom: 1rem;
+    max-width: calc(100% - 2.3rem);
+    padding: 0.85rem 1rem;
+    border-radius: 0.78rem;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.1), rgba(2, 6, 23, 0.7) 16%, rgba(2, 6, 23, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    color: #ffffff;
+    font-size: 0.92rem;
+    line-height: 1.42;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-shadow: none;
+    box-shadow: 0 14px 34px rgba(2, 6, 23, 0.42);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.95);
+    color: #111827;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28);
+    backdrop-filter: blur(12px);
+    transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.lightbox-close:hover {
+    transform: translateY(-1px);
+    background: #ffffff;
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.lightbox-shell {
+    overflow: hidden;
+    overscroll-behavior: contain;
+    padding: 1rem;
+}
+
+.lightbox-thumbs-shell {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.98));
+    padding: 0.72rem 1rem 0.82rem;
+}
+
+.lightbox-thumbs {
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+    scroll-behavior: smooth;
+}
+
+.lightbox-thumbs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.lightbox-thumbs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lightbox-thumbs::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+}
+
+.lightbox-thumb {
+    flex: 0 0 5rem;
+    width: 5rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.62rem;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    opacity: 0.7;
+    transition: transform 180ms ease, border-color 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
+}
+
+.lightbox-thumb:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.lightbox-thumb.is-active {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45);
+}
+
+.lightbox-thumb__media {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+
+.lightbox-thumb__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .inline-note {
@@ -891,6 +1240,63 @@ label {
 table th,
 table td {
     vertical-align: top;
+}
+
+.flatpickr-calendar {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 0.9rem;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+    font-family: 'Manrope', sans-serif;
+}
+
+.flatpickr-months {
+    background: linear-gradient(135deg, #cf2338 0%, #f97316 100%);
+    border-radius: 0.9rem 0.9rem 0 0;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year,
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month,
+.flatpickr-weekdays,
+.flatpickr-weekday {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+.flatpickr-weekdays {
+    background: rgba(2, 6, 23, 0.92);
+}
+
+.flatpickr-day {
+    border-radius: 0.6rem;
+    max-width: 2.2rem;
+    height: 2.2rem;
+    line-height: 2.2rem;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background: #cf2338;
+    border-color: #cf2338;
+}
+
+.flatpickr-day.inRange {
+    background: rgba(207, 35, 56, 0.12);
+    border-color: rgba(207, 35, 56, 0.08);
+    box-shadow: none;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: rgba(100, 116, 139, 0.5);
+    text-decoration: line-through;
+    cursor: not-allowed;
 }
 
 @keyframes spin {
@@ -939,5 +1345,62 @@ table td {
 
     .rating-chip-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lightbox-frame,
+    .lightbox-media {
+        height: min(80vh, 38rem);
+        max-height: min(80vh, 38rem);
+    }
+
+    .lightbox-image {
+        height: 100%;
+        max-height: 100%;
+    }
+
+    .lightbox-caption {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        font-size: 0.84rem;
+        line-height: 1.35;
+        padding: 0.72rem 0.85rem;
+    }
+
+    .lightbox-close {
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 2.45rem;
+        height: 2.45rem;
+    }
+
+    .lightbox-nav {
+        width: 2.45rem;
+        height: 2.45rem;
+    }
+
+    .lightbox-nav--prev {
+        left: 0.9rem;
+    }
+
+    .lightbox-nav--next {
+        right: 0.9rem;
+    }
+
+    .lightbox-thumbs-shell {
+        padding: 0.62rem 0.72rem 0.72rem;
+    }
+
+    .lightbox-thumb {
+        flex-basis: 4.1rem;
+        width: 4.1rem;
+    }
+
+    .gallery-thumb__media {
+        aspect-ratio: 4 / 3;
+    }
+
+    .gallery-thumb__media--feature {
+        aspect-ratio: 4 / 3;
     }
 }

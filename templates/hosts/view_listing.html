@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% load cloudinary %}
 {% load property_extras %}
 {% block title %}{{ property.name }} | BayStays{% endblock %}
 {% block content %}
@@ -29,7 +28,7 @@
         <div class="space-y-6 section-fade">
             <div class="panel overflow-hidden">
                 {% if property.images.first %}
-                    {% cloudinary property.images.first.image class="h-[26rem] w-full object-cover" %}
+                    <img src="{{ property.images.first.image.url }}" alt="{{ property.name }}" class="h-[26rem] w-full object-cover">
                 {% else %}
                     <div class="h-[26rem] bg-gradient-to-br from-sky-200 to-amber-100 flex items-center justify-center text-5xl text-slate-500"><i class="fa-solid fa-house"></i></div>
                 {% endif %}
@@ -67,6 +66,22 @@
                                 <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
                             </div>
                             <p class="text-sm text-slate-600 mt-3">KES {{ booking.total_price|intcomma }}</p>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}?subject={{ property.name|urlencode }} on BayStays" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email guest</a>{% endif %}
+                                {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call guest</a>{% endif %}
+                                {% if booking.status == 'pending' %}
+                                    <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'confirmed' %}" data-loading-form="true">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{% url 'hosts:view_listing' property.id %}">
+                                        <button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-check"></i>Approve</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Approving</span></button>
+                                    </form>
+                                    <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{% url 'hosts:view_listing' property.id %}">
+                                        <button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-xmark"></i>Decline</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Declining</span></button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </div>
                     {% empty %}
                         <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
@@ -82,6 +97,27 @@
         </div>
 
         <div class="space-y-6 section-fade">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-orange mb-3">Pending requests</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Approvals still open on this listing</h2>
+                <div class="space-y-3">
+                    {% for booking in pending_requests %}
+                        <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4 border border-slate-100">
+                            <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                            <p class="text-sm text-slate-500 mt-1">{{ booking.check_in_date }} to {{ booking.check_out_date }} · {{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No pending approvals here</p>
+                                <p class="text-sm text-slate-500 mt-1">This listing has no open booking requests waiting for a host decision right now.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div class="panel p-6 lg:p-8">
                 <span class="badge badge-warm mb-3">Performance snapshot</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">How this listing is performing</h2>

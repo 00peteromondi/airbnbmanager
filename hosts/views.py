@@ -13,6 +13,7 @@ from bookings.models import Booking
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, Avg, Q
+from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from hosts.models import Host
@@ -85,6 +86,10 @@ def dashboard(request):
         check_in_date__lte=next_week,
     ).order_by('check_in_date')[:6]
     recent_bookings = bookings.order_by('-created_at')[:6]
+    pending_requests = bookings.filter(status='pending').order_by('check_in_date', '-created_at')[:5]
+    active_guest_contacts = bookings.filter(
+        status__in=['pending', 'confirmed', 'checked_in'],
+    ).select_related('guest', 'property').order_by('check_in_date')[:6]
     active_properties = properties.filter(is_active=True).count()
     paused_properties = properties.filter(is_active=False).count()
     avg_listing_rating = properties.aggregate(avg=Avg('average_rating'))['avg'] or 0
@@ -142,29 +147,37 @@ def dashboard(request):
         'revenue': revenue,
         'avg_listing_rating': avg_listing_rating,
         'recent_bookings': recent_bookings,
+        'pending_requests': pending_requests,
+        'active_guest_contacts': active_guest_contacts,
         'upcoming_arrivals': upcoming_arrivals,
     }
     return render(request, 'hosts/dashboard.html', context)
 
 @login_required
 def add_listing(request):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
     if request.method == 'POST':
         form = PropertyForm(request.POST)
         if form.is_valid():
             property = form.save(commit=False)
             property.owner = request.user
-            property.save()
-
-            # Handle image uploads (use prefix 'images' so JS matches the management_form ids)
-            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
-            if image_formset.is_valid():
-                image_formset.save()
-                messages.success(request, 'Property listed successfully with images!')
-                return redirect('hosts:dashboard')
-            else:
-                # If image formset is invalid, delete the property and show error
-                property.delete()
-                messages.error(request, 'Error uploading images. Please try again.')
+            try:
+                with transaction.atomic():
+                    property.save()
+                    image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+                    if image_formset.is_valid():
+                        image_formset.save()
+                        messages.success(request, 'Property listed successfully with images!')
+                        return redirect('hosts:dashboard')
+                    property.delete()
+                    messages.error(request, 'Please correct the image upload errors below.')
+            except Exception as exc:
+                if property.pk:
+                    property.delete()
+                image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+                messages.error(request, f'Image upload failed: {exc}')
         else:
             # Ensure image_formset exists so the template can render it with form errors
             # We don't have a saved Property instance in this branch, so provide an empty formset
@@ -182,20 +195,30 @@ def add_listing(request):
 
 @login_required
 def edit_listing(request, property_id):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
     property = get_object_or_404(Property, id=property_id, owner=request.user)
     
     if request.method == 'POST':
         form = PropertyForm(request.POST, instance=property)
         if form.is_valid():
-            form.save()
+            try:
+                with transaction.atomic():
+                    form.save()
 
-            # Handle image uploads
-            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
-            if image_formset.is_valid():
-                image_formset.save()
-                messages.success(request, 'Property updated successfully!')
-                return redirect('hosts:view_listing', property_id=property.id)
+                    # Handle image uploads
+                    image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+                    if image_formset.is_valid():
+                        image_formset.save()
+                        messages.success(request, 'Property updated successfully!')
+                        return redirect('hosts:view_listing', property_id=property.id)
+                    messages.error(request, 'Please correct the image upload errors below.')
+            except Exception as exc:
+                image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
+                messages.error(request, f'Image upload failed: {exc}')
         else:
+            image_formset = PropertyImageFormSet(request.POST, request.FILES, instance=property, prefix='images')
             messages.error(request, 'Please correct the errors below.')
     else:
         form = PropertyForm(instance=property)
@@ -210,6 +233,9 @@ def edit_listing(request, property_id):
 
 @login_required
 def view_listing(request, property_id):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
     property = get_object_or_404(Property, id=property_id, owner=request.user)
     bookings = Booking.objects.filter(property=property).select_related('guest').order_by('-created_at')
     today = timezone.now().date()
@@ -225,11 +251,15 @@ def view_listing(request, property_id):
         'property': property,
         'bookings': bookings[:8],
         'listing_stats': listing_stats,
+        'pending_requests': bookings.filter(status='pending')[:4],
     }
     return render(request, 'hosts/view_listing.html', context)
 
 @login_required
 def delete_listing(request, property_id):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
     property = get_object_or_404(Property, id=property_id, owner=request.user)
     
     if request.method == 'POST':
@@ -295,6 +325,34 @@ def property_bookings(request):
         'upcoming_arrivals': bookings.filter(status__in=['pending', 'confirmed'], check_in_date__gte=today).order_by('check_in_date')[:6],
     }
     return render(request, 'hosts/owner_bookings.html', context)
+
+
+@login_required
+def update_booking_status(request, booking_id, status):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
+    booking = get_object_or_404(Booking, id=booking_id, property__owner=request.user)
+    if request.method == 'POST':
+        valid_statuses = ['pending', 'confirmed', 'cancelled', 'checked_in', 'checked_out', 'completed']
+        next_url = request.POST.get('next')
+        if status in valid_statuses:
+            booking.status = status
+            booking.save(update_fields=['status', 'updated_at'])
+            status_labels = {
+                'pending': 'moved back to pending review',
+                'confirmed': 'confirmed',
+                'cancelled': 'cancelled',
+                'checked_in': 'marked as checked in',
+                'checked_out': 'marked as checked out',
+                'completed': 'marked as completed',
+            }
+            messages.success(request, f"{booking.guest.get_display_name()}'s booking for {booking.property.name} was {status_labels.get(status, status)}.")
+        else:
+            messages.error(request, 'Invalid booking status action.')
+        if next_url:
+            return redirect(next_url)
+    return redirect('hosts:property_bookings')
 
 
 @login_required

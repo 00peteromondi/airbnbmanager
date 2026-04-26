@@ -6,7 +6,9 @@ import urllib.request
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Avg, Sum
 from django.http import JsonResponse
@@ -136,15 +138,26 @@ def profile(request):
         if form_scope == 'preferences':
             details_form = ProfileDetailsForm(instance=request.user)
             preferences_form = ProfilePreferencesForm(request.POST, instance=profile_obj)
+            password_form = PasswordChangeForm(request.user)
             if preferences_form.is_valid():
                 preferences_form.save()
                 messages.success(request, 'Your BayStays preferences have been updated.')
+                return redirect('users:profile')
+        elif form_scope == 'password':
+            details_form = ProfileDetailsForm(instance=request.user)
+            preferences_form = ProfilePreferencesForm(instance=profile_obj)
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Your BayStays password has been changed successfully.')
                 return redirect('users:profile')
         else:
             previous_email = request.user.email
             previous_phone = request.user.phone_number
             details_form = ProfileDetailsForm(request.POST, request.FILES, instance=request.user)
             preferences_form = ProfilePreferencesForm(instance=profile_obj)
+            password_form = PasswordChangeForm(request.user)
             if details_form.is_valid():
                 user = details_form.save(commit=False)
                 if previous_email.strip().lower() != (user.email or '').strip().lower():
@@ -158,6 +171,7 @@ def profile(request):
     else:
         details_form = ProfileDetailsForm(instance=request.user)
         preferences_form = ProfilePreferencesForm(instance=profile_obj)
+        password_form = PasswordChangeForm(request.user)
 
     guest_bookings = Booking.objects.filter(guest=request.user).exclude(status='cancelled')
     host_properties = Property.objects.filter(owner=request.user)
@@ -167,6 +181,7 @@ def profile(request):
     context = {
         'details_form': details_form,
         'preferences_form': preferences_form,
+        'password_form': password_form,
         'guest_stats': {
             'total_bookings': guest_bookings.count(),
             'upcoming_trips': guest_bookings.filter(status__in=['pending', 'confirmed']).count(),

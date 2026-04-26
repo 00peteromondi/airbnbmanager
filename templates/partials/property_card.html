@@ -1,10 +1,9 @@
-{% load cloudinary %}
 {% load property_extras %}
 {% load humanize %}
 <article class="panel panel-hover overflow-hidden h-full flex flex-col">
     <div class="relative">
         {% if property.images.first %}
-            {% cloudinary property.images.first.image class="h-64 w-full object-cover" %}
+            <img src="{{ property.images.first.image.url }}" alt="{{ property.name }}" class="h-64 w-full object-cover">
         {% else %}
             <div class="h-64 w-full bg-gradient-to-br from-sky-200 via-cyan-100 to-amber-100 flex items-center justify-center text-slate-500 text-4xl">
                 <i class="fa-solid fa-house"></i>

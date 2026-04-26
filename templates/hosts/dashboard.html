@@ -105,6 +105,49 @@
 
         <div class="space-y-6">
             <div class="panel p-6 lg:p-8 section-fade">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-primary mb-3">Pending approvals</span>
+                        <h2 class="font-display text-2xl font-semibold">Requests waiting on your decision</h2>
+                    </div>
+                    <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open queue</a>
+                </div>
+                <div class="space-y-3">
+                    {% for booking in pending_requests %}
+                        <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                            <div class="flex items-start justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
+                                </div>
+                                <span class="badge badge-warning"><i class="fa-solid fa-hourglass-half"></i>Pending</span>
+                            </div>
+                            <div class="mt-4 flex flex-wrap gap-3">
+                                <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'confirmed' %}" data-loading-form="true">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                                    <button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-check"></i>Approve</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Approving</span></button>
+                                </form>
+                                <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                                    <button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-xmark"></i>Decline</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Declining</span></button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No requests are waiting right now</p>
+                                <p class="text-sm text-slate-500 mt-1">Fresh booking requests will appear here so you can approve them quickly from the hub.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8 section-fade">
                 <span class="badge badge-orange mb-3">Action queue</span>
                 <h2 class="font-display text-2xl font-semibold">What needs your attention next</h2>
                 <div class="mt-5 space-y-3">
@@ -133,6 +176,10 @@
                         <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
                             <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
                             <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.check_in_date }} · {{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</p>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email guest</a>{% endif %}
+                                {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call guest</a>{% endif %}
+                            </div>
                         </div>
                     {% empty %}
                         <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
@@ -140,6 +187,37 @@
                                 <i class="fa-solid fa-calendar-day text-2xl text-blue-500"></i>
                                 <p class="mt-3 font-semibold text-slate-800">No arrivals in the next 7 days</p>
                                 <p class="text-sm text-slate-500 mt-1">New guest arrivals will show up here as bookings move closer.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8 section-fade">
+                <span class="badge badge-blue mb-3">Guest communication</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Reach the next guests quickly</h2>
+                <div class="space-y-3">
+                    {% for booking in active_guest_contacts %}
+                        <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.status|title }}</p>
+                                </div>
+                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}?subject={{ booking.property.name|urlencode }} on BayStays" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email</a>{% endif %}
+                                {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call</a>{% endif %}
+                                <a href="{% url 'hosts:view_listing' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>Open listing</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-comments text-2xl text-blue-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No active guest threads to handle</p>
+                                <p class="text-sm text-slate-500 mt-1">As requests and stays move forward, your next guest touchpoints will show up here.</p>
                             </div>
                         </div>
                     {% endfor %}

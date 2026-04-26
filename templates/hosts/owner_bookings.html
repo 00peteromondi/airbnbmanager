@@ -48,17 +48,37 @@
                                 <div class="text-sm text-slate-500">
                                     <i class="fa-solid fa-location-dot mr-2 text-blue-500"></i>{{ booking.property.city }}, {{ booking.property.country }}
                                 </div>
+                                <div class="flex flex-wrap gap-3">
+                                    {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}?subject={{ booking.property.name|urlencode }} on BayStays" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email guest</a>{% endif %}
+                                    {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call guest</a>{% endif %}
+                                    <a href="{% url 'hosts:view_listing' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-house"></i>Open listing</a>
+                                </div>
                             </div>
-                            {% if booking.status == 'pending' %}
-                                <div class="flex gap-3 flex-wrap">
-                                    <form method="post" action="{% url 'bookings:update_booking_status' booking.id 'confirmed' %}" data-loading-form="true">{% csrf_token %}<button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-check"></i>Confirm</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Confirming</span></button></form>
-                                    <form method="post" action="{% url 'bookings:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">{% csrf_token %}<button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-xmark"></i>Decline</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Declining</span></button></form>
-                                </div>
-                            {% else %}
-                                <div class="rounded-[0.7rem] bg-white px-4 py-4 text-sm text-slate-500 min-w-[14rem]">
-                                    <i class="fa-solid fa-bell-concierge mr-2 text-orange-500"></i>Booking actions complete for this status.
-                                </div>
-                            {% endif %}
+                            <div class="space-y-3 min-w-[16rem]">
+                                {% if booking.status == 'pending' %}
+                                    <div class="flex gap-3 flex-wrap">
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'confirmed' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-check"></i>Approve</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Approving</span></button></form>
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-xmark"></i>Decline</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Declining</span></button></form>
+                                    </div>
+                                {% elif booking.status == 'confirmed' %}
+                                    <div class="flex gap-3 flex-wrap">
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'checked_in' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-door-open"></i>Check in</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Updating</span></button></form>
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-ban"></i>Cancel</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Updating</span></button></form>
+                                    </div>
+                                {% elif booking.status == 'checked_in' %}
+                                    <div class="flex gap-3 flex-wrap">
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'checked_out' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-door-closed"></i>Check out</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Updating</span></button></form>
+                                    </div>
+                                {% elif booking.status == 'checked_out' %}
+                                    <div class="flex gap-3 flex-wrap">
+                                        <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'completed' %}" data-loading-form="true">{% csrf_token %}<input type="hidden" name="next" value="{% url 'hosts:property_bookings' %}"><button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-flag-checkered"></i>Complete stay</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Completing</span></button></form>
+                                    </div>
+                                {% else %}
+                                    <div class="rounded-[0.7rem] bg-white px-4 py-4 text-sm text-slate-500">
+                                        <i class="fa-solid fa-bell-concierge mr-2 text-orange-500"></i>Operational actions are complete for this reservation.
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 {% empty %}
