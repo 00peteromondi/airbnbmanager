@@ -9,6 +9,10 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
     and handle role-based redirects
     """
     
+    PUBLIC_ENDPOINT_PREFIXES = [
+        '/bookings/payments/mpesa/callback/',
+    ]
+
     # Pages that should ONLY be accessible to logged-out users
     AUTH_PAGES = [
         '/guests/login/',
@@ -38,7 +42,8 @@ class AuthenticationGuardMiddleware(MiddlewareMixin):
         # Skip for static files and admin
         if (request.path.startswith('/static/') or 
             request.path.startswith('/media/') or 
-            request.path.startswith('/admin/')):
+            request.path.startswith('/admin/') or
+            any(request.path.startswith(prefix) for prefix in self.PUBLIC_ENDPOINT_PREFIXES)):
             return None
 
         # Check if user is authenticated

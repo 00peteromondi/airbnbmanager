@@ -5,8 +5,7 @@ import urllib.request
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.mail import EmailMultiAlternatives
@@ -15,12 +14,15 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from bookings.models import Booking
+from bookings.forms import WithdrawalRequestForm
+from bookings.models import Booking, BookingPayment, HostWithdrawal
 from hosts.models import Host
 from properties.models import Property
 
 from .forms import (
     CustomUserCreationForm,
+    GovernmentIdForm,
+    HostFinancialDetailsForm,
     ProfileDetailsForm,
     ProfilePreferencesForm,
     RoleSelectionForm,
@@ -130,34 +132,61 @@ def _verify_code(user, channel, raw_code):
     ).order_by('-created_at').first()
 
 
+def _coalesce_decimal(value):
+    return value or 0
+
+
+def _style_password_form(form):
+    for field in form.fields.values():
+        field.widget.attrs['class'] = 'input-shell'
+    return form
+
+
 @login_required
 def profile(request):
     profile_obj = request.user.profile
+    host_profile = Host.objects.get_or_create(user=request.user)[0] if request.user.role in ['host', 'both'] else Host.objects.filter(user=request.user).first()
+
     if request.method == 'POST':
         form_scope = request.POST.get('form_scope')
+        details_form = ProfileDetailsForm(instance=request.user)
+        preferences_form = ProfilePreferencesForm(instance=profile_obj)
+        password_form = _style_password_form(PasswordChangeForm(request.user))
+        government_id_form = GovernmentIdForm(instance=request.user)
+        host_financial_form = HostFinancialDetailsForm(instance=host_profile) if host_profile else None
+
         if form_scope == 'preferences':
-            details_form = ProfileDetailsForm(instance=request.user)
             preferences_form = ProfilePreferencesForm(request.POST, instance=profile_obj)
-            password_form = PasswordChangeForm(request.user)
             if preferences_form.is_valid():
                 preferences_form.save()
                 messages.success(request, 'Your BayStays preferences have been updated.')
                 return redirect('users:profile')
         elif form_scope == 'password':
-            details_form = ProfileDetailsForm(instance=request.user)
-            preferences_form = ProfilePreferencesForm(instance=profile_obj)
-            password_form = PasswordChangeForm(request.user, request.POST)
+            password_form = _style_password_form(PasswordChangeForm(request.user, request.POST))
             if password_form.is_valid():
                 user = password_form.save()
                 update_session_auth_hash(request, user)
                 messages.success(request, 'Your BayStays password has been changed successfully.')
                 return redirect('users:profile')
+        elif form_scope == 'government_id':
+            government_id_form = GovernmentIdForm(request.POST, request.FILES, instance=request.user)
+            if government_id_form.is_valid():
+                user = government_id_form.save(commit=False)
+                if user.government_id_document:
+                    user.government_id_status = 'pending'
+                user.save()
+                messages.success(request, 'Your government ID has been uploaded for verification review.')
+                return redirect('users:profile')
+        elif form_scope == 'host_finance' and host_profile:
+            host_financial_form = HostFinancialDetailsForm(request.POST, request.FILES, instance=host_profile)
+            if host_financial_form.is_valid():
+                host_financial_form.save()
+                messages.success(request, 'Your host tax and payout details have been saved.')
+                return redirect('users:profile')
         else:
             previous_email = request.user.email
             previous_phone = request.user.phone_number
             details_form = ProfileDetailsForm(request.POST, request.FILES, instance=request.user)
-            preferences_form = ProfilePreferencesForm(instance=profile_obj)
-            password_form = PasswordChangeForm(request.user)
             if details_form.is_valid():
                 user = details_form.save(commit=False)
                 if previous_email.strip().lower() != (user.email or '').strip().lower():
@@ -165,39 +194,63 @@ def profile(request):
                 if (previous_phone or '').strip() != (user.phone_number or '').strip():
                     user.phone_verified = False
                 user.save()
+                if host_profile:
+                    host_profile.save()
                 messages.success(request, 'Your BayStays profile has been updated.')
                 return redirect('users:profile')
         messages.error(request, 'Please correct the highlighted profile details and try again.')
     else:
         details_form = ProfileDetailsForm(instance=request.user)
         preferences_form = ProfilePreferencesForm(instance=profile_obj)
-        password_form = PasswordChangeForm(request.user)
+        password_form = _style_password_form(PasswordChangeForm(request.user))
+        government_id_form = GovernmentIdForm(instance=request.user)
+        host_financial_form = HostFinancialDetailsForm(instance=host_profile) if host_profile else None
 
     guest_bookings = Booking.objects.filter(guest=request.user).exclude(status='cancelled')
+    guest_payments = BookingPayment.objects.filter(guest=request.user).select_related('booking', 'booking__property', 'host')
     host_properties = Property.objects.filter(owner=request.user)
     host_bookings = Booking.objects.filter(property__owner=request.user)
-    host_profile = Host.objects.filter(user=request.user).first()
+    host_payments = BookingPayment.objects.filter(host=request.user).select_related('booking', 'guest', 'booking__property')
+    host_withdrawals = HostWithdrawal.objects.filter(host=request.user)
 
     context = {
         'details_form': details_form,
         'preferences_form': preferences_form,
         'password_form': password_form,
+        'government_id_form': government_id_form,
+        'host_financial_form': host_financial_form,
+        'withdrawal_form': WithdrawalRequestForm(initial={
+            'mpesa_phone_number': host_profile.mpesa_phone_number if host_profile else request.user.phone_number or '',
+        }) if host_profile else None,
         'guest_stats': {
             'total_bookings': guest_bookings.count(),
-            'upcoming_trips': guest_bookings.filter(status__in=['pending', 'confirmed']).count(),
+            'upcoming_trips': guest_bookings.filter(status__in=['pending', 'confirmed', 'checked_in']).count(),
             'completed_trips': guest_bookings.filter(status__in=['completed', 'checked_out']).count(),
-            'spend': guest_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+            'spend': _coalesce_decimal(guest_payments.filter(status='paid').aggregate(total=Sum('amount'))['total']),
+        },
+        'guest_payment_stats': {
+            'total_paid': _coalesce_decimal(guest_payments.filter(status='paid').aggregate(total=Sum('amount'))['total']),
+            'pending_payments': guest_payments.filter(status__in=['pending', 'initiated']).count(),
+            'failed_payments': guest_payments.filter(status='failed').count(),
         },
         'host_stats': {
             'total_properties': host_properties.count(),
             'live_properties': host_properties.filter(is_active=True).count(),
             'total_bookings': host_bookings.count(),
-            'revenue': host_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+            'revenue': _coalesce_decimal(host_bookings.filter(status__in=Booking.REVENUE_ACTIVE_STATUSES).aggregate(total=Sum('total_price'))['total']),
             'avg_rating': host_properties.aggregate(avg=Avg('average_rating'))['avg'] or 0,
+        },
+        'host_finance_stats': {
+            'payments_received': _coalesce_decimal(host_payments.filter(status='paid').aggregate(total=Sum('amount'))['total']),
+            'withdrawn_total': _coalesce_decimal(host_withdrawals.filter(status='paid').aggregate(total=Sum('amount'))['total']),
+            'pending_withdrawals': _coalesce_decimal(host_withdrawals.filter(status__in=['requested', 'processing']).aggregate(total=Sum('amount'))['total']),
         },
         'host_profile': host_profile,
         'recent_guest_bookings': guest_bookings.select_related('property').order_by('-created_at')[:4],
         'recent_host_bookings': host_bookings.select_related('property', 'guest').order_by('-created_at')[:4],
+        'recent_guest_payments': guest_payments[:5],
+        'recent_host_payments': host_payments[:5],
+        'recent_withdrawals': host_withdrawals[:5],
         'email_verification_pending': VerificationCode.objects.filter(
             user=request.user,
             channel='email',
@@ -298,9 +351,6 @@ def verify_phone_code(request):
 
 @login_required
 def role_selection(request):
-    """
-    View for new users to select their role (Host, Guest, or Both)
-    """
     if request.user.role:
         return redirect(get_redirect_url(request.user))
 

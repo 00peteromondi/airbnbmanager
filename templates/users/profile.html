@@ -19,6 +19,7 @@
                             <span class="badge badge-dark"><i class="fa-solid fa-user-tag"></i>{{ user.get_role_display }}</span>
                             <span class="badge {% if user.email_verified %}badge-success{% else %}badge-warning{% endif %}"><i class="fa-solid fa-envelope-circle-check"></i>{% if user.email_verified %}Email verified{% else %}Email pending{% endif %}</span>
                             <span class="badge {% if user.phone_verified %}badge-success{% else %}badge-warning{% endif %}"><i class="fa-solid fa-mobile-screen-button"></i>{% if user.phone_verified %}Phone verified{% else %}Phone pending{% endif %}</span>
+                            <span class="badge {% if user.government_id_status == 'verified' %}badge-success{% elif user.government_id_status == 'pending' %}badge-blue{% elif user.government_id_status == 'rejected' %}badge-warning{% else %}badge-dark{% endif %}"><i class="fa-solid fa-id-card"></i>{{ user.get_government_id_status_display }}</span>
                         </div>
                     </div>
                 </div>
@@ -36,6 +37,7 @@
                 <div class="space-y-3 mb-5">
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Email verification</span><span class="badge {% if user.email_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.email_verified %}Ready{% else %}Needs action{% endif %}</span></div>
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Phone verification</span><span class="badge {% if user.phone_verified %}badge-success{% else %}badge-warning{% endif %}">{% if user.phone_verified %}Ready{% else %}Needs action{% endif %}</span></div>
+                    <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Government ID</span><span class="badge {% if user.government_id_status == 'verified' %}badge-success{% elif user.government_id_status == 'pending' %}badge-blue{% else %}badge-warning{% endif %}">{{ user.get_government_id_status_display }}</span></div>
                     <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]"><span>Public profile</span><span class="badge {% if user.profile.profile_public %}badge-success{% else %}badge-warning{% endif %}">{% if user.profile.profile_public %}Visible{% else %}Private{% endif %}</span></div>
                 </div>
                 <div class="space-y-4">
@@ -112,6 +114,8 @@
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Upcoming</p><p class="font-display text-3xl font-semibold mt-2">{{ guest_stats.upcoming_trips }}</p></div>
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Completed</p><p class="font-display text-3xl font-semibold mt-2">{{ guest_stats.completed_trips }}</p></div>
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Spend</p><p class="font-display text-3xl font-semibold mt-2">KES {{ guest_stats.spend|intcomma }}</p></div>
+                        <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Payments settled</p><p class="font-display text-3xl font-semibold mt-2">{{ guest_payment_stats.total_paid|intcomma }}</p></div>
+                        <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Pending payments</p><p class="font-display text-3xl font-semibold mt-2">{{ guest_payment_stats.pending_payments }}</p></div>
                     </div>
                 </div>
             {% endif %}
@@ -125,6 +129,8 @@
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Live</p><p class="font-display text-3xl font-semibold mt-2">{{ host_stats.live_properties }}</p></div>
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Bookings</p><p class="font-display text-3xl font-semibold mt-2">{{ host_stats.total_bookings }}</p></div>
                         <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Revenue</p><p class="font-display text-3xl font-semibold mt-2">KES {{ host_stats.revenue|intcomma }}</p></div>
+                        <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Payments received</p><p class="font-display text-3xl font-semibold mt-2">KES {{ host_finance_stats.payments_received|intcomma }}</p></div>
+                        <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]"><p class="text-sm text-slate-500">Withdrawn</p><p class="font-display text-3xl font-semibold mt-2">KES {{ host_finance_stats.withdrawn_total|intcomma }}</p></div>
                     </div>
                     {% if host_profile %}
                         <div class="mt-4 bg-slate-50 px-4 py-4 rounded-[0.7rem] text-sm text-slate-600">
@@ -208,6 +214,92 @@
                 </form>
             </div>
 
+            <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 240ms;">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-primary mb-3">Government ID</span>
+                        <h2 class="font-display text-3xl font-semibold">Identity verification</h2>
+                        <p class="text-sm text-slate-500 mt-2">Upload the document BayStays should use for trust checks, host verification, and faster support resolution.</p>
+                    </div>
+                    <span class="badge {% if user.government_id_status == 'verified' %}badge-success{% elif user.government_id_status == 'pending' %}badge-blue{% else %}badge-warning{% endif %}">
+                        <i class="fa-solid fa-id-card"></i>{{ user.get_government_id_status_display }}
+                    </span>
+                </div>
+                <form method="post" enctype="multipart/form-data" class="space-y-6" data-loading-form="true">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_scope" value="government_id">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div><label for="{{ government_id_form.government_id_type.id_for_label }}">Document type</label>{{ government_id_form.government_id_type }}</div>
+                        <div><label for="{{ government_id_form.government_id_number.id_for_label }}">Document number</label>{{ government_id_form.government_id_number }}</div>
+                        <div class="md:col-span-2">
+                            <label for="{{ government_id_form.government_id_document.id_for_label }}">Document upload</label>
+                            <div class="mt-3 rounded-[0.7rem] border border-slate-200 bg-slate-50 p-4">
+                                {{ government_id_form.government_id_document }}
+                                <p class="mt-3 text-sm text-slate-500">Use a clear scan or photo of the document front. The uploaded file is stored securely for verification review.</p>
+                                {% if user.government_id_document %}
+                                    <a href="{{ user.government_id_document.url }}" target="_blank" rel="noopener" class="mt-3 inline-flex text-sm font-semibold text-red-600">Open current document</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-bay"><span data-submit-text><i class="fa-solid fa-cloud-arrow-up"></i>Upload ID</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Uploading</span></button>
+                </form>
+            </div>
+
+            {% if user.role == 'host' or user.role == 'both' %}
+                <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 280ms;">
+                    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                        <div>
+                            <span class="badge badge-orange mb-3">Host finance and tax</span>
+                            <h2 class="font-display text-3xl font-semibold">Payout and compliance setup</h2>
+                            <p class="text-sm text-slate-500 mt-2">Keep your host identity, tax details, and M-Pesa payout profile ready so withdrawals and reporting do not stall.</p>
+                        </div>
+                        {% if host_profile %}
+                            <span class="badge {% if host_profile.fully_verified %}badge-success{% else %}badge-warning{% endif %}"><i class="fa-solid fa-shield-halved"></i>{{ host_profile.completion_percentage }}% complete</span>
+                        {% endif %}
+                    </div>
+                    <form method="post" enctype="multipart/form-data" class="space-y-6" data-loading-form="true">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_scope" value="host_finance">
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div><label for="{{ host_financial_form.company_name.id_for_label }}">Company or host business name</label>{{ host_financial_form.company_name }}</div>
+                            <div><label for="{{ host_financial_form.tax_id.id_for_label }}">Tax ID / PIN</label>{{ host_financial_form.tax_id }}</div>
+                            <div><label for="{{ host_financial_form.payout_method.id_for_label }}">Payout method</label>{{ host_financial_form.payout_method }}</div>
+                            <div><label for="{{ host_financial_form.payout_reference_name.id_for_label }}">Payout profile name</label>{{ host_financial_form.payout_reference_name }}</div>
+                            <div><label for="{{ host_financial_form.mpesa_phone_number.id_for_label }}">M-Pesa payout number</label>{{ host_financial_form.mpesa_phone_number }}</div>
+                            <div><label for="{{ host_financial_form.bank_name.id_for_label }}">Bank name</label>{{ host_financial_form.bank_name }}</div>
+                            <div><label for="{{ host_financial_form.account_number.id_for_label }}">Account number</label>{{ host_financial_form.account_number }}</div>
+                            <div><label for="{{ host_financial_form.routing_number.id_for_label }}">Routing / branch code</label>{{ host_financial_form.routing_number }}</div>
+                            <div class="md:col-span-2"><label for="{{ host_financial_form.business_license.id_for_label }}">Business licence</label>{{ host_financial_form.business_license }}</div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-3">
+                            <label class="flex items-center gap-3 bg-slate-50 px-4 py-4 rounded-[0.7rem]">{{ host_financial_form.same_day_bookings }}<span>Allow same-day bookings</span></label>
+                            <label class="flex items-center gap-3 bg-slate-50 px-4 py-4 rounded-[0.7rem]">{{ host_financial_form.instant_book }}<span>Instant book</span></label>
+                            <label class="flex items-center gap-3 bg-slate-50 px-4 py-4 rounded-[0.7rem]">{{ host_financial_form.auto_approval }}<span>Auto-approve requests</span></label>
+                        </div>
+                        <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-building-columns"></i>Save host finance</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Saving</span></button>
+                    </form>
+                </div>
+            {% endif %}
+
+            <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 320ms;">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                    <div>
+                        <span class="badge badge-blue mb-3">Security</span>
+                        <h2 class="font-display text-3xl font-semibold">Change your password</h2>
+                        <p class="text-sm text-slate-500 mt-2">Keep access secure for guest bookings, host payouts, and profile recovery.</p>
+                    </div>
+                </div>
+                <form method="post" class="space-y-4" data-loading-form="true">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_scope" value="password">
+                    <div><label for="{{ password_form.old_password.id_for_label }}">Current password</label>{{ password_form.old_password }}</div>
+                    <div><label for="{{ password_form.new_password1.id_for_label }}">New password</label>{{ password_form.new_password1 }}</div>
+                    <div><label for="{{ password_form.new_password2.id_for_label }}">Confirm new password</label>{{ password_form.new_password2 }}</div>
+                    <button type="submit" class="btn-bay"><span data-submit-text><i class="fa-solid fa-key"></i>Change password</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Updating</span></button>
+                </form>
+            </div>
+
             <div class="grid gap-6 xl:grid-cols-2">
                 {% if user.role == 'guest' or user.role == 'both' %}
                     <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 280ms;">
@@ -251,6 +343,100 @@
                                     </div>
                                 </div>
                             {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="grid gap-6 xl:grid-cols-2">
+                {% if user.role == 'guest' or user.role == 'both' %}
+                    <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 420ms;">
+                        <span class="badge badge-blue mb-3">Guest payments</span>
+                        <h2 class="font-display text-2xl font-semibold mb-5">Recent booking payments</h2>
+                        <div class="space-y-3">
+                            {% for payment in recent_guest_payments %}
+                                <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-slate-900">{{ payment.booking.property.name }}</p>
+                                            <p class="text-sm text-slate-500 mt-1">{{ payment.created_at|date:"M d, Y" }} · {{ payment.provider|upper }}</p>
+                                        </div>
+                                        <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
+                                    </div>
+                                    <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+                                </div>
+                            {% empty %}
+                                <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                                    <div>
+                                        <i class="fa-solid fa-wallet text-2xl text-blue-500"></i>
+                                        <p class="mt-3 font-semibold text-slate-800">No guest payments yet</p>
+                                        <p class="text-sm text-slate-500 mt-1">As you pay for stays, your M-Pesa history will appear here for easy reference.</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if user.role == 'host' or user.role == 'both' %}
+                    <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 480ms;">
+                        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                            <div>
+                                <span class="badge badge-orange mb-3">Host payments and withdrawals</span>
+                                <h2 class="font-display text-2xl font-semibold">Money movement on your hosting side</h2>
+                            </div>
+                            <span class="badge badge-success"><i class="fa-solid fa-money-bill-wave"></i>KES {{ host_finance_stats.payments_received|intcomma }} received</span>
+                        </div>
+                        <div class="space-y-3 mb-6">
+                            {% for payment in recent_host_payments %}
+                                <div class="bg-slate-50 px-4 py-4 rounded-[0.7rem]">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-slate-900">{{ payment.booking.property.name }}</p>
+                                            <p class="text-sm text-slate-500 mt-1">{{ payment.guest.get_display_name }} · {{ payment.created_at|date:"M d, Y" }}</p>
+                                        </div>
+                                        <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
+                                    </div>
+                                    <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}</p>
+                                </div>
+                            {% empty %}
+                                <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                                    <div>
+                                        <i class="fa-solid fa-hand-holding-dollar text-2xl text-orange-500"></i>
+                                        <p class="mt-3 font-semibold text-slate-800">No host payments yet</p>
+                                        <p class="text-sm text-slate-500 mt-1">Payments from confirmed BayStays reservations will show up here as guests settle their stays.</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="rounded-[0.7rem] border border-slate-200 p-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold text-slate-900">Request an M-Pesa withdrawal</p>
+                                    <p class="text-sm text-slate-500 mt-1">Use the payout details above to move available funds out of BayStays.</p>
+                                </div>
+                                <span class="badge badge-blue">Pending withdrawals: KES {{ host_finance_stats.pending_withdrawals|intcomma }}</span>
+                            </div>
+                            <form method="post" action="{% url 'hosts:request_withdrawal' %}" class="mt-4 grid gap-4 md:grid-cols-3" data-loading-form="true">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'users:profile' %}">
+                                <div><label for="{{ withdrawal_form.amount.id_for_label }}">Amount</label>{{ withdrawal_form.amount }}</div>
+                                <div><label for="{{ withdrawal_form.mpesa_phone_number.id_for_label }}">M-Pesa number</label>{{ withdrawal_form.mpesa_phone_number }}</div>
+                                <div><label for="{{ withdrawal_form.notes.id_for_label }}">Notes</label>{{ withdrawal_form.notes }}</div>
+                                <div class="md:col-span-3">
+                                    <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-arrow-up-right-dots"></i>Request withdrawal</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Submitting</span></button>
+                                </div>
+                            </form>
+                            <div class="mt-4 space-y-2">
+                                {% for withdrawal in recent_withdrawals %}
+                                    <div class="flex items-center justify-between rounded-[0.7rem] bg-slate-50 px-4 py-3 text-sm">
+                                        <span>KES {{ withdrawal.amount|intcomma }} · {{ withdrawal.requested_at|date:"M d, Y" }}</span>
+                                        <span class="badge {% if withdrawal.status == 'paid' %}badge-success{% elif withdrawal.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ withdrawal.get_status_display }}</span>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-sm text-slate-500">No withdrawal requests yet.</p>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 {% endif %}

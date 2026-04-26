@@ -927,9 +927,14 @@
                     return;
                 }
 
-                const extraMarkup = payload.redirect_url
-                    ? `<p class="mt-2"><a class="font-semibold underline" href="${escapeHtml(payload.redirect_url)}">Open my bookings</a></p>`
-                    : '';
+                const extraNotes = [];
+                if (payload.payment_message) {
+                    extraNotes.push(`<p class="mt-2 text-sm">${escapeHtml(payload.payment_message)}</p>`);
+                }
+                if (payload.redirect_url) {
+                    extraNotes.push(`<p class="mt-2"><a class="font-semibold underline" href="${escapeHtml(payload.redirect_url)}">Open my bookings</a></p>`);
+                }
+                const extraMarkup = extraNotes.join('');
                 showInlineFeedback(feedback, 'success', payload.message || 'Booking request submitted successfully.', extraMarkup);
                 form.reset();
                 form._updateQuote?.();
@@ -1148,10 +1153,6 @@
         });
     });
 
-    const toggleLiveOverlay = (scope, active) => {
-        scope?.querySelector('[data-live-overlay]')?.classList.toggle('is-active', !!active);
-    };
-
     const refreshExploreResults = (payload, form) => {
         const results = document.querySelector('[data-explore-results]');
         const countNode = document.querySelector('[data-results-count]');
@@ -1196,7 +1197,6 @@
                     return;
                 }
                 inFlight = true;
-                const overlayTimer = window.setTimeout(() => toggleLiveOverlay(region, true), force ? 0 : 280);
                 try {
                     const response = await fetch(url, {
                         headers: {
@@ -1220,8 +1220,6 @@
                 } catch (error) {
                     // Keep background syncing resilient and silent.
                 } finally {
-                    window.clearTimeout(overlayTimer);
-                    toggleLiveOverlay(region, false);
                     inFlight = false;
                 }
             };
@@ -1248,7 +1246,6 @@
                     return;
                 }
                 inFlight = true;
-                const overlayTimer = window.setTimeout(() => overlay?.classList.add('is-active'), force ? 0 : 280);
                 try {
                     const params = new URLSearchParams(new FormData(form));
                     const response = await fetch(`${form.action || window.location.pathname}?${params.toString()}`, {
@@ -1268,14 +1265,98 @@
                 } catch (error) {
                     // Silent in the background; manual search UI already handles visible failures.
                 } finally {
-                    window.clearTimeout(overlayTimer);
-                    overlay?.classList.remove('is-active');
                     inFlight = false;
                 }
             };
             shell._runLiveRefresh = run;
             window.setInterval(() => run(false), intervalMs);
         });
+    };
+
+    const initRealtimeSocket = () => {
+        const nodes = [...document.querySelectorAll('[data-live-region], [data-live-explore], [data-property-live]')];
+        const signature = nodes.map((node) => node.dataset.liveGroup || '').filter(Boolean).sort().join('|');
+        if (!signature) {
+            return;
+        }
+        if (window.__baystaysRealtimeSignature === signature && window.__baystaysRealtimeSocketOpen) {
+            return;
+        }
+        if (window.__baystaysRealtimeSocket && window.__baystaysRealtimeSocket.readyState < 2) {
+            window.__baystaysRealtimeSocket.close();
+        }
+        window.__baystaysRealtimeSignature = signature;
+        window.__baystaysRealtimeGeneration = (window.__baystaysRealtimeGeneration || 0) + 1;
+        const generation = window.__baystaysRealtimeGeneration;
+        const sockets = [];
+        const registerSocketTarget = (socketGroups, callback) => {
+            if (!socketGroups.length) {
+                return;
+            }
+            sockets.push({ groups: socketGroups, callback });
+        };
+
+        document.querySelectorAll('[data-live-region], [data-live-explore], [data-property-live]').forEach((node) => {
+            const groups = (node.dataset.liveGroup || '')
+                .split(',')
+                .map((group) => group.trim())
+                .filter(Boolean);
+            registerSocketTarget(groups, () => node._runLiveRefresh?.(true));
+        });
+
+        if (!sockets.length) {
+            return;
+        }
+
+        const uniqueGroups = [...new Set(sockets.flatMap((entry) => entry.groups))];
+        if (!uniqueGroups.length) {
+            return;
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const socketUrl = `${protocol}://${window.location.host}/ws/live/?groups=${encodeURIComponent(uniqueGroups.join(','))}`;
+
+        const connect = () => {
+            let socket;
+            try {
+                socket = new window.WebSocket(socketUrl);
+            } catch (error) {
+                return;
+            }
+            window.__baystaysRealtimeSocket = socket;
+
+            socket.addEventListener('open', () => {
+                window.__baystaysRealtimeSocketOpen = true;
+            });
+
+            socket.addEventListener('message', (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    const targetGroups = Array.isArray(payload.groups)
+                        ? payload.groups
+                        : [payload.group].filter(Boolean);
+                    if (!targetGroups.length) {
+                        return;
+                    }
+                    sockets.forEach((entry) => {
+                        if (entry.groups.some((group) => targetGroups.includes(group))) {
+                            entry.callback();
+                        }
+                    });
+                } catch (error) {
+                    // Ignore malformed real-time payloads and keep fallback polling alive.
+                }
+            });
+
+            socket.addEventListener('close', () => {
+                window.__baystaysRealtimeSocketOpen = false;
+                if (generation === window.__baystaysRealtimeGeneration) {
+                    window.setTimeout(connect, 2500);
+                }
+            });
+        };
+
+        connect();
     };
 
     const initPropertyRealtime = () => {
@@ -1531,6 +1612,7 @@
     initGenericLiveRegions();
     initExploreRealtime();
     initPropertyRealtime();
+    initRealtimeSocket();
     initPropertyMaps();
     initListingMaps();
 
@@ -1540,6 +1622,7 @@
         initGenericLiveRegions();
         initExploreRealtime();
         initPropertyRealtime();
+        initRealtimeSocket();
         initPropertyMaps();
         initListingMaps();
     });

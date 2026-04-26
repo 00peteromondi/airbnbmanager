@@ -25,6 +25,7 @@ urlpatterns = [
     path('bookings/', views.property_bookings, name='property_bookings'),
     path('bookings/live/', views.property_bookings_live, name='property_bookings_live'),
     path('bookings/<int:booking_id>/<str:status>/', views.update_booking_status, name='update_booking_status'),
+    path('finance/withdrawals/request/', views.request_withdrawal, name='request_withdrawal'),
 
     # Default root URL
     path('', views.dashboard, name='home'),

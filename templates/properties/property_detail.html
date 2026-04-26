@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 {% endblock %}
 {% block content %}
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6" data-property-live data-live-url="{% url 'properties:property_detail_live' property.id %}" data-live-version="{{ live_version }}" data-live-poll-interval="12000">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6" data-property-live data-live-url="{% url 'properties:property_detail_live' property.id %}" data-live-version="{{ live_version }}" data-live-poll-interval="12000" data-live-group="property-{{ property.id }}">
     <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div class="space-y-6 section-fade">
             <div class="panel overflow-hidden">
@@ -318,6 +318,15 @@
                         <label for="{{ booking_form.special_requests.id_for_label }}">Special requests</label>
                         {{ booking_form.special_requests }}
                     </div>
+                    <div>
+                        <label for="{{ booking_form.mpesa_phone_number.id_for_label }}">M-Pesa number</label>
+                        {{ booking_form.mpesa_phone_number }}
+                        <p class="mt-2 text-xs text-slate-500">Use the number that should receive the STK push when you choose to pay now.</p>
+                    </div>
+                    <label class="flex items-center gap-3 rounded-[0.95rem] bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                        {{ booking_form.charge_now }}
+                        <span>Pay now with M-Pesa so the booking and payment record are created together.</span>
+                    </label>
                     <div class="rounded-[0.95rem] bg-red-50/55 border border-red-100 px-4 py-4">
                         <div class="flex items-center justify-between gap-4">
                             <div>
@@ -330,7 +339,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn-bay w-full"><span data-submit-text><i class="fa-solid fa-calendar-check"></i>Request booking</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Sending request</span></button>
+                    <button type="submit" class="btn-bay w-full"><span data-submit-text><i class="fa-solid fa-wallet"></i>Request and pay</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Submitting</span></button>
                 </form>
             </div>
         </aside>

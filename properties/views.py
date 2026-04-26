@@ -270,33 +270,3 @@ def property_search(request):
     }
 
     return render(request, 'properties/property_list.html', context)
-
-# hosts/views.py
-@login_required
-def dashboard(request):
-    if not request.user.is_host:
-        return redirect('hosts:become_host')
-    
-    properties = Property.objects.filter(owner=request.user)
-    total_properties = properties.count()
-    
-    # Get booking statistics
-    bookings = Booking.objects.filter(property__owner=request.user)
-    total_bookings = bookings.count()
-    pending_bookings = bookings.filter(status='pending').count()
-    revenue = bookings.filter(status__in=['completed', 'checked_out']).aggregate(
-        total_revenue=Sum('total_price')
-    )['total_revenue'] or 0
-    
-    # Recent bookings
-    recent_bookings = bookings.order_by('-created_at')[:5]
-    
-    context = {
-        'total_properties': total_properties,
-        'total_bookings': total_bookings,
-        'pending_bookings': pending_bookings,
-        'revenue': revenue,
-        'recent_bookings': recent_bookings,
-        'properties': properties,
-    }
-    return render(request, 'hosts/dashboard.html', context)

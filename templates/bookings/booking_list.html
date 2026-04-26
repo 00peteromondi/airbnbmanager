@@ -3,16 +3,7 @@
 {% block title %}My bookings | BayStays{% endblock %}
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6" data-booking-filter-group>
-    <div class="live-panel" data-live-region data-live-url="{% url 'bookings:booking_list_live' %}" data-live-version="{{ live_version }}" data-live-poll-interval="9000">
-        <div class="live-overlay" data-live-overlay>
-            <div class="panel px-6 py-5 flex items-center gap-4">
-                <span class="spinner spinner-dark spinner-lg"></span>
-                <div>
-                    <p class="font-semibold">Refreshing your trips</p>
-                    <p class="text-sm text-slate-500">Checking reservation changes and host responses.</p>
-                </div>
-            </div>
-        </div>
+    <div class="live-panel" data-live-region data-live-url="{% url 'bookings:booking_list_live' %}" data-live-version="{{ live_version }}" data-live-poll-interval="9000" data-live-group="guest-bookings-{{ request.user.id }}">
         <div data-live-content>
             {% include 'bookings/_booking_list_content.html' %}
         </div>

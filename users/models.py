@@ -5,6 +5,20 @@ from django.utils import timezone
 from datetime import timedelta
 
 class CustomUser(AbstractUser):
+    GOVERNMENT_ID_STATUS_CHOICES = (
+        ('not_submitted', 'Not Submitted'),
+        ('pending', 'Pending Review'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    )
+
+    GOVERNMENT_ID_TYPE_CHOICES = (
+        ('national_id', 'National ID'),
+        ('passport', 'Passport'),
+        ('drivers_license', 'Driver License'),
+        ('alien_id', 'Alien ID'),
+    )
+
     # Role system
     ROLE_CHOICES = (
         ('guest', 'Guest'),
@@ -42,6 +56,21 @@ class CustomUser(AbstractUser):
     # Verification fields
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
+    government_id_type = models.CharField(max_length=30, choices=GOVERNMENT_ID_TYPE_CHOICES, blank=True)
+    government_id_number = models.CharField(max_length=80, blank=True)
+    government_id_document = CloudinaryField(
+        'government_id_document',
+        folder='airbnb_manager/verification/users/',
+        default=None,
+        blank=True,
+        null=True
+    )
+    government_id_status = models.CharField(
+        max_length=20,
+        choices=GOVERNMENT_ID_STATUS_CHOICES,
+        default='not_submitted',
+    )
+    government_id_verified_at = models.DateTimeField(blank=True, null=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,6 +102,14 @@ class CustomUser(AbstractUser):
         # Ensure email is lowercase
         if self.email:
             self.email = self.email.lower()
+
+        if not self.government_id_document:
+            self.government_id_status = 'not_submitted'
+            self.government_id_verified_at = None
+        elif self.government_id_status == 'verified' and not self.government_id_verified_at:
+            self.government_id_verified_at = timezone.now()
+        elif self.government_id_status != 'verified':
+            self.government_id_verified_at = None
         
         # Set username to email if not set
         if not self.username and self.email:

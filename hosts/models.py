@@ -5,6 +5,11 @@ from cloudinary.models import CloudinaryField
 from users.models import CustomUser
 
 class Host(models.Model):
+    PAYOUT_METHOD_CHOICES = (
+        ('mpesa', 'M-Pesa'),
+        ('bank', 'Bank transfer'),
+    )
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
@@ -17,6 +22,9 @@ class Host(models.Model):
     hosting_since = models.DateTimeField(auto_now_add=True)
     
     # Bank/payment information
+    payout_method = models.CharField(max_length=20, choices=PAYOUT_METHOD_CHOICES, default='mpesa')
+    mpesa_phone_number = models.CharField(max_length=20, blank=True)
+    payout_reference_name = models.CharField(max_length=120, blank=True)
     bank_name = models.CharField(max_length=100, blank=True)
     account_number = models.CharField(max_length=50, blank=True)
     routing_number = models.CharField(max_length=50, blank=True)
@@ -67,6 +75,9 @@ class Host(models.Model):
         return f"Host: {self.user.get_display_name()}"
     
     def save(self, *args, **kwargs):
+        self.id_verified = self.user.government_id_status == 'verified'
+        self.email_verified = self.user.email_verified
+        self.phone_verified = self.user.phone_verified
         self.fully_verified = all([
             self.id_verified,
             self.address_verified, 
@@ -98,7 +109,8 @@ class Host(models.Model):
         required_fields = [
             self.user.first_name, self.user.last_name, self.user.email,
             self.user.phone_number, self.user.profile_picture,
-            self.government_id, self.tax_id
+            self.user.government_id_document or self.government_id, self.tax_id,
+            self.mpesa_phone_number if self.payout_method == 'mpesa' else self.bank_name
         ]
         completed = sum(1 for field in required_fields if field)
         return int((completed / len(required_fields)) * 100)

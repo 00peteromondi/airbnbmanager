@@ -38,11 +38,12 @@
     </div>
 </div>
 
-<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6 section-fade">
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-7 section-fade">
     <div class="panel p-5"><p class="text-sm text-slate-500">Total listings</p><p class="font-display text-4xl font-semibold mt-2">{{ total_properties }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Live listings</p><p class="font-display text-4xl font-semibold mt-2">{{ active_properties }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Paused</p><p class="font-display text-4xl font-semibold mt-2">{{ paused_properties }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Pending bookings</p><p class="font-display text-4xl font-semibold mt-2">{{ pending_bookings }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Checked in</p><p class="font-display text-4xl font-semibold mt-2">{{ active_stays }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Completed stays</p><p class="font-display text-4xl font-semibold mt-2">{{ completed_bookings }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Revenue</p><p class="font-display text-4xl font-semibold mt-2">KES {{ revenue|intcomma }}</p></div>
 </div>
@@ -163,6 +164,42 @@
         <div class="panel p-6 lg:p-8 section-fade">
             <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
                 <div>
+                    <span class="badge badge-primary mb-3">Host finance</span>
+                    <h2 class="font-display text-2xl font-semibold">Payout and cashflow control</h2>
+                </div>
+                <span class="badge badge-success"><i class="fa-solid fa-wallet"></i>KES {{ finance_snapshot.available_balance|intcomma }} available</span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Received</p><p class="font-display text-2xl font-semibold mt-2">KES {{ finance_snapshot.total_received|intcomma }}</p></div>
+                <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Paid out</p><p class="font-display text-2xl font-semibold mt-2">KES {{ finance_snapshot.paid_out_total|intcomma }}</p></div>
+                <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Pending payout</p><p class="font-display text-2xl font-semibold mt-2">KES {{ finance_snapshot.pending_payout_total|intcomma }}</p></div>
+                <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Paid transactions</p><p class="font-display text-2xl font-semibold mt-2">{{ finance_snapshot.paid_payment_count }}</p></div>
+            </div>
+            <form method="post" action="{% url 'hosts:request_withdrawal' %}" class="mt-5 grid gap-4 md:grid-cols-3" data-loading-form="true">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                <div><label for="{{ withdrawal_form.amount.id_for_label }}">Amount</label>{{ withdrawal_form.amount }}</div>
+                <div><label for="{{ withdrawal_form.mpesa_phone_number.id_for_label }}">M-Pesa number</label>{{ withdrawal_form.mpesa_phone_number }}</div>
+                <div><label for="{{ withdrawal_form.notes.id_for_label }}">Notes</label>{{ withdrawal_form.notes }}</div>
+                <div class="md:col-span-3">
+                    <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-money-bill-transfer"></i>Request withdrawal</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Submitting</span></button>
+                </div>
+            </form>
+            <div class="mt-5 space-y-3">
+                {% for withdrawal in recent_withdrawals %}
+                    <div class="flex items-center justify-between rounded-[0.7rem] bg-slate-50 px-4 py-3 text-sm">
+                        <span>KES {{ withdrawal.amount|intcomma }} · {{ withdrawal.requested_at|date:"M d, Y" }}</span>
+                        <span class="badge {% if withdrawal.status == 'paid' %}badge-success{% elif withdrawal.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ withdrawal.get_status_display }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-sm text-slate-500">No withdrawal requests yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-6 lg:p-8 section-fade">
+            <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                <div>
                     <span class="badge badge-blue mb-3">Upcoming arrivals</span>
                     <h2 class="font-display text-2xl font-semibold">Guests arriving soon</h2>
                 </div>
@@ -187,6 +224,39 @@
                         </div>
                     </div>
                 {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-6 lg:p-8 section-fade">
+            <span class="badge badge-blue mb-3">Today’s operations</span>
+            <h2 class="font-display text-2xl font-semibold mb-5">Check-ins and check-outs due now</h2>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-sm font-semibold text-slate-700 mb-3">Check-ins today</p>
+                    <div class="space-y-3">
+                        {% for booking in check_ins_today %}
+                            <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                                <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · Opens at {{ booking.property.check_in_time }}</p>
+                            </div>
+                        {% empty %}
+                            <p class="text-sm text-slate-500">No check-ins due today.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-700 mb-3">Check-outs today</p>
+                    <div class="space-y-3">
+                        {% for booking in check_outs_today %}
+                            <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                                <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · Opens at {{ booking.property.check_out_time }}</p>
+                            </div>
+                        {% empty %}
+                            <p class="text-sm text-slate-500">No check-outs due today.</p>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -249,6 +319,37 @@
                     <i class="fa-solid fa-bell-concierge text-2xl text-red-500"></i>
                     <p class="mt-3 font-semibold text-slate-800">No reservation activity yet</p>
                     <p class="text-sm text-slate-500 mt-1">As guests begin requesting stays, this feed will give you a quick operations view.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="panel p-6 lg:p-8 section-fade">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <div>
+            <span class="badge badge-orange mb-3">Recent payouts and payments</span>
+            <h2 class="font-display text-2xl font-semibold">Money movement from guests to host wallet</h2>
+        </div>
+    </div>
+    <div class="grid gap-4 lg:grid-cols-2">
+        {% for payment in recent_payments %}
+            <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="font-semibold text-slate-900">{{ payment.booking.property.name }}</p>
+                        <p class="text-sm text-slate-500 mt-1">{{ payment.guest.get_display_name }} · {{ payment.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
+                </div>
+                <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+            </div>
+        {% empty %}
+            <div class="empty-state rounded-[0.7rem] px-6 py-10 lg:col-span-2">
+                <div>
+                    <i class="fa-solid fa-money-bill-wave text-2xl text-red-500"></i>
+                    <p class="mt-3 font-semibold text-slate-800">No payment movement yet</p>
+                    <p class="text-sm text-slate-500 mt-1">Once guests pay for stays, each transaction and payout trail will show up here.</p>
                 </div>
             </div>
         {% endfor %}

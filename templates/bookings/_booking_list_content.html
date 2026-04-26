@@ -21,6 +21,24 @@
         <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.manageable }}</p>
     </div>
 </div>
+<div class="grid gap-4 md:grid-cols-4 section-fade">
+    <div class="panel p-5">
+        <p class="text-sm text-slate-500">Payments settled</p>
+        <p class="font-display text-3xl font-semibold mt-2">KES {{ payment_summary.paid_total|intcomma }}</p>
+    </div>
+    <div class="panel p-5">
+        <p class="text-sm text-slate-500">Paid transactions</p>
+        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.paid_count }}</p>
+    </div>
+    <div class="panel p-5">
+        <p class="text-sm text-slate-500">Pending payment prompts</p>
+        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.pending_count }}</p>
+    </div>
+    <div class="panel p-5">
+        <p class="text-sm text-slate-500">Failed payments</p>
+        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.failed_count }}</p>
+    </div>
+</div>
 <div class="flex flex-wrap gap-2 section-fade">
     <button type="button" class="filter-chip is-active" data-booking-filter="all"><i class="fa-solid fa-layer-group mr-2"></i>All</button>
     <button type="button" class="filter-chip" data-booking-filter="pending"><i class="fa-solid fa-hourglass-half mr-2"></i>Pending</button>
@@ -40,9 +58,24 @@
                 <div class="text-right">
                     <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
                     <p class="font-display text-3xl font-semibold mt-3">KES {{ booking.total_price|intcomma }}</p>
+                    <p class="mt-2 text-sm {% if booking.payment_status == 'paid' %}text-emerald-600{% elif booking.payment_status == 'failed' %}text-red-600{% else %}text-slate-500{% endif %}">
+                        <i class="fa-solid fa-money-bill-wave mr-2"></i>{{ booking.get_payment_status_display }}
+                    </p>
                 </div>
             </div>
             {% if booking.special_requests %}<div class="mt-4 rounded-[0.7rem] bg-slate-50 px-4 py-4 text-sm text-slate-600"><strong class="text-slate-900">Your note:</strong> {{ booking.special_requests }}</div>{% endif %}
+            {% with latest_payment=booking.payments.first %}
+                <div class="mt-4 rounded-[0.7rem] bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                        <span><i class="fa-solid fa-receipt text-blue-500 mr-2"></i>Payment tracking</span>
+                        {% if latest_payment %}
+                            <span>{% if latest_payment.transaction_reference %}{{ latest_payment.transaction_reference }}{% else %}{{ latest_payment.get_status_display }}{% endif %}</span>
+                        {% else %}
+                            <span>No payment yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endwith %}
             {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                 {% if booking.check_in_date > today %}
                 <div class="mt-4 rounded-[0.7rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
@@ -58,6 +91,20 @@
             {% endif %}
             <div class="mt-5 flex flex-wrap gap-3">
                 <a href="{% url 'properties:property_detail' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>View stay</a>
+                {% if booking.payment_status != 'paid' %}
+                    <form method="post" action="{% url 'bookings:pay_booking' booking.id %}" data-loading-form="true" class="inline-flex flex-wrap gap-3 items-end rounded-[0.7rem] border border-slate-200 bg-slate-50 px-3 py-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'bookings:booking_list' %}">
+                        <div class="min-w-[12rem]">
+                            <label class="text-xs text-slate-500">M-Pesa number</label>
+                            <input type="text" name="mpesa_phone_number" value="{{ user.phone_number|default:'' }}" class="input-shell mt-1">
+                        </div>
+                        <button type="submit" class="btn-bay-secondary">
+                            <span data-submit-text><i class="fa-solid fa-mobile-screen-button"></i>Pay now</span>
+                            <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Charging</span>
+                        </button>
+                    </form>
+                {% endif %}
                 {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                     {% if booking.check_in_date > today %}
                         <a href="{% url 'bookings:reschedule_booking' booking.id %}" class="btn-bay-secondary"><i class="fa-solid fa-calendar-plus"></i>Reschedule</a>
@@ -85,4 +132,34 @@
             </div>
         </div>
     {% endfor %}
+</div>
+<div class="panel p-6 lg:p-8 section-fade">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <div>
+            <span class="badge badge-blue mb-3">Payment history</span>
+            <h2 class="font-display text-2xl font-semibold">Recent BayStays payment activity</h2>
+        </div>
+    </div>
+    <div class="space-y-3">
+        {% for payment in recent_payments %}
+            <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                        <p class="font-semibold text-slate-900">{{ payment.booking.property.name }}</p>
+                        <p class="text-sm text-slate-500 mt-1">{{ payment.created_at|date:"M d, Y" }} · {{ payment.phone_number|default:"M-Pesa" }}</p>
+                    </div>
+                    <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
+                </div>
+                <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+            </div>
+        {% empty %}
+            <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                <div>
+                    <i class="fa-solid fa-receipt text-2xl text-blue-500"></i>
+                    <p class="mt-3 font-semibold text-slate-800">No payment history yet</p>
+                    <p class="text-sm text-slate-500 mt-1">Your M-Pesa charges and payment retries will show up here once you start paying for stays.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
