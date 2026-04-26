@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <form method="get" action="{% url 'core:properties_list' %}" class="mt-6 grid gap-4 lg:grid-cols-12" data-explore-form>
+        <form method="get" action="{% url 'core:properties_list' %}" class="mt-6 grid gap-4 lg:grid-cols-12" data-explore-form data-live-explore-version="{{ live_version }}">
             <div class="lg:col-span-4 location-autocomplete" data-location-autocomplete>
                 <label for="id_location">Location</label>
                 <div class="relative">
@@ -108,7 +108,7 @@
         </form>
     </div>
 
-    <div class="results-shell section-fade">
+    <div class="results-shell section-fade" data-live-explore data-live-poll-interval="12000">
         <div class="results-overlay" data-results-overlay>
             <div class="panel px-6 py-5 flex items-center gap-4">
                 <span class="spinner spinner-dark spinner-lg"></span>

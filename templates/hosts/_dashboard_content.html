@@ -1,0 +1,254 @@
+<div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] section-fade">
+    <div class="panel p-6 lg:p-8 surface-tint">
+        <span class="badge badge-warm mb-3">Hosting hub</span>
+        <h1 class="font-display text-4xl font-semibold">Run your BayStays portfolio like an active business, not just a single listing page.</h1>
+        <p class="mt-3 max-w-3xl text-slate-600">Track listing health, respond to reservation demand, keep properties live or paused when needed, and see what needs attention before guests ever ask about it.</p>
+        <div class="mt-6 flex flex-wrap gap-3">
+            <a href="{% url 'hosts:add_listing' %}" class="btn-bay-secondary"><i class="fa-solid fa-plus"></i>Add a stay</a>
+            <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost"><i class="fa-solid fa-calendar-days"></i>Manage bookings</a>
+            <a href="{% url 'hosts:my_listings' %}" class="btn-bay-ghost"><i class="fa-solid fa-house"></i>Portfolio</a>
+        </div>
+    </div>
+    <div class="panel p-6 lg:p-8">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div>
+                <span class="badge badge-blue mb-3">Host readiness</span>
+                <h2 class="font-display text-2xl font-semibold">Operational profile</h2>
+            </div>
+            <div class="badge {% if host_profile.fully_verified %}badge-success{% else %}badge-warning{% endif %}">
+                <i class="fa-solid fa-shield-halved"></i>{% if host_profile.fully_verified %}Verified{% else %}In progress{% endif %}
+            </div>
+        </div>
+        <div class="grid gap-3">
+            {% for check in readiness_checks %}
+                <div class="flex items-center justify-between bg-slate-50 px-4 py-4 rounded-[0.7rem]">
+                    <span class="text-sm text-slate-700">{{ check.label }}</span>
+                    <span class="badge {% if check.done %}badge-success{% else %}badge-warning{% endif %}">
+                        <i class="fa-solid {% if check.done %}fa-circle-check{% else %}fa-hourglass-half{% endif %}"></i>
+                        {% if check.done %}Ready{% else %}Needs attention{% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4 bg-slate-50 px-4 py-4 rounded-[0.7rem] text-sm text-slate-600">
+            <strong class="text-slate-900">Completion:</strong> {{ host_profile.completion_percentage }}% of the core host profile is filled in.
+        </div>
+    </div>
+</div>
+
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6 section-fade">
+    <div class="panel p-5"><p class="text-sm text-slate-500">Total listings</p><p class="font-display text-4xl font-semibold mt-2">{{ total_properties }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Live listings</p><p class="font-display text-4xl font-semibold mt-2">{{ active_properties }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Paused</p><p class="font-display text-4xl font-semibold mt-2">{{ paused_properties }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Pending bookings</p><p class="font-display text-4xl font-semibold mt-2">{{ pending_bookings }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Completed stays</p><p class="font-display text-4xl font-semibold mt-2">{{ completed_bookings }}</p></div>
+    <div class="panel p-5"><p class="text-sm text-slate-500">Revenue</p><p class="font-display text-4xl font-semibold mt-2">KES {{ revenue|intcomma }}</p></div>
+</div>
+
+<div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] section-fade">
+    <div class="panel p-6 lg:p-8">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <span class="badge badge-primary mb-3">Portfolio performance</span>
+                <h2 class="font-display text-2xl font-semibold">Listings that are driving the most activity</h2>
+            </div>
+            <a href="{% url 'hosts:my_listings' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>View portfolio</a>
+        </div>
+        <div class="space-y-4">
+            {% for item in top_properties %}
+                <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] p-4">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ item.property.name }}</p>
+                            <p class="text-sm text-slate-500 mt-1">{{ item.property.city }}, {{ item.property.country }} · {{ item.property.max_guests }} guests</p>
+                        </div>
+                        <span class="badge {% if item.property.is_active %}badge-success{% else %}badge-warning{% endif %}">
+                            <i class="fa-solid {% if item.property.is_active %}fa-circle-check{% else %}fa-pause{% endif %}"></i>
+                            {% if item.property.is_active %}Live{% else %}Paused{% endif %}
+                        </span>
+                    </div>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-4 text-sm text-slate-600">
+                        <div class="bg-white rounded-[0.6rem] px-3 py-3"><strong class="block text-slate-900">{{ item.booking_count }}</strong>Total bookings</div>
+                        <div class="bg-white rounded-[0.6rem] px-3 py-3"><strong class="block text-slate-900">{{ item.pending_count }}</strong>Pending</div>
+                        <div class="bg-white rounded-[0.6rem] px-3 py-3"><strong class="block text-slate-900">{{ item.image_count }}</strong>Photos</div>
+                        <div class="bg-white rounded-[0.6rem] px-3 py-3"><strong class="block text-slate-900">KES {{ item.revenue|intcomma }}</strong>Revenue</div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <a href="{% url 'hosts:view_listing' item.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>Open listing</a>
+                        <a href="{% url 'hosts:edit_listing' item.property.id %}" class="btn-bay"><i class="fa-solid fa-pen"></i>Edit</a>
+                        <form method="post" action="{% url 'hosts:toggle_listing_status' item.property.id %}" data-loading-form="true">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                            <button type="submit" class="btn-bay-ghost">
+                                <span data-submit-text><i class="fa-solid {% if item.property.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>{% if item.property.is_active %}Pause{% else %}Go live{% endif %}</span>
+                                <span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Updating</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state rounded-[0.7rem] px-6 py-10">
+                    <div>
+                        <i class="fa-solid fa-house-circle-check text-2xl text-red-500"></i>
+                        <p class="mt-3 font-semibold text-slate-800">Your host portfolio starts here</p>
+                        <p class="text-sm text-slate-500 mt-1">Create your first listing to unlock bookings, revenue tracking, and listing health insights.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="panel p-6 lg:p-8 section-fade">
+            <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                <div>
+                    <span class="badge badge-primary mb-3">Pending approvals</span>
+                    <h2 class="font-display text-2xl font-semibold">Requests waiting on your decision</h2>
+                </div>
+                <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open queue</a>
+            </div>
+            <div class="space-y-3">
+                {% for booking in pending_requests %}
+                    <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                        <div class="flex items-start justify-between gap-3 flex-wrap">
+                            <div>
+                                <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
+                            </div>
+                            <span class="badge badge-warning"><i class="fa-solid fa-hourglass-half"></i>Pending</span>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'confirmed' %}" data-loading-form="true">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                                <button type="submit" class="btn-success"><span data-submit-text><i class="fa-solid fa-check"></i>Approve</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Approving</span></button>
+                            </form>
+                            <form method="post" action="{% url 'hosts:update_booking_status' booking.id 'cancelled' %}" data-loading-form="true">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
+                                <button type="submit" class="btn-danger"><span data-submit-text><i class="fa-solid fa-xmark"></i>Decline</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner spinner-dark"></span>Declining</span></button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                        <div>
+                            <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+                            <p class="mt-3 font-semibold text-slate-800">No requests are waiting right now</p>
+                            <p class="text-sm text-slate-500 mt-1">Fresh booking requests will appear here so you can approve them quickly from the hub.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-6 lg:p-8 section-fade">
+            <span class="badge badge-orange mb-3">Action queue</span>
+            <h2 class="font-display text-2xl font-semibold">What needs your attention next</h2>
+            <div class="mt-5 space-y-3">
+                {% for item in attention_items %}
+                    <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4 text-sm text-slate-600">
+                        <i class="fa-solid fa-circle-exclamation mr-2 text-orange-500"></i>{{ item }}
+                    </div>
+                {% empty %}
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-[0.7rem] px-4 py-4 text-sm text-emerald-800">
+                        <i class="fa-solid fa-circle-check mr-2"></i>Your current listings look healthy. No urgent host-side issues are showing.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-6 lg:p-8 section-fade">
+            <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                <div>
+                    <span class="badge badge-blue mb-3">Upcoming arrivals</span>
+                    <h2 class="font-display text-2xl font-semibold">Guests arriving soon</h2>
+                </div>
+                <span class="badge badge-primary"><i class="fa-solid fa-star"></i>{{ avg_listing_rating|floatformat:1 }} avg rating</span>
+            </div>
+            <div class="space-y-3">
+                {% for booking in upcoming_arrivals %}
+                    <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                        <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                        <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.check_in_date }} · {{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</p>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email guest</a>{% endif %}
+                            {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call guest</a>{% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                        <div>
+                            <i class="fa-solid fa-calendar-day text-2xl text-blue-500"></i>
+                            <p class="mt-3 font-semibold text-slate-800">No arrivals in the next 7 days</p>
+                            <p class="text-sm text-slate-500 mt-1">New guest arrivals will show up here as bookings move closer.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-6 lg:p-8 section-fade">
+            <span class="badge badge-blue mb-3">Guest communication</span>
+            <h2 class="font-display text-2xl font-semibold mb-5">Reach the next guests quickly</h2>
+            <div class="space-y-3">
+                {% for booking in active_guest_contacts %}
+                    <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                        <div class="flex items-center justify-between gap-3 flex-wrap">
+                            <div>
+                                <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ booking.property.name }} · {{ booking.status|title }}</p>
+                            </div>
+                            <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            {% if booking.guest.email %}<a href="mailto:{{ booking.guest.email }}?subject={{ booking.property.name|urlencode }} on BayStays" class="btn-bay-ghost"><i class="fa-solid fa-envelope"></i>Email</a>{% endif %}
+                            {% if booking.guest.phone_number %}<a href="tel:{{ booking.guest.phone_number }}" class="btn-bay-ghost"><i class="fa-solid fa-phone"></i>Call</a>{% endif %}
+                            <a href="{% url 'hosts:view_listing' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>Open listing</a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">
+                        <div>
+                            <i class="fa-solid fa-comments text-2xl text-blue-500"></i>
+                            <p class="mt-3 font-semibold text-slate-800">No active guest threads to handle</p>
+                            <p class="text-sm text-slate-500 mt-1">As requests and stays move forward, your next guest touchpoints will show up here.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel p-6 lg:p-8 section-fade">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <div>
+            <span class="badge badge-primary mb-3">Recent reservation activity</span>
+            <h2 class="font-display text-2xl font-semibold">Fresh booking movement across your listings</h2>
+        </div>
+        <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open booking queue</a>
+    </div>
+    <div class="grid gap-4 lg:grid-cols-2">
+        {% for booking in recent_bookings %}
+            <div class="bg-slate-50 border border-slate-100 rounded-[0.7rem] px-4 py-4">
+                <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                        <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
+                        <p class="text-sm text-slate-500 mt-1">{{ booking.guest.get_display_name }} · {{ booking.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-3">{{ booking.check_in_date }} to {{ booking.check_out_date }} · KES {{ booking.total_price|intcomma }}</p>
+            </div>
+        {% empty %}
+            <div class="empty-state rounded-[0.7rem] px-6 py-10 lg:col-span-2">
+                <div>
+                    <i class="fa-solid fa-bell-concierge text-2xl text-red-500"></i>
+                    <p class="mt-3 font-semibold text-slate-800">No reservation activity yet</p>
+                    <p class="text-sm text-slate-500 mt-1">As guests begin requesting stays, this feed will give you a quick operations view.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

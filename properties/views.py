@@ -3,11 +3,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Property, Review
 from bookings.models import Booking
 from django.shortcuts import get_object_or_404, render, redirect
+from django.template.loader import render_to_string
 
 
 from bookings.forms import BookingForm
 from .forms import ReviewForm
-from django.db.models import Sum
+from django.db.models import Sum, Max
 from django.utils import timezone
 from django.db.models import Q, Avg
 from datetime import datetime
@@ -39,6 +40,72 @@ AMENITY_ICONS = {
     'elevator': 'fa-solid fa-elevator',
     'accessible': 'fa-solid fa-wheelchair',
 }
+
+
+def _property_detail_context_data(property_obj, user):
+    booking_form = BookingForm(initial={'property': property_obj, 'num_guests': 1})
+    booking_form.fields['num_guests'].widget.attrs.update({
+        'min': 1,
+        'max': property_obj.max_guests,
+    })
+    reviews = property_obj.reviews.select_related('user')
+    user_review = None
+    can_review = False
+    existing_guest_bookings = Booking.objects.none()
+    if user.is_authenticated:
+        user_review = reviews.filter(user=user).first()
+        can_review = Booking.objects.filter(
+            property=property_obj,
+            guest=user,
+        ).exclude(status='cancelled').exists()
+        existing_guest_bookings = Booking.objects.filter(
+            property=property_obj,
+            guest=user,
+        ).exclude(status='cancelled').order_by('-check_in_date')
+
+    unavailable_bookings = Booking.objects.filter(
+        property=property_obj,
+        status__in=['confirmed', 'pending', 'checked_in']
+    ).order_by('check_in_date')
+    unavailable_periods_json = json.dumps([
+        {
+            'check_in': booking.check_in_date.isoformat(),
+            'check_out': booking.check_out_date.isoformat(),
+            'status': booking.status,
+        }
+        for booking in unavailable_bookings
+    ])
+
+    booking_latest = unavailable_bookings.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    review_latest = reviews.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    latest_update = max(
+        [stamp for stamp in [property_obj.updated_at, booking_latest, review_latest] if stamp is not None],
+        default=None,
+    )
+
+    return {
+        'booking_form': booking_form,
+        'review_form': ReviewForm(instance=user_review),
+        'reviews': reviews[:6],
+        'reviews_count': reviews.count(),
+        'guest_range': range(1, property_obj.max_guests + 1),
+        'can_review': can_review,
+        'current_user_rating': user_review.rating if user_review else 0,
+        'rating_choices': Review._meta.get_field('rating').choices,
+        'existing_guest_bookings': existing_guest_bookings[:4],
+        'has_existing_booking': existing_guest_bookings.exists(),
+        'unavailable_periods': unavailable_bookings[:6],
+        'unavailable_periods_json': unavailable_periods_json,
+        'amenities_display': [
+            (
+                amenity,
+                dict(Property.AMENITY_CHOICES).get(amenity, amenity),
+                AMENITY_ICONS.get(amenity, 'fa-solid fa-circle-check'),
+            )
+            for amenity in property_obj.amenities
+        ],
+        'live_version': f"{property_obj.id}:{reviews.count()}:{unavailable_bookings.count()}:{latest_update.isoformat() if latest_update else 'none'}",
+    }
 
 class PropertyListView(ListView):
     model = Property
@@ -79,58 +146,7 @@ class PropertyDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        booking_form = BookingForm(initial={'property': self.object, 'num_guests': 1})
-        booking_form.fields['num_guests'].widget.attrs.update({
-            'min': 1,
-            'max': self.object.max_guests,
-        })
-        reviews = self.object.reviews.select_related('user')
-        user_review = None
-        can_review = False
-        existing_guest_bookings = Booking.objects.none()
-        if self.request.user.is_authenticated:
-            user_review = reviews.filter(user=self.request.user).first()
-            can_review = Booking.objects.filter(
-                property=self.object,
-                guest=self.request.user,
-            ).exclude(status='cancelled').exists()
-            existing_guest_bookings = Booking.objects.filter(
-                property=self.object,
-                guest=self.request.user,
-            ).exclude(status='cancelled').order_by('-check_in_date')
-
-        unavailable_bookings = Booking.objects.filter(
-            property=self.object,
-            status__in=['confirmed', 'pending', 'checked_in']
-        ).order_by('check_in_date')
-
-        context['booking_form'] = booking_form
-        context['review_form'] = ReviewForm(instance=user_review)
-        context['reviews'] = reviews[:6]
-        context['reviews_count'] = reviews.count()
-        context['guest_range'] = range(1, self.object.max_guests + 1)
-        context['can_review'] = can_review
-        context['current_user_rating'] = user_review.rating if user_review else 0
-        context['rating_choices'] = Review._meta.get_field('rating').choices
-        context['existing_guest_bookings'] = existing_guest_bookings[:4]
-        context['has_existing_booking'] = existing_guest_bookings.exists()
-        context['unavailable_periods'] = unavailable_bookings[:6]
-        context['unavailable_periods_json'] = json.dumps([
-            {
-                'check_in': booking.check_in_date.isoformat(),
-                'check_out': booking.check_out_date.isoformat(),
-                'status': booking.status,
-            }
-            for booking in unavailable_bookings
-        ])
-        context['amenities_display'] = [
-            (
-                amenity,
-                dict(Property.AMENITY_CHOICES).get(amenity, amenity),
-                AMENITY_ICONS.get(amenity, 'fa-solid fa-circle-check'),
-            )
-            for amenity in self.object.amenities
-        ]
+        context.update(_property_detail_context_data(self.object, self.request.user))
         return context
 
 
