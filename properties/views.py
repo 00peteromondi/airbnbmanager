@@ -150,6 +150,19 @@ class PropertyDetailView(DetailView):
         return context
 
 
+def property_detail_live(request, property_id):
+    property_obj = get_object_or_404(Property, pk=property_id, is_active=True)
+    context = _property_detail_context_data(property_obj, request.user)
+    return JsonResponse({
+        'version': context['live_version'],
+        'reviews_html': render_to_string('properties/_reviews_list.html', context, request=request),
+        'availability_html': render_to_string('properties/_availability_panel.html', context, request=request),
+        'reviews_count': context['reviews_count'],
+        'average_rating': f"{property_obj.average_rating:.1f}",
+        'unavailable_ranges': json.loads(context['unavailable_periods_json']),
+    })
+
+
 @login_required
 def submit_review(request, property_id):
     property = get_object_or_404(Property, pk=property_id, is_active=True)

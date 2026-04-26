@@ -1,3 +1,5 @@
+{% load static humanize %}
+{% load humanize %}
 <div class="grid gap-4 md:grid-cols-5 section-fade">
     <div class="panel p-5"><p class="text-sm text-slate-500">Total</p><p class="font-display text-4xl font-semibold mt-2">{{ stats.total_bookings }}</p></div>
     <div class="panel p-5"><p class="text-sm text-slate-500">Pending</p><p class="font-display text-4xl font-semibold mt-2">{{ stats.pending_bookings }}</p></div>

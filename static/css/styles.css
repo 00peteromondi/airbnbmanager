@@ -26,6 +26,11 @@ html {
     scroll-behavior: smooth;
 }
 
+html.drawer-open,
+body.drawer-open {
+    overflow: hidden;
+}
+
 body {
     font-family: 'Manrope', sans-serif;
     color: var(--bay-ink);
@@ -328,14 +333,7 @@ label {
 }
 
 .loader-overlay {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 180ms ease, visibility 180ms ease;
-}
-
-.loader-overlay.is-active {
-    opacity: 1;
-    visibility: visible;
+    display: none !important;
 }
 
 .modal-shell,
@@ -374,13 +372,29 @@ label {
 }
 
 .drawer-shell {
+    position: fixed;
+    inset: 0;
     z-index: 2147483647 !important;
     isolation: isolate;
+    pointer-events: none;
 }
 
 .mobile-drawer-panel {
-    position: absolute;
-    z-index: 2147483647;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background: #ffffff;
+    isolation: isolate;
+}
+
+.drawer-backdrop {
+    z-index: 1;
+}
+
+.drawer-shell.is-open {
+    pointer-events: auto;
 }
 
 .drawer-shell.is-open .drawer-panel {
@@ -727,22 +741,37 @@ label {
 }
 
 .results-overlay {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.74);
-    backdrop-filter: blur(8px);
-    border-radius: 0.8rem;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 180ms ease, visibility 180ms ease;
-    z-index: 15;
+    pointer-events: none;
 }
 
 .results-overlay.is-active {
-    opacity: 1;
-    visibility: visible;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.live-overlay {
+    display: none !important;
+}
+
+.ui-refresh-blink {
+    animation: uiRefreshBlink 720ms ease;
+}
+
+@keyframes uiRefreshBlink {
+    0% {
+        background-color: rgba(255, 244, 230, 0.86);
+        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.22);
+    }
+    45% {
+        background-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.1);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+    }
 }
 
 .rating-meter {
@@ -1528,4 +1557,26 @@ table td {
         flex-basis: 4.25rem;
         width: 4.25rem;
     }
+}
+ .live-panel {
+    position: relative;
+}
+
+.live-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(248, 250, 252, 0.52);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+}
+
+.live-overlay.is-active {
+    opacity: 1;
 }

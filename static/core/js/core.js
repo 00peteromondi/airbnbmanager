@@ -92,6 +92,18 @@
         };
     };
 
+    const markAreaUpdated = (target) => {
+        if (!target) {
+            return;
+        }
+        target.classList.remove('ui-refresh-blink');
+        void target.offsetWidth;
+        target.classList.add('ui-refresh-blink');
+        window.setTimeout(() => {
+            target.classList.remove('ui-refresh-blink');
+        }, 760);
+    };
+
     const formatLocationAddress = (item) => {
         const address = item?.address || {};
         const primaryLine = [
@@ -126,16 +138,30 @@
         };
     };
 
+    const setDrawerState = (shell, isOpen) => {
+        if (!shell) {
+            return;
+        }
+        shell.classList.toggle('is-open', !!isOpen);
+        shell.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        document.body.classList.toggle('drawer-open', !!isOpen);
+        document.documentElement.classList.toggle('drawer-open', !!isOpen);
+    };
+
     const closeClosest = (selector, source) => {
         const shell = source.closest(selector);
         if (shell) {
+            if (selector === '.drawer-shell') {
+                setDrawerState(shell, false);
+                return;
+            }
             shell.classList.remove('is-open');
         }
     };
 
     document.querySelectorAll('[data-open-drawer]').forEach((button) => {
         button.addEventListener('click', () => {
-            document.getElementById(button.dataset.openDrawer)?.classList.add('is-open');
+            setDrawerState(document.getElementById(button.dataset.openDrawer), true);
         });
     });
 
@@ -236,6 +262,9 @@
         });
 
         document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.drawer-shell.is-open').forEach((shell) => setDrawerState(shell, false));
+            }
             if (!shell.classList.contains('is-open')) {
                 return;
             }
@@ -322,9 +351,16 @@
             return;
         }
         form.addEventListener('submit', () => {
-            setLoader(true);
             setButtonBusy(getSubmitButton(form), true);
         });
+    });
+
+    document.addEventListener('submit', (event) => {
+        const form = event.target.closest('form[data-loading-form="true"]');
+        if (!form || form.matches('[data-async-booking], [data-async-review]')) {
+            return;
+        }
+        setButtonBusy(getSubmitButton(form), true);
     });
 
     const observer = new IntersectionObserver((entries) => {
@@ -411,6 +447,26 @@
                 const visible = target === 'all' || status === target;
                 row.classList.toggle('hidden', !visible);
             });
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-booking-filter]');
+        if (!button) {
+            return;
+        }
+        const scope = button.closest('[data-booking-filter-group]');
+        if (!scope) {
+            return;
+        }
+        const target = button.dataset.bookingFilter;
+        scope.querySelectorAll('[data-booking-filter]').forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+        });
+        scope.querySelectorAll('[data-booking-row]').forEach((row) => {
+            const status = row.dataset.bookingStatus || '';
+            const visible = target === 'all' || status === target;
+            row.classList.toggle('hidden', !visible);
         });
     });
 
@@ -558,7 +614,7 @@
         const availabilityNode = document.getElementById('availability-feedback');
         const submitButton = getSubmitButton(bookingCalculator);
         const rate = Number(bookingCalculator.dataset.nightlyRate || 0);
-        const unavailableRanges = JSON.parse(bookingCalculator.dataset.unavailableRanges || '[]');
+        let unavailableRanges = JSON.parse(bookingCalculator.dataset.unavailableRanges || '[]');
         const todayIso = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
         const normalizeBlockedRanges = () => unavailableRanges.map((range) => {
@@ -654,6 +710,18 @@
         };
 
         bookingCalculator._updateQuote = updateQuote;
+        bookingCalculator._refreshAvailability = (ranges = []) => {
+            unavailableRanges = Array.isArray(ranges) ? ranges : [];
+            bookingCalculator.dataset.unavailableRanges = JSON.stringify(unavailableRanges);
+            const nextBlockedRanges = normalizeBlockedRanges();
+            if (checkInPicker) {
+                checkInPicker.set('disable', nextBlockedRanges);
+            }
+            if (checkOutPicker) {
+                checkOutPicker.set('disable', nextBlockedRanges);
+            }
+            updateQuote();
+        };
         checkIn?.addEventListener('change', updateQuote);
         checkOut?.addEventListener('change', updateQuote);
         guests?.addEventListener('input', updateQuote);
@@ -794,6 +862,8 @@
 
                 showInlineFeedback(feedback, 'success', payload.message || 'Review saved successfully.');
                 updateReviewSummaries(payload);
+                document.dispatchEvent(new CustomEvent('baystays:live-refresh'));
+                markAreaUpdated(reviewsList || feedback);
 
                 if (reviewsList) {
                     const emptyState = reviewsList.querySelector('.empty-state');
@@ -863,6 +933,8 @@
                 showInlineFeedback(feedback, 'success', payload.message || 'Booking request submitted successfully.', extraMarkup);
                 form.reset();
                 form._updateQuote?.();
+                document.dispatchEvent(new CustomEvent('baystays:live-refresh'));
+                markAreaUpdated(form.closest('.panel') || form);
             } catch (error) {
                 showInlineFeedback(feedback, 'error', 'We ran into a network issue while sending your booking request.');
             } finally {
@@ -1058,6 +1130,10 @@
                 if (destinationNode) {
                     destinationNode.textContent = payload.top_destination || 'Flexible';
                 }
+                if (payload.version) {
+                    form.dataset.liveExploreVersion = payload.version;
+                }
+                markAreaUpdated(results?.closest('.results-shell') || results);
                 const url = new URL(window.location.href);
                 url.search = params.toString();
                 window.history.replaceState({}, '', url);
@@ -1069,6 +1145,207 @@
                 overlay?.classList.remove('is-active');
                 setButtonBusy(submitButton, false);
             }
+        });
+    });
+
+    const toggleLiveOverlay = (scope, active) => {
+        scope?.querySelector('[data-live-overlay]')?.classList.toggle('is-active', !!active);
+    };
+
+    const refreshExploreResults = (payload, form) => {
+        const results = document.querySelector('[data-explore-results]');
+        const countNode = document.querySelector('[data-results-count]');
+        const avgPriceNode = document.querySelector('[data-results-price]');
+        const avgRatingNode = document.querySelector('[data-results-rating]');
+        const destinationNode = document.querySelector('[data-results-destination]');
+        if (results && typeof payload.html === 'string') {
+            results.innerHTML = payload.html;
+        }
+        if (countNode) {
+            countNode.textContent = payload.results_count ?? 0;
+        }
+        if (avgPriceNode) {
+            avgPriceNode.textContent = `KES ${Math.round(Number(payload.avg_price || 0)).toLocaleString()}`;
+        }
+        if (avgRatingNode) {
+            avgRatingNode.textContent = Number(payload.avg_rating || 0).toFixed(1);
+        }
+        if (destinationNode) {
+            destinationNode.textContent = payload.top_destination || 'Flexible';
+        }
+        if (payload.version && form) {
+            form.dataset.liveExploreVersion = payload.version;
+        }
+    };
+
+    const initGenericLiveRegions = () => {
+        document.querySelectorAll('[data-live-region]').forEach((region) => {
+            if (region.dataset.liveBound === 'true') {
+                return;
+            }
+            region.dataset.liveBound = 'true';
+            const url = region.dataset.liveUrl;
+            const intervalMs = Number(region.dataset.livePollInterval || 10000);
+            const content = region.querySelector('[data-live-content]');
+            if (!url || !content) {
+                return;
+            }
+            let inFlight = false;
+            const run = async (force = false) => {
+                if (inFlight || document.hidden) {
+                    return;
+                }
+                inFlight = true;
+                const overlayTimer = window.setTimeout(() => toggleLiveOverlay(region, true), force ? 0 : 280);
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    const payload = await response.json();
+                    if (!response.ok) {
+                        return;
+                    }
+                    if (!force && payload.version && payload.version === region.dataset.liveVersion) {
+                        return;
+                    }
+                    if (typeof payload.html === 'string') {
+                        content.innerHTML = payload.html;
+                    }
+                    if (payload.version) {
+                        region.dataset.liveVersion = payload.version;
+                    }
+                    markAreaUpdated(content);
+                } catch (error) {
+                    // Keep background syncing resilient and silent.
+                } finally {
+                    window.clearTimeout(overlayTimer);
+                    toggleLiveOverlay(region, false);
+                    inFlight = false;
+                }
+            };
+            region._runLiveRefresh = run;
+            window.setInterval(() => run(false), intervalMs);
+        });
+    };
+
+    const initExploreRealtime = () => {
+        document.querySelectorAll('[data-live-explore]').forEach((shell) => {
+            if (shell.dataset.liveBound === 'true') {
+                return;
+            }
+            shell.dataset.liveBound = 'true';
+            const form = document.querySelector('form[data-explore-form]');
+            const overlay = shell.querySelector('[data-results-overlay]');
+            const intervalMs = Number(shell.dataset.livePollInterval || 12000);
+            if (!form) {
+                return;
+            }
+            let inFlight = false;
+            const run = async (force = false) => {
+                if (inFlight || document.hidden) {
+                    return;
+                }
+                inFlight = true;
+                const overlayTimer = window.setTimeout(() => overlay?.classList.add('is-active'), force ? 0 : 280);
+                try {
+                    const params = new URLSearchParams(new FormData(form));
+                    const response = await fetch(`${form.action || window.location.pathname}?${params.toString()}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    const payload = await response.json();
+                    if (!response.ok) {
+                        return;
+                    }
+                    if (!force && payload.version && payload.version === form.dataset.liveExploreVersion) {
+                        return;
+                    }
+                    refreshExploreResults(payload, form);
+                    markAreaUpdated(shell.querySelector('[data-explore-results]') || shell);
+                } catch (error) {
+                    // Silent in the background; manual search UI already handles visible failures.
+                } finally {
+                    window.clearTimeout(overlayTimer);
+                    overlay?.classList.remove('is-active');
+                    inFlight = false;
+                }
+            };
+            shell._runLiveRefresh = run;
+            window.setInterval(() => run(false), intervalMs);
+        });
+    };
+
+    const initPropertyRealtime = () => {
+        document.querySelectorAll('[data-property-live]').forEach((section) => {
+            if (section.dataset.liveBound === 'true') {
+                return;
+            }
+            section.dataset.liveBound = 'true';
+            const url = section.dataset.liveUrl;
+            const intervalMs = Number(section.dataset.livePollInterval || 12000);
+            const availabilityRegion = section.querySelector('[data-availability-region]');
+            const reviewsRegion = section.querySelector('[data-reviews-region]');
+            const bookingForm = section.querySelector('form[data-async-booking]');
+            if (!url || !availabilityRegion || !reviewsRegion) {
+                return;
+            }
+            let inFlight = false;
+            const run = async (force = false) => {
+                if (inFlight || document.hidden) {
+                    return;
+                }
+                inFlight = true;
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    const payload = await response.json();
+                    if (!response.ok) {
+                        return;
+                    }
+                    if (!force && payload.version && payload.version === section.dataset.liveVersion) {
+                        return;
+                    }
+                    if (typeof payload.availability_html === 'string') {
+                        availabilityRegion.innerHTML = payload.availability_html;
+                        markAreaUpdated(availabilityRegion);
+                    }
+                    if (typeof payload.reviews_html === 'string') {
+                        reviewsRegion.innerHTML = payload.reviews_html;
+                        markAreaUpdated(reviewsRegion);
+                    }
+                    document.querySelectorAll('[data-reviews-count-display]').forEach((node) => {
+                        node.textContent = `${payload.reviews_count} review${Number(payload.reviews_count) === 1 ? '' : 's'}`;
+                    });
+                    document.querySelectorAll('[data-average-rating-display]').forEach((node) => {
+                        node.textContent = payload.average_rating;
+                    });
+                    document.querySelectorAll('[data-average-rating-meter]').forEach((node) => {
+                        node.style.setProperty('--rating', payload.average_rating);
+                    });
+                    bookingForm?._refreshAvailability?.(payload.unavailable_ranges || []);
+                    if (payload.version) {
+                        section.dataset.liveVersion = payload.version;
+                    }
+                } catch (error) {
+                    // Silent refresh to avoid disrupting booking decisions.
+                } finally {
+                    inFlight = false;
+                }
+            };
+            section._runLiveRefresh = run;
+            window.setInterval(() => run(false), intervalMs);
+        });
+    };
+
+    document.addEventListener('baystays:live-refresh', () => {
+        document.querySelectorAll('[data-live-region], [data-live-explore], [data-property-live]').forEach((node) => {
+            node._runLiveRefresh?.(true);
         });
     });
 
@@ -1251,12 +1528,18 @@
         node.dataset.mapReady = 'true';
     });
 
+    initGenericLiveRegions();
+    initExploreRealtime();
+    initPropertyRealtime();
     initPropertyMaps();
     initListingMaps();
 
     window.addEventListener('pageshow', () => setLoader(false));
     window.addEventListener('load', () => {
         setLoader(false);
+        initGenericLiveRegions();
+        initExploreRealtime();
+        initPropertyRealtime();
         initPropertyMaps();
         initListingMaps();
     });

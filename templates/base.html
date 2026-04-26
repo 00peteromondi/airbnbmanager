@@ -27,15 +27,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="antialiased {% block body_class %}{% endblock %}">
-    <div data-loader class="loader-overlay fixed inset-0 z-[120] bg-slate-950/30 backdrop-blur-sm flex items-center justify-center">
-        <div class="panel px-6 py-5 flex items-center gap-4">
-            <span class="spinner spinner-dark spinner-lg"></span>
-            <div>
-                <p class="font-semibold">Preparing BayStays</p>
-                <p class="text-sm text-slate-500">Syncing stays, availability, and guest details.</p>
-            </div>
-        </div>
-    </div>
+    <div data-loader class="loader-overlay hidden" aria-hidden="true"></div>
     <div class="app-shell">
         {% block site_chrome %}
         <header class="sticky top-0 z-50 border-b border-white/60 bg-white/82 backdrop-blur-xl">
@@ -97,9 +89,9 @@
         {% endblock %}
 
         {% block mobile_drawer %}
-        <aside id="mobile-drawer" class="drawer-shell fixed inset-0 z-[9999] lg:hidden">
-            <div class="absolute inset-0 bg-slate-950/45" data-close-drawer></div>
-            <div class="drawer-panel mobile-drawer-panel absolute right-0 top-0 z-[10000] h-full w-[88vw] max-w-sm bg-white p-6 shadow-2xl flex flex-col">
+        <aside id="mobile-drawer" class="drawer-shell fixed inset-0 lg:hidden" aria-hidden="true">
+            <div class="drawer-backdrop absolute inset-0 bg-slate-950/45" data-close-drawer></div>
+            <div class="drawer-panel mobile-drawer-panel fixed right-0 top-0 h-dvh w-[88vw] max-w-sm bg-white p-6 shadow-2xl flex flex-col">
                 <div class="flex items-center justify-between mb-8">
                     <div>
                         <p class="font-display text-xl font-semibold">BayStays</p>
@@ -143,7 +135,6 @@
                             </button>
                         </form>
                     </div>
-                </div>
                 {% endif %}
             </div>
         </aside>
