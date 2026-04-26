@@ -17,7 +17,7 @@ from datetime import datetime
 from properties.models import Property, Review
 from bookings.models import Booking
 from hosts.models import Host
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Max
 from datetime import timedelta
 from django.utils import timezone
 from django.template.loader import render_to_string
@@ -168,7 +168,9 @@ def properties_list(request):
         avg_price=Avg('price_per_night'),
         avg_rating=Avg('average_rating'),
         total_results=Count('id'),
+        latest_update=Max('updated_at'),
     )
+    live_version = f"{summary['total_results'] or 0}:{summary['latest_update'].isoformat() if summary['latest_update'] else 'none'}"
     user_booked_property_ids = []
     if request.user.is_authenticated and request.user.role in ['guest', 'both']:
         user_booked_property_ids = list(
@@ -201,6 +203,7 @@ def properties_list(request):
         )
         data = {
             'html': results_html,
+            'version': live_version,
             'page': page_obj.number,
             'total_pages': paginator.num_pages,
             'has_next': page_obj.has_next(),
@@ -235,6 +238,7 @@ def properties_list(request):
         'avg_rating': summary['avg_rating'] or 0,
         'top_destination': destination['city'] if destination else '',
         'user_booked_property_ids': user_booked_property_ids,
+        'live_version': live_version,
     }
     return render(request, 'core/properties.html', context)
 

@@ -1,6 +1,7 @@
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -33,43 +34,11 @@ def _get_host_profile(user):
     host_profile, _ = Host.objects.get_or_create(user=user)
     return host_profile
 
-class HostRegistrationView(LogoutRequiredMixin, View):
-    def get(self, request):
-        if request.user.is_authenticated:
-            messages.info(request, "You're already logged in!")
-            return redirect('hosts:dashboard')
-        form = HostRegistrationForm()
-        return render(request, 'hosts/register.html', {'form': form})
-    
-    def post(self, request):
-        if request.user.is_authenticated:
-            messages.info(request, "You're already logged in!")
-            return redirect('hosts:dashboard')
-        form = HostRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Registration successful! Welcome to BayStays.")
-            return redirect('users:role_selection')
-        messages.error(request, "Registration failed. Invalid information.")
-        return render(request, 'hosts/register.html', {'form': form})
 
-@login_required
-def logout_host(request):
-    logout(request)
-    messages.info(request, "Logged out successfully.")
-    return redirect('core:home')
-
-@login_required
-def dashboard(request):
-    host_gate = _ensure_host_mode(request)
-    if host_gate:
-        return host_gate
-
-    host_profile = _get_host_profile(request.user)
-    properties = Property.objects.filter(owner=request.user).prefetch_related('images').order_by('-created_at')
-
-    bookings = Booking.objects.filter(property__owner=request.user).select_related('property', 'guest')
+def _host_dashboard_context(user):
+    host_profile = _get_host_profile(user)
+    properties = Property.objects.filter(owner=user).prefetch_related('images').order_by('-created_at')
+    bookings = Booking.objects.filter(property__owner=user).select_related('property', 'guest')
     total_bookings = bookings.count()
     pending_bookings = bookings.filter(status='pending').count()
     confirmed_bookings = bookings.filter(status='confirmed').count()
@@ -124,13 +93,20 @@ def dashboard(request):
 
     top_properties = sorted(property_summaries, key=lambda item: (item['booking_count'], item['revenue']), reverse=True)[:4]
     readiness_checks = [
-        {'label': 'Email verification', 'done': request.user.email_verified},
-        {'label': 'Phone verification', 'done': request.user.phone_verified},
+        {'label': 'Email verification', 'done': user.email_verified},
+        {'label': 'Phone verification', 'done': user.phone_verified},
         {'label': 'Government ID on file', 'done': bool(host_profile.government_id)},
         {'label': 'Tax or payout details added', 'done': bool(host_profile.tax_id or host_profile.bank_name)},
     ]
 
-    context = {
+    property_latest = properties.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    booking_latest = bookings.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    latest_update = max(
+        [stamp for stamp in [property_latest, booking_latest] if stamp is not None],
+        default=None,
+    )
+
+    return {
         'properties': properties,
         'property_summaries': property_summaries[:4],
         'top_properties': top_properties,
@@ -150,8 +126,88 @@ def dashboard(request):
         'pending_requests': pending_requests,
         'active_guest_contacts': active_guest_contacts,
         'upcoming_arrivals': upcoming_arrivals,
+        'live_version': f"{properties.count()}:{total_bookings}:{latest_update.isoformat() if latest_update else 'none'}",
     }
-    return render(request, 'hosts/dashboard.html', context)
+
+
+def _host_listings_context(user):
+    properties = Property.objects.filter(owner=user).prefetch_related('images').order_by('-created_at')
+    listing_rows = []
+    for property in properties:
+        property_bookings = Booking.objects.filter(property=property)
+        listing_rows.append({
+            'property': property,
+            'bookings_count': property_bookings.count(),
+            'pending_count': property_bookings.filter(status='pending').count(),
+            'confirmed_count': property_bookings.filter(status='confirmed').count(),
+            'revenue': property_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+            'image_count': property.images.count(),
+        })
+
+    latest_update = properties.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    return {
+        'properties': properties,
+        'listing_rows': listing_rows,
+        'live_version': f"{properties.count()}:{latest_update.isoformat() if latest_update else 'none'}",
+    }
+
+
+def _host_bookings_context(user):
+    properties = Property.objects.filter(owner=user)
+    bookings = Booking.objects.filter(property__in=properties).select_related(
+        'property', 'guest'
+    ).order_by('-created_at')
+    today = timezone.now().date()
+    stats = {
+        'total_bookings': bookings.count(),
+        'pending_bookings': bookings.filter(status='pending').count(),
+        'confirmed_bookings': bookings.filter(status='confirmed').count(),
+        'cancelled_bookings': bookings.filter(status='cancelled').count(),
+        'completed_bookings': bookings.filter(status='completed').count(),
+        'revenue': bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
+    }
+    latest_update = bookings.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    return {
+        'bookings': bookings,
+        'stats': stats,
+        'properties': properties,
+        'upcoming_arrivals': bookings.filter(status__in=['pending', 'confirmed'], check_in_date__gte=today).order_by('check_in_date')[:6],
+        'live_version': f"{properties.count()}:{bookings.count()}:{latest_update.isoformat() if latest_update else 'none'}",
+    }
+
+class HostRegistrationView(LogoutRequiredMixin, View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('hosts:dashboard')
+        form = HostRegistrationForm()
+        return render(request, 'hosts/register.html', {'form': form})
+    
+    def post(self, request):
+        if request.user.is_authenticated:
+            messages.info(request, "You're already logged in!")
+            return redirect('hosts:dashboard')
+        form = HostRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registration successful! Welcome to BayStays.")
+            return redirect('users:role_selection')
+        messages.error(request, "Registration failed. Invalid information.")
+        return render(request, 'hosts/register.html', {'form': form})
+
+@login_required
+def logout_host(request):
+    logout(request)
+    messages.info(request, "Logged out successfully.")
+    return redirect('core:home')
+
+@login_required
+def dashboard(request):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return host_gate
+    return render(request, 'hosts/dashboard.html', _host_dashboard_context(request.user))
 
 @login_required
 def add_listing(request):
@@ -277,23 +333,7 @@ def my_listings(request):
     host_gate = _ensure_host_mode(request)
     if host_gate:
         return host_gate
-    properties = Property.objects.filter(owner=request.user).prefetch_related('images').order_by('-created_at')
-    listing_rows = []
-    for property in properties:
-        property_bookings = Booking.objects.filter(property=property)
-        listing_rows.append({
-            'property': property,
-            'bookings_count': property_bookings.count(),
-            'pending_count': property_bookings.filter(status='pending').count(),
-            'confirmed_count': property_bookings.filter(status='confirmed').count(),
-            'revenue': property_bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
-            'image_count': property.images.count(),
-        })
-    context = {
-        'properties': properties,
-        'listing_rows': listing_rows,
-    }
-    return render(request, 'hosts/my_listings.html', context)
+    return render(request, 'hosts/my_listings.html', _host_listings_context(request.user))
 
 @login_required
 def property_bookings(request):
@@ -302,29 +342,43 @@ def property_bookings(request):
     if host_gate:
         return host_gate
     
-    properties = Property.objects.filter(owner=request.user)
-    bookings = Booking.objects.filter(property__in=properties).select_related(
-        'property', 'guest'
-    ).order_by('-created_at')
-    
-    # Booking statistics
-    stats = {
-        'total_bookings': bookings.count(),
-        'pending_bookings': bookings.filter(status='pending').count(),
-        'confirmed_bookings': bookings.filter(status='confirmed').count(),
-        'cancelled_bookings': bookings.filter(status='cancelled').count(),
-        'completed_bookings': bookings.filter(status='completed').count(),
-        'revenue': bookings.filter(status__in=['confirmed', 'completed']).aggregate(total=Sum('total_price'))['total'] or 0,
-    }
+    return render(request, 'hosts/owner_bookings.html', _host_bookings_context(request.user))
 
-    today = timezone.now().date()
-    context = {
-        'bookings': bookings,
-        'stats': stats,
-        'properties': properties,
-        'upcoming_arrivals': bookings.filter(status__in=['pending', 'confirmed'], check_in_date__gte=today).order_by('check_in_date')[:6],
-    }
-    return render(request, 'hosts/owner_bookings.html', context)
+
+@login_required
+def dashboard_live(request):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return JsonResponse({'redirect_url': reverse('core:home')}, status=403)
+    context = _host_dashboard_context(request.user)
+    return JsonResponse({
+        'html': render_to_string('hosts/_dashboard_content.html', context, request=request),
+        'version': context['live_version'],
+    })
+
+
+@login_required
+def my_listings_live(request):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return JsonResponse({'redirect_url': reverse('core:home')}, status=403)
+    context = _host_listings_context(request.user)
+    return JsonResponse({
+        'html': render_to_string('hosts/_my_listings_content.html', context, request=request),
+        'version': context['live_version'],
+    })
+
+
+@login_required
+def property_bookings_live(request):
+    host_gate = _ensure_host_mode(request)
+    if host_gate:
+        return JsonResponse({'redirect_url': reverse('core:home')}, status=403)
+    context = _host_bookings_context(request.user)
+    return JsonResponse({
+        'html': render_to_string('hosts/_owner_bookings_content.html', context, request=request),
+        'version': context['live_version'],
+    })
 
 
 @login_required

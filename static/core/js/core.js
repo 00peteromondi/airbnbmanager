@@ -249,6 +249,47 @@
         });
     });
 
+    document.querySelectorAll('[data-mobile-gallery]').forEach((gallery) => {
+        const primaryTrigger = gallery.querySelector('[data-mobile-gallery-primary]');
+        const primaryImage = gallery.querySelector('[data-mobile-gallery-image]');
+        const countNode = gallery.querySelector('[data-mobile-gallery-count]');
+        const thumbs = Array.from(gallery.querySelectorAll('[data-mobile-gallery-thumb]'));
+        if (!primaryTrigger || !primaryImage || !thumbs.length) {
+            return;
+        }
+
+        const total = thumbs.length;
+        const syncMobileGallery = (index) => {
+            const nextIndex = Math.max(0, Math.min(index, total - 1));
+            const activeThumb = thumbs[nextIndex];
+            if (!activeThumb) {
+                return;
+            }
+            primaryImage.src = activeThumb.dataset.imageSrc || primaryImage.src;
+            primaryImage.alt = activeThumb.dataset.imageAlt || primaryImage.alt;
+            primaryTrigger.dataset.lightboxIndex = String(nextIndex);
+            primaryTrigger.dataset.imageSrc = activeThumb.dataset.imageSrc || '';
+            primaryTrigger.dataset.imageAlt = activeThumb.dataset.imageAlt || '';
+            primaryTrigger.dataset.imageCaption = activeThumb.dataset.imageCaption || '';
+            thumbs.forEach((thumb, thumbIndex) => {
+                const isActive = thumbIndex === nextIndex;
+                thumb.classList.toggle('is-active', isActive);
+                if (isActive) {
+                    thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            });
+            if (countNode) {
+                countNode.textContent = `${nextIndex + 1} / ${total}`;
+            }
+        };
+
+        thumbs.forEach((thumb, index) => {
+            thumb.addEventListener('click', () => syncMobileGallery(index));
+        });
+
+        syncMobileGallery(0);
+    });
+
     document.querySelectorAll('.accordion-toggle').forEach((button) => {
         button.addEventListener('click', () => {
             const panel = document.getElementById(button.getAttribute('aria-controls'));

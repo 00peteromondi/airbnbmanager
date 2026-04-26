@@ -12,24 +12,67 @@
         <div class="space-y-6 section-fade">
             <div class="panel overflow-hidden">
                 {% if property.images.all %}
-                    <div class="grid gap-2 md:grid-cols-[1.3fr_0.7fr]">
-                        {% for image in property.images.all|slice:':5' %}
+                    <div class="property-gallery-mobile md:hidden" data-mobile-gallery>
+                        {% with lead_image=property.images.all|first total_images=property.images.count %}
                             <button
                                 type="button"
-                                class="gallery-thumb relative {% if forloop.first %}md:row-span-2 gallery-thumb--feature{% endif %}"
+                                class="property-gallery-mobile__hero"
+                                data-mobile-gallery-primary
                                 data-open-lightbox="property-lightbox"
-                                data-lightbox-index="{{ forloop.counter0 }}"
-                                data-image-src="{{ image.image.url }}"
-                                data-image-alt="{{ image.caption|default:property.name }}"
-                                data-image-caption="{{ image.caption|default:property.name }}"
+                                data-lightbox-index="0"
+                                data-image-src="{{ lead_image.image.url }}"
+                                data-image-alt="{{ lead_image.caption|default:property.name }}"
+                                data-image-caption="{{ lead_image.caption|default:property.name }}"
                             >
-                                <span class="gallery-thumb__media {% if forloop.first %}gallery-thumb__media--feature{% endif %}">
-                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:property.name }}" class="gallery-thumb__image">
+                                <img src="{{ lead_image.image.url }}" alt="{{ lead_image.caption|default:property.name }}" class="property-gallery-mobile__hero-image" data-mobile-gallery-image>
+                                <span class="property-gallery-mobile__hero-veil"></span>
+                                <span class="property-gallery-mobile__hero-actions">
+                                    <span class="property-gallery-mobile__hero-chip"><i class="fa-solid fa-expand"></i>Open gallery</span>
+                                    <span class="property-gallery-mobile__hero-chip" data-mobile-gallery-count>1 / {{ total_images }}</span>
                                 </span>
-                                <span class="gallery-thumb__veil"></span>
-                                <span class="gallery-thumb__label"><i class="fa-solid fa-expand"></i>Open gallery</span>
                             </button>
-                        {% endfor %}
+                        {% endwith %}
+                        <div class="property-gallery-mobile__rail" data-mobile-gallery-rail>
+                            {% for image in property.images.all %}
+                                <button
+                                    type="button"
+                                    class="property-gallery-mobile__thumb {% if forloop.first %}is-active{% endif %}"
+                                    data-mobile-gallery-thumb
+                                    data-lightbox-index="{{ forloop.counter0 }}"
+                                    data-image-src="{{ image.image.url }}"
+                                    data-image-alt="{{ image.caption|default:property.name }}"
+                                    data-image-caption="{{ image.caption|default:property.name }}"
+                                    aria-label="Preview image {{ forloop.counter }}"
+                                >
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:property.name }}" class="property-gallery-mobile__thumb-image">
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="hidden md:grid gap-2 md:grid-cols-[1.3fr_0.7fr]">
+                        {% with total_images=property.images.count %}
+                            {% for image in property.images.all|slice:':5' %}
+                                <button
+                                    type="button"
+                                    class="gallery-thumb relative {% if forloop.first %}md:row-span-2 gallery-thumb--feature{% endif %}"
+                                    data-open-lightbox="property-lightbox"
+                                    data-lightbox-index="{{ forloop.counter0 }}"
+                                    data-image-src="{{ image.image.url }}"
+                                    data-image-alt="{{ image.caption|default:property.name }}"
+                                    data-image-caption="{{ image.caption|default:property.name }}"
+                                >
+                                    <span class="gallery-thumb__media {% if forloop.first %}gallery-thumb__media--feature{% endif %}">
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:property.name }}" class="gallery-thumb__image">
+                                    </span>
+                                    <span class="gallery-thumb__veil"></span>
+                                    {% if forloop.last and total_images > 5 %}
+                                        <span class="gallery-thumb__count">+{{ total_images|add:"-5" }} more</span>
+                                    {% endif %}
+                                    <span class="gallery-thumb__label"><i class="fa-solid fa-expand"></i>Open gallery</span>
+                                </button>
+                            {% endfor %}
+                        {% endwith %}
                     </div>
                 {% else %}
                     <div class="h-[28rem] bg-gradient-to-br from-blue-100 via-white to-red-50 flex items-center justify-center text-slate-500 text-5xl"><i class="fa-solid fa-house"></i></div>
@@ -87,11 +130,11 @@
                     </div>
                     <div class="panel p-5 bg-slate-50">
                         <h3 class="font-semibold mb-3">Amenities</h3>
-                        <div class="grid gap-3 sm:grid-cols-2 text-sm text-slate-600">
+                        <div class="grid grid-cols-2 gap-3 text-sm text-slate-600">
                             {% for code, label, icon in amenities_display %}
                                 <div class="rounded-[0.9rem] bg-white px-4 py-3 border border-slate-100"><i class="{{ icon }} text-red-500 mr-2"></i>{{ label }}</div>
                             {% empty %}
-                                <div class="empty-state rounded-[0.9rem] sm:col-span-2 px-6">
+                                <div class="empty-state rounded-[0.9rem] col-span-2 px-6">
                                     <div>
                                         <i class="fa-solid fa-layer-group text-2xl text-red-500"></i>
                                         <p class="mt-3 font-semibold text-slate-800">Amenities will appear here</p>

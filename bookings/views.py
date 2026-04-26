@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import CreateView, ListView, UpdateView
@@ -34,6 +35,30 @@ def _booking_overlap_queryset(property_obj, check_in_date, check_out_date, exclu
     if exclude_id:
         queryset = queryset.exclude(id=exclude_id)
     return queryset
+
+
+def _guest_bookings_context(user):
+    bookings = Booking.objects.filter(guest=user).select_related('property').order_by('-created_at')
+    today = timezone.now().date()
+    active_bookings = bookings.exclude(status='cancelled')
+    latest_update = bookings.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    return {
+        'bookings': bookings,
+        'today': today,
+        'booking_summary': {
+            'total': bookings.count(),
+            'upcoming': active_bookings.filter(check_out_date__gte=today).count(),
+            'manageable': bookings.filter(
+                status__in=['pending', 'confirmed'],
+                check_in_date__gt=today,
+            ).count(),
+        },
+        'can_manage_any_booking': bookings.filter(
+            status__in=['pending', 'confirmed'],
+            check_in_date__gt=today,
+        ).exists(),
+        'live_version': f"{bookings.count()}:{latest_update.isoformat() if latest_update else 'none'}",
+    }
 
 
 class BookingCreateView(LoginRequiredMixin, CreateView):
@@ -203,23 +228,17 @@ class UserBookingListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        bookings = context['bookings']
-        today = timezone.now().date()
-        active_bookings = bookings.exclude(status='cancelled')
-        context['today'] = today
-        context['booking_summary'] = {
-            'total': bookings.count(),
-            'upcoming': active_bookings.filter(check_out_date__gte=today).count(),
-            'manageable': bookings.filter(
-                status__in=['pending', 'confirmed'],
-                check_in_date__gt=today,
-            ).count(),
-        }
-        context['can_manage_any_booking'] = bookings.filter(
-            status__in=['pending', 'confirmed'],
-            check_in_date__gt=today,
-        ).exists()
+        context.update(_guest_bookings_context(self.request.user))
         return context
+
+
+@login_required
+def booking_list_live(request):
+    context = _guest_bookings_context(request.user)
+    return JsonResponse({
+        'html': render_to_string('bookings/_booking_list_content.html', context, request=request),
+        'version': context['live_version'],
+    })
 
 
 @login_required

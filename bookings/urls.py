@@ -5,6 +5,7 @@ app_name = 'bookings'
 
 urlpatterns = [
     path('', views.UserBookingListView.as_view(), name='booking_list'),
+    path('live/', views.booking_list_live, name='booking_list_live'),
     path('create/<int:property_id>/', views.BookingCreateView.as_view(), name='create_booking'),
     path('<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
     path('<int:booking_id>/reschedule/', views.reschedule_booking, name='reschedule_booking'),
