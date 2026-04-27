@@ -4,15 +4,18 @@
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
     <div class="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <div class="panel p-6 lg:p-8 section-fade surface-tint">
-            <span class="badge badge-primary mb-3">Guest dashboard</span>
-            <h1 class="font-display text-4xl font-semibold">Stay on top of every trip, payment, and host touchpoint.</h1>
-            <p class="mt-3 max-w-3xl text-slate-600">BayStays keeps your upcoming stays, payment follow-through, and profile readiness in one place so booking feels calm before arrival and organized after checkout.</p>
-            <div class="mt-6 flex flex-wrap gap-3">
-                <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Explore stays</a>
-                <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-calendar-days"></i>Manage bookings</a>
-                <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-secondary"><i class="fa-solid fa-wallet"></i>Payments center</a>
-                <a href="{% url 'users:profile' %}" class="btn-bay-ghost"><i class="fa-regular fa-circle-user"></i>Complete profile</a>
+        <div class="panel p-6 lg:p-8 section-fade immersive-panel" style="--card-image:url('https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1400&q=80');">
+            <div class="immersive-panel__veil"></div>
+            <div class="immersive-panel__content">
+                <span class="badge badge-primary mb-3">Guest dashboard</span>
+                <h1 class="font-display text-4xl font-semibold text-white">Stay on top of every trip, payment, and host touchpoint.</h1>
+                <p class="mt-3 max-w-3xl text-white/88">BayStays keeps your upcoming stays, payment follow-through, and profile readiness in one place so booking feels calm before arrival and organized after checkout.</p>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Explore stays</a>
+                    <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost bg-white/88"><i class="fa-solid fa-calendar-days"></i>Manage bookings</a>
+                    <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-secondary"><i class="fa-solid fa-wallet"></i>Payments center</a>
+                    <a href="{% url 'users:profile' %}" class="btn-bay-ghost bg-white/88"><i class="fa-regular fa-circle-user"></i>Complete profile</a>
+                </div>
             </div>
         </div>
         <div class="panel p-6 lg:p-8 section-fade">
@@ -36,10 +39,38 @@
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 section-fade">
-        <div class="panel p-5"><p class="text-sm text-slate-500">Upcoming stays</p><p class="font-display text-4xl font-semibold mt-2">{{ dashboard_stats.upcoming }}</p></div>
-        <div class="panel p-5"><p class="text-sm text-slate-500">Currently active</p><p class="font-display text-4xl font-semibold mt-2">{{ dashboard_stats.active }}</p></div>
-        <div class="panel p-5"><p class="text-sm text-slate-500">Completed trips</p><p class="font-display text-4xl font-semibold mt-2">{{ dashboard_stats.completed }}</p></div>
-        <div class="panel p-5"><p class="text-sm text-slate-500">Payments settled</p><p class="font-display text-4xl font-semibold mt-2">{{ dashboard_stats.payments_paid }}</p></div>
+        <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80');">
+            <div class="stat-visual-card__veil"></div>
+            <div class="stat-visual-card__content">
+                <div class="stat-visual-card__icon"><i class="fa-solid fa-suitcase-rolling"></i></div>
+                <p class="text-sm text-slate-100">Upcoming stays</p><p class="font-display text-4xl font-semibold mt-2 text-white">{{ dashboard_stats.upcoming }}</p>
+                <p class="text-sm text-slate-100/90 mt-2">Trips lining up next in your guest flow.</p>
+            </div>
+        </div>
+        <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80');">
+            <div class="stat-visual-card__veil"></div>
+            <div class="stat-visual-card__content">
+                <div class="stat-visual-card__icon"><i class="fa-solid fa-door-open"></i></div>
+                <p class="text-sm text-slate-100">Currently active</p><p class="font-display text-4xl font-semibold mt-2 text-white">{{ dashboard_stats.active }}</p>
+                <p class="text-sm text-slate-100/90 mt-2">Stays that are live right now.</p>
+            </div>
+        </div>
+        <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80');">
+            <div class="stat-visual-card__veil"></div>
+            <div class="stat-visual-card__content">
+                <div class="stat-visual-card__icon"><i class="fa-solid fa-star"></i></div>
+                <p class="text-sm text-slate-100">Completed trips</p><p class="font-display text-4xl font-semibold mt-2 text-white">{{ dashboard_stats.completed }}</p>
+                <p class="text-sm text-slate-100/90 mt-2">Stays already finished and ready for reviews.</p>
+            </div>
+        </div>
+        <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=900&q=80');">
+            <div class="stat-visual-card__veil"></div>
+            <div class="stat-visual-card__content">
+                <div class="stat-visual-card__icon"><i class="fa-solid fa-wallet"></i></div>
+                <p class="text-sm text-slate-100">Payments settled</p><p class="font-display text-4xl font-semibold mt-2 text-white">{{ dashboard_stats.payments_paid }}</p>
+                <p class="text-sm text-slate-100/90 mt-2">Charges that have already landed successfully.</p>
+            </div>
+        </div>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[1.08fr_0.92fr] section-fade">
@@ -52,25 +83,47 @@
                 <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open bookings</a>
             </div>
             <div class="space-y-4">
-                {% for booking in upcoming_bookings %}
+                {% for plan in upcoming_trip_plans %}
+                    {% with booking=plan.booking %}
                     <article class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
                         <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div>
                                 <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
                                 <p class="text-sm text-slate-500 mt-1">{{ booking.property.city }}, {{ booking.property.country }}</p>
                             </div>
-                            <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                                <span class="badge badge-blue"><i class="fa-solid fa-list-check"></i>{{ plan.ready_count }}/{{ plan.checklist_total }} ready</span>
+                            </div>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
                             <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ booking.check_in_date }}</strong>Check-in</div>
                             <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ booking.check_out_date }}</strong>Check-out</div>
-                            <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">KES {{ booking.total_price|intcomma }}</strong>Total</div>
+                            <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ plan.countdown_days }} day{{ plan.countdown_days|pluralize }}</strong>Until check-in</div>
+                        </div>
+                        <div class="mt-4 rounded-[0.8rem] border border-slate-200 bg-white px-4 py-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                                <p class="text-sm font-semibold text-slate-800">Pre-arrival checklist</p>
+                                <span class="badge {% if plan.ready_count == plan.checklist_total %}badge-success{% else %}badge-warm{% endif %}">
+                                    <i class="fa-solid fa-clipboard-check"></i>{{ plan.ready_count }}/{{ plan.checklist_total }} complete
+                                </span>
+                            </div>
+                            <div class="grid gap-2 sm:grid-cols-2">
+                                {% for item in plan.checklist %}
+                                    <div class="rounded-[0.7rem] px-3 py-3 text-sm {% if item.done %}bg-emerald-50 text-emerald-800 border border-emerald-100{% else %}bg-amber-50 text-amber-900 border border-amber-100{% endif %}">
+                                        <i class="fa-solid {% if item.done %}fa-circle-check{% else %}fa-circle-notch{% endif %} mr-2"></i>{{ item.label }}
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="mt-4 flex flex-wrap gap-3">
                             <a href="{% url 'properties:property_detail' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>View stay</a>
                             <a href="{% url 'bookings:booking_list' %}" class="btn-bay-secondary"><i class="fa-solid fa-calendar-check"></i>Manage booking</a>
+                            <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Trip summary</a>
+                            <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Add reminder</a>
                         </div>
                     </article>
+                    {% endwith %}
                 {% empty %}
                     <div class="empty-state rounded-[0.8rem] px-6 py-10">
                         <div>
@@ -145,7 +198,8 @@
                     <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open center</a>
                 </div>
                 <div class="space-y-3">
-                    {% for booking in unpaid_bookings %}
+                    {% for plan in unpaid_trip_plans %}
+                        {% with booking=plan.booking %}
                         <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
                             <div class="flex items-center justify-between gap-3 flex-wrap">
                                 <div>
@@ -154,8 +208,13 @@
                                 </div>
                                 <span class="badge {% if booking.payment_status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ booking.get_payment_status_display }}</span>
                             </div>
-                            <p class="mt-3 text-sm text-slate-600">KES {{ booking.total_price|intcomma }}</p>
+                            <p class="mt-3 text-sm text-slate-600">KES {{ booking.total_price|intcomma }} · {{ plan.ready_count }}/{{ plan.checklist_total }} travel checks ready</p>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-ghost"><i class="fa-solid fa-wallet"></i>Settle now</a>
+                                <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
+                            </div>
                         </div>
+                        {% endwith %}
                     {% empty %}
                         <p class="text-sm text-slate-500">Any unpaid or retry-ready stays will appear here with a direct path into the payments center.</p>
                     {% endfor %}
@@ -189,17 +248,26 @@
         </div>
         <div class="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
             <div class="space-y-3">
-                {% for booking in travel_timeline %}
+                {% for plan in travel_timeline_plans %}
+                    {% with booking=plan.booking %}
                     <article class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
-                            <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                                <span class="badge badge-dark"><i class="fa-solid fa-list-check"></i>{{ plan.ready_count }}/{{ plan.checklist_total }}</span>
+                            </div>
                         </div>
                         <p class="mt-2 text-sm text-slate-500">{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
                         <p class="mt-2 text-sm {% if booking.payment_status == 'paid' %}text-emerald-600{% elif booking.payment_status == 'failed' %}text-red-600{% else %}text-slate-500{% endif %}">
                             <i class="fa-solid fa-money-bill-wave mr-2"></i>{{ booking.get_payment_status_display }}
                         </p>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Summary</a>
+                            <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
+                        </div>
                     </article>
+                    {% endwith %}
                 {% empty %}
                     <div class="empty-state rounded-[0.8rem] px-6 py-10">
                         <div>

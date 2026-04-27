@@ -583,6 +583,12 @@
     const hero = document.querySelector('[data-hero-carousel]');
     if (hero) {
         const slides = Array.from(hero.querySelectorAll('[data-hero-slide]'));
+        const progressContainer = hero.querySelector('[data-hero-progress]');
+        if (progressContainer && !progressContainer.querySelector('[data-hero-progress-item]')) {
+            progressContainer.innerHTML = slides.map((_, index) => (
+                `<span data-hero-progress-item${index === 0 ? ' class="is-active"' : ''}></span>`
+            )).join('');
+        }
         const progress = Array.from(hero.querySelectorAll('[data-hero-progress-item]'));
         let activeIndex = 0;
         const heroDuration = Number(hero.dataset.heroDuration || 6500);
@@ -607,6 +613,46 @@
             }, heroDuration);
         }
     }
+
+    document.querySelectorAll('[data-auth-carousel]').forEach((carousel) => {
+        const slides = Array.from(carousel.querySelectorAll('[data-auth-slide]'));
+        const progressContainer = carousel.querySelector('[data-auth-progress]');
+        if (!slides.length) {
+            return;
+        }
+        if (progressContainer && !progressContainer.querySelector('[data-auth-progress-item]')) {
+            progressContainer.innerHTML = slides.map((_, index) => (
+                `<span data-auth-progress-item${index === 0 ? ' class="is-active"' : ''}></span>`
+            )).join('');
+        }
+        const progress = Array.from(carousel.querySelectorAll('[data-auth-progress-item]'));
+        const duration = Number(carousel.dataset.authDuration || 4200);
+        let activeIndex = Math.max(0, slides.findIndex((slide) => slide.classList.contains('is-active')));
+        if (activeIndex < 0) {
+            activeIndex = 0;
+        }
+
+        const activate = (index) => {
+            slides.forEach((slide, slideIndex) => {
+                slide.classList.toggle('is-active', slideIndex === index);
+            });
+            progress.forEach((item, itemIndex) => {
+                item.classList.remove('is-active');
+                if (itemIndex === index) {
+                    void item.offsetWidth;
+                    item.classList.add('is-active');
+                }
+            });
+            activeIndex = index;
+        };
+
+        activate(activeIndex);
+        if (slides.length > 1) {
+            window.setInterval(() => {
+                activate((activeIndex + 1) % slides.length);
+            }, duration);
+        }
+    });
 
     document.querySelectorAll('[data-booking-filter]').forEach((button) => {
         button.addEventListener('click', () => {

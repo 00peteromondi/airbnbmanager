@@ -10,6 +10,8 @@
     <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
         <div class="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] items-stretch auth-grid">
             <div class="auth-side rounded-[0.95rem] p-8 lg:p-12 section-fade">
+                <div class="auth-side__media" style="--card-image:url('{% if '/hosts/' in request.path %}https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80{% else %}https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80{% endif %}');"></div>
+                <div class="auth-side__overlay"></div>
                 <div class="relative z-10 flex h-full flex-col justify-between gap-8">
                     <div>
                         <div class="flex items-center gap-3">
@@ -33,34 +35,77 @@
                             <p class="mt-5 text-lg text-white/78 max-w-2xl">Guest access is tuned for travel flow: clear sign-in, fast account creation, and an immediate path back to browsing or managing booked homes.</p>
                         {% endif %}
                     </div>
-                    <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="glass-card rounded-[0.78rem] p-4 auth-side__spotlight" data-auth-carousel data-auth-duration="4200">
                         {% if '/hosts/' in request.path %}
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Live</p>
-                                <p class="text-sm text-white/72 mt-1">Reservation view</p>
-                            </div>
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Fast</p>
-                                <p class="text-sm text-white/72 mt-1">Listing access</p>
-                            </div>
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Clear</p>
-                                <p class="text-sm text-white/72 mt-1">Guest signals</p>
-                            </div>
+                            <article class="auth-spotlight-slide is-active" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-calendar-check"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Reservation timing</p>
+                                        <p class="font-display text-xl font-semibold">Live queue clarity</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">See requests, arrivals, and approval work without jumping around.</h2>
+                                <p class="auth-spotlight-slide__copy">Hosts land back in a tighter workflow with arrivals, payout signals, and guest actions already within reach.</p>
+                            </article>
+                            <article class="auth-spotlight-slide" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-house"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Portfolio control</p>
+                                        <p class="font-display text-xl font-semibold">Listing access fast</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">Open a listing, refresh media, or pause availability from one tighter host surface.</h2>
+                                <p class="auth-spotlight-slide__copy">This sign-in path is tuned for hosts who want to get back to ops, not wander through generic account steps.</p>
+                            </article>
+                            <article class="auth-spotlight-slide" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Trust signals</p>
+                                        <p class="font-display text-xl font-semibold">Clear guest context</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">Step back into a workspace that keeps verification, reviews, and payouts in view.</h2>
+                                <p class="auth-spotlight-slide__copy">BayStays host access stays focused on what helps listings convert and what protects the stay once booked.</p>
+                            </article>
                         {% else %}
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Quick</p>
-                                <p class="text-sm text-white/72 mt-1">Trip access</p>
-                            </div>
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Clear</p>
-                                <p class="text-sm text-white/72 mt-1">Stay detail</p>
-                            </div>
-                            <div class="glass-card rounded-[0.7rem] p-4">
-                                <p class="text-2xl font-display font-semibold">Safe</p>
-                                <p class="text-sm text-white/72 mt-1">Booking flow</p>
-                            </div>
+                            <article class="auth-spotlight-slide is-active" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-bolt"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Trip momentum</p>
+                                        <p class="font-display text-xl font-semibold">Quick trip access</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">Reopen your plans, payments, and saved stays without losing where your trip was headed.</h2>
+                                <p class="auth-spotlight-slide__copy">Guest access stays calm and focused so travelers can get back to comparing, paying, or planning in seconds.</p>
+                            </article>
+                            <article class="auth-spotlight-slide" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Discovery context</p>
+                                        <p class="font-display text-xl font-semibold">Stay detail first</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">Pick back up with location detail, arrival timing, and booking context already lined up.</h2>
+                                <p class="auth-spotlight-slide__copy">BayStays guest access is designed for travelers who need clarity on dates, payments, and the next step.</p>
+                            </article>
+                            <article class="auth-spotlight-slide" data-auth-slide>
+                                <div class="auth-spotlight-slide__meta">
+                                    <div class="auth-spotlight-slide__icon"><i class="fa-solid fa-lock"></i></div>
+                                    <div>
+                                        <p class="auth-spotlight-slide__eyebrow">Protected flow</p>
+                                        <p class="font-display text-xl font-semibold">Safe booking return</p>
+                                    </div>
+                                </div>
+                                <h2 class="auth-spotlight-slide__title font-display font-semibold">Come back to a trusted checkout path with payment history and travel planning close by.</h2>
+                                <p class="auth-spotlight-slide__copy">From browsing to booked stay management, this route keeps the guest side feeling steady and intentional.</p>
+                            </article>
                         {% endif %}
+                        <div class="auth-spotlight-progress" data-auth-progress></div>
                     </div>
                 </div>
             </div>

@@ -296,8 +296,19 @@
                     <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span><i class="fa-solid fa-clock mr-2 text-blue-500"></i>Booking window</span><span>At least one day ahead</span></div>
                     <div class="flex items-center justify-between rounded-[0.95rem] bg-slate-50 px-4 py-3"><span><i class="fa-solid fa-camera mr-2 text-orange-500"></i>Gallery viewing</span><span>Tap any photo to enlarge</span></div>
                 </div>
+                {% if user.is_authenticated and user.role == 'host' and can_book_listing %}
+                    <div class="mt-5 rounded-[0.95rem] border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-900">
+                        <i class="fa-solid fa-person-walking-luggage mr-2"></i>Your host account can still book other BayStays stays as a guest whenever you travel.
+                    </div>
+                {% endif %}
+                {% if user.is_authenticated and is_owner_viewing %}
+                    <div class="mt-5 rounded-[0.95rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                        <i class="fa-solid fa-circle-info mr-2"></i>You cannot reserve your own listing on BayStays, including on behalf of another guest. Use host availability controls instead.
+                    </div>
+                {% endif %}
                 <div id="booking-feedback" class="hidden mt-5"></div>
                 <div id="availability-feedback" class="hidden mb-4"></div>
+                {% if can_book_listing %}
                 <form method="post" action="{% url 'bookings:create_booking' property.id %}" class="mt-5 space-y-4" data-loading-form="true" data-booking-calculator data-nightly-rate="{{ property.price_per_night }}" data-async-booking data-unavailable-ranges='{{ unavailable_periods_json|safe }}'>
                     {% csrf_token %}
                     <div>
@@ -341,6 +352,12 @@
                     </div>
                     <button type="submit" class="btn-bay w-full"><span data-submit-text><i class="fa-solid fa-wallet"></i>Request and pay</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Submitting</span></button>
                 </form>
+                {% else %}
+                <div class="mt-5 rounded-[0.95rem] border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                    <p class="font-semibold text-slate-900"><i class="fa-solid fa-house-lock mr-2 text-red-500"></i>Booking is unavailable from this account.</p>
+                    <p class="mt-2">BayStays prevents listing owners from booking their own property. You can still manage the stay from the hosting hub.</p>
+                </div>
+                {% endif %}
             </div>
         </aside>
     </div>

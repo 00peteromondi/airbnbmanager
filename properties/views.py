@@ -52,7 +52,10 @@ def _property_detail_context_data(property_obj, user):
     user_review = None
     can_review = False
     existing_guest_bookings = Booking.objects.none()
+    is_owner_viewing = False
+    can_book_listing = property_obj.owner_id != getattr(user, 'id', None)
     if user.is_authenticated:
+        is_owner_viewing = property_obj.owner_id == user.id
         user_review = reviews.filter(user=user).first()
         can_review = Booking.objects.filter(
             property=property_obj,
@@ -92,6 +95,8 @@ def _property_detail_context_data(property_obj, user):
         'can_review': can_review,
         'current_user_rating': user_review.rating if user_review else 0,
         'rating_choices': Review._meta.get_field('rating').choices,
+        'is_owner_viewing': is_owner_viewing,
+        'can_book_listing': can_book_listing,
         'existing_guest_bookings': existing_guest_bookings[:4],
         'has_existing_booking': existing_guest_bookings.exists(),
         'unavailable_periods': unavailable_bookings[:6],

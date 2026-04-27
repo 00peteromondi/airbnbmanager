@@ -85,6 +85,21 @@
                     </div>
                 </div>
             </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80" alt="Friends planning a lakeside trip" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--left max-w-7xl mx-auto">
+                    <div class="hero-copy">
+                        <span class="badge badge-blue mb-5 shadow-sm">For weekend planners and families</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">Map out the stay, save the trip summary, and keep everyone aligned before check-in day.</h2>
+                        <p class="mt-4 max-w-2xl text-base lg:text-lg text-white/88">BayStays now helps guests compare places, plan arrivals, and manage payment follow-through without juggling multiple tools.</p>
+                        <div class="mt-7 hero-actions">
+                            <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-location-dot"></i>Find a stay</a>
+                            <a href="{% url 'guests:guest_login' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-bell"></i>Track a trip</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {% elif user.role == 'host' %}
             <article class="hero-slide is-active" data-hero-slide>
                 <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80" alt="Host listing workspace" class="hero-slide__image"></div>
@@ -127,6 +142,21 @@
                         <div class="mt-7 hero-actions justify-center">
                             <a href="{% url 'hosts:my_listings' %}" class="btn-bay"><i class="fa-solid fa-house"></i>Open portfolio</a>
                             <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-calendar-days"></i>Reservation queue</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1600&q=80" alt="Host reviewing finances and guest operations" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--right max-w-7xl mx-auto">
+                    <div class="hero-copy ml-auto">
+                        <span class="badge badge-primary mb-5 shadow-sm">Host finance clarity</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">See payouts, Thursday withdrawal timing, and reservation readiness without leaving the hosting hub.</h2>
+                        <p class="mt-4 max-w-2xl text-base lg:text-lg text-white/88">The latest host tools bring finance, guest arrivals, listing quality, and reservation action into one operating surface.</p>
+                        <div class="mt-7 hero-actions">
+                            <a href="{% url 'hosts:dashboard' %}" class="btn-bay"><i class="fa-solid fa-wallet"></i>Check host finance</a>
+                            <a href="{% url 'users:profile' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-id-card"></i>Finish compliance</a>
                         </div>
                     </div>
                 </div>
@@ -177,13 +207,23 @@
                     </div>
                 </div>
             </article>
+            <article class="hero-slide" data-hero-slide>
+                <div class="hero-slide__bg"><img loading="lazy" src="https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1600&q=80" alt="Guests reviewing travel plans" class="hero-slide__image"></div>
+                <div class="hero-slide__veil"></div>
+                <div class="hero-slide__content hero-slide__content--center max-w-7xl mx-auto">
+                    <div class="hero-copy text-center mx-auto">
+                        <span class="badge badge-blue mb-5 shadow-sm">Guest planning tools</span>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">Download trip summaries, add reminders, and keep pre-arrival tasks tied to each booking.</h2>
+                        <p class="mt-4 max-w-2xl mx-auto text-base lg:text-lg text-white/88">Guests now get a stronger planning workflow from discovery to payment to arrival without leaving BayStays.</p>
+                        <div class="mt-7 hero-actions justify-center">
+                            <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay"><i class="fa-solid fa-file-arrow-down"></i>Open planning tools</a>
+                            <a href="{% url 'guests:guest_dashboard' %}" class="btn-bay-ghost bg-white/10 border-white/20 text-white"><i class="fa-solid fa-suitcase-rolling"></i>Guest dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {% endif %}
-        <div class="hero-progress" aria-hidden="true">
-            <span data-hero-progress-item class="is-active"></span>
-            <span data-hero-progress-item></span>
-            <span data-hero-progress-item></span>
-            {% if not user.is_authenticated %}<span data-hero-progress-item></span>{% endif %}
-        </div>
+        <div class="hero-progress" aria-hidden="true" data-hero-progress></div>
     </div>
 </section>
 {% endblock %}

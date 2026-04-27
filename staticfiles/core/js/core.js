@@ -328,6 +328,182 @@
         });
     });
 
+    const setPasswordVisibility = (input, button, visible) => {
+        input.type = visible ? 'text' : 'password';
+        button.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+        button.innerHTML = visible
+            ? '<i class="fa-regular fa-eye-slash"></i>'
+            : '<i class="fa-regular fa-eye"></i>';
+    };
+
+    document.querySelectorAll('[data-password-toggle-button]').forEach((button) => {
+        if (button.dataset.passwordBound === 'true') {
+            return;
+        }
+        button.dataset.passwordBound = 'true';
+        const shell = button.closest('.password-shell');
+        const input = shell?.querySelector('input');
+        if (!input) {
+            return;
+        }
+        setPasswordVisibility(input, button, false);
+        button.addEventListener('click', () => {
+            setPasswordVisibility(input, button, input.type === 'password');
+        });
+    });
+
+    document.querySelectorAll('form[data-password-meter]').forEach((form) => {
+        if (form.dataset.passwordMeterBound === 'true') {
+            return;
+        }
+        form.dataset.passwordMeterBound = 'true';
+        const passwordInput = form.querySelector('input[name="password1"], input[name="new_password1"]');
+        const confirmInput = form.querySelector('input[name="password2"], input[name="new_password2"]');
+        const label = form.querySelector('[data-password-strength-label]');
+        const fill = form.querySelector('[data-password-strength-fill]');
+        const hints = form.querySelector('[data-password-strength-hints]');
+        const matchLabel = form.querySelector('[data-password-match-label]');
+        const endpoint = form.dataset.passwordStrengthUrl;
+        let activeRequest = 0;
+        if (!passwordInput || !confirmInput || !endpoint) {
+            return;
+        }
+
+        const renderPasswordState = (payload) => {
+            if (label) {
+                label.textContent = payload.label || 'No password yet';
+                label.className = `badge ${payload.tone === 'green' ? 'badge-success' : payload.tone === 'blue' ? 'badge-blue' : payload.tone === 'orange' ? 'badge-warm' : payload.tone === 'red' ? 'badge-warning' : 'badge-dark'}`;
+            }
+            if (fill) {
+                const percentage = Math.max(0, Math.min(100, ((Number(payload.score || 0) / Number(payload.max_score || 5)) * 100)));
+                fill.style.width = `${percentage}%`;
+                fill.dataset.tone = payload.tone || 'red';
+            }
+            if (hints) {
+                hints.textContent = (payload.hints && payload.hints[0]) || 'Use at least 8 characters, numbers, and a symbol.';
+            }
+            if (matchLabel) {
+                const states = {
+                    match: { text: 'Passwords match', cls: 'badge badge-success' },
+                    mismatch: { text: 'Passwords do not match yet', cls: 'badge badge-warning' },
+                    pending: { text: 'Waiting for confirmation', cls: 'badge badge-dark' },
+                };
+                const state = states[payload.match_state] || states.pending;
+                matchLabel.textContent = state.text;
+                matchLabel.className = state.cls;
+            }
+        };
+
+        const checkStrength = debounce(async () => {
+            const password = passwordInput.value || '';
+            const confirm = confirmInput.value || '';
+            const requestId = ++activeRequest;
+            try {
+                const response = await fetch(`${endpoint}?password=${encodeURIComponent(password)}&confirm=${encodeURIComponent(confirm)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                const payload = await response.json();
+                if (!response.ok || requestId !== activeRequest) {
+                    return;
+                }
+                renderPasswordState(payload);
+            } catch (error) {
+                renderPasswordState({
+                    label: 'Unavailable',
+                    tone: 'red',
+                    score: 0,
+                    max_score: 5,
+                    hints: ['Password guidance is temporarily unavailable.'],
+                    match_state: confirm ? 'mismatch' : 'pending',
+                });
+            }
+        }, 180);
+
+        passwordInput.addEventListener('input', checkStrength);
+        confirmInput.addEventListener('input', checkStrength);
+        checkStrength();
+    });
+
+    const initPhoneInputs = () => {
+        const phoneInputs = document.querySelectorAll('input[data-phone-input], input[name="phone_number"], input[name="mpesa_phone_number"]');
+        phoneInputs.forEach((input) => {
+            if (input.dataset.phoneBound === 'true') {
+                return;
+            }
+            input.dataset.phoneBound = 'true';
+            input.type = 'tel';
+            input.inputMode = 'numeric';
+            input.autocomplete = input.autocomplete || 'tel-national';
+            input.placeholder = input.placeholder || '719463611';
+            if (typeof window.intlTelInput !== 'function') {
+                return;
+            }
+            const iti = window.intlTelInput(input, {
+                initialCountry: 'ke',
+                preferredCountries: ['ke', 'ug', 'tz', 'rw', 'bi', 'za', 'gb', 'us'],
+                separateDialCode: true,
+                nationalMode: false,
+                autoPlaceholder: 'aggressive',
+                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.0/build/js/utils.js',
+            });
+            input._iti = iti;
+            const form = input.closest('form');
+            form?.addEventListener('submit', () => {
+                if (typeof iti.getNumber === 'function') {
+                    const fullNumber = iti.getNumber();
+                    if (fullNumber) {
+                        input.value = fullNumber;
+                    }
+                }
+            });
+        });
+    };
+
+    const initBackToTop = () => {
+        const button = document.querySelector('[data-back-to-top]');
+        if (!button || button.dataset.bound === 'true') {
+            return;
+        }
+        button.dataset.bound = 'true';
+        const sync = () => {
+            const active = window.scrollY > 520;
+            button.classList.toggle('hidden', !active);
+            button.classList.toggle('is-visible', active);
+        };
+        button.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        window.addEventListener('scroll', sync, { passive: true });
+        sync();
+    };
+
+    const initHostEstimator = () => {
+        document.querySelectorAll('[data-host-estimator]').forEach((widget) => {
+            if (widget.dataset.bound === 'true') {
+                return;
+            }
+            widget.dataset.bound = 'true';
+            const rateInput = widget.querySelector('[data-host-rate]');
+            const nightsInput = widget.querySelector('[data-host-nights]');
+            const nightsLabel = widget.querySelector('[data-host-nights-label]');
+            const grossNode = widget.querySelector('[data-host-gross]');
+            if (!rateInput || !nightsInput || !nightsLabel || !grossNode) {
+                return;
+            }
+            const render = () => {
+                const rate = Number(rateInput.value || 0);
+                const nights = Number(nightsInput.value || 0);
+                nightsLabel.textContent = `${nights} night${nights === 1 ? '' : 's'}`;
+                grossNode.textContent = `KES ${Math.round(rate * nights).toLocaleString()}`;
+            };
+            rateInput.addEventListener('input', render);
+            nightsInput.addEventListener('input', render);
+            render();
+        });
+    };
+
     document.querySelectorAll('[data-toast-close]').forEach((button) => {
         button.addEventListener('click', () => {
             const toast = button.closest('.toast');
@@ -407,6 +583,12 @@
     const hero = document.querySelector('[data-hero-carousel]');
     if (hero) {
         const slides = Array.from(hero.querySelectorAll('[data-hero-slide]'));
+        const progressContainer = hero.querySelector('[data-hero-progress]');
+        if (progressContainer && !progressContainer.querySelector('[data-hero-progress-item]')) {
+            progressContainer.innerHTML = slides.map((_, index) => (
+                `<span data-hero-progress-item${index === 0 ? ' class="is-active"' : ''}></span>`
+            )).join('');
+        }
         const progress = Array.from(hero.querySelectorAll('[data-hero-progress-item]'));
         let activeIndex = 0;
         const heroDuration = Number(hero.dataset.heroDuration || 6500);
@@ -1735,6 +1917,9 @@
     initExploreRealtime();
     initPropertyRealtime();
     initRealtimeSocket();
+    initPhoneInputs();
+    initBackToTop();
+    initHostEstimator();
     initPropertyMaps();
     initListingMaps();
 
@@ -1745,6 +1930,9 @@
         initExploreRealtime();
         initPropertyRealtime();
         initRealtimeSocket();
+        initPhoneInputs();
+        initBackToTop();
+        initHostEstimator();
         initPropertyMaps();
         initListingMaps();
     });

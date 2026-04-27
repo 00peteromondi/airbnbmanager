@@ -4,7 +4,7 @@
 {% block content %}
 <section id="top" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6 overflow-x-hidden">
     <!-- Profile Navigation -->
-    <div class="panel p-4 lg:p-6 section-fade" style="transition-delay: 20ms;">
+    <div class="panel p-4 lg:p-6 section-fade profile-nav-card" style="transition-delay: 20ms;">
         <div class="flex flex-col gap-4">
             <div>
                 <span class="badge badge-primary mb-2">Quick navigation</span>
@@ -24,8 +24,8 @@
 
     <div class="grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
         <aside class="space-y-6 section-fade" style="transition-delay: 80ms;">
-            <div class="panel p-6 lg:p-8 surface-tint">
-                <div class="flex items-start gap-4">
+            <div class="panel p-6 lg:p-8 surface-tint profile-account-card">
+                <div class="flex items-start gap-4 profile-account-card__head">
                     <div class="h-20 w-20 rounded-[0.8rem] bg-gradient-to-br from-red-500 to-orange-500 text-white flex items-center justify-center text-3xl overflow-hidden">
                         <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% endif %}" alt="{{ user.get_display_name }}" class="h-full w-full object-cover {% if not user.profile_picture %}hidden{% endif %}" data-profile-preview-image>
                         <i class="fa-regular fa-circle-user {% if user.profile_picture %}hidden{% endif %}" data-profile-preview-icon></i>
@@ -50,7 +50,7 @@
                 {% endif %}
             </div>
 
-            <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 150ms;">
+            <div class="panel p-6 lg:p-8 section-fade profile-aside-card" style="transition-delay: 150ms;">
                 <span class="badge badge-warm mb-3">Verification and privacy</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">Trust controls</h2>
                 <div class="space-y-3 mb-5">
@@ -125,7 +125,7 @@
             </div>
 
             {% if user.role == 'guest' or user.role == 'both' %}
-                <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 220ms;">
+                <div class="panel p-6 lg:p-8 section-fade profile-aside-card" style="transition-delay: 220ms;">
                     <span class="badge badge-blue mb-3">Guest activity</span>
                     <h2 class="font-display text-2xl font-semibold mb-5">Travel snapshot</h2>
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -140,7 +140,7 @@
             {% endif %}
 
             {% if user.role == 'host' or user.role == 'both' %}
-                <div class="panel p-6 lg:p-8 section-fade" style="transition-delay: 290ms;">
+                <div class="panel p-6 lg:p-8 section-fade profile-aside-card" style="transition-delay: 290ms;">
                     <span class="badge badge-orange mb-3">Host activity</span>
                     <h2 class="font-display text-2xl font-semibold mb-5">Hosting snapshot</h2>
                     <div class="grid gap-3 sm:grid-cols-2">

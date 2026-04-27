@@ -1,11 +1,14 @@
 import json
+from datetime import datetime, time
 from decimal import Decimal
+from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -13,6 +16,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, ListView, UpdateView
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from core.realtime import announce_live_update
 from hosts.models import Host
@@ -48,6 +57,181 @@ def _booking_overlap_queryset(property_obj, check_in_date, check_out_date, exclu
 
 def _coalesce_decimal(value):
     return value or Decimal('0.00')
+
+
+def _build_guest_plan(booking, user, today):
+    checklist = [
+        {'label': 'Payment settled', 'done': booking.payment_status == 'paid'},
+        {'label': 'Email and phone verified', 'done': user.email_verified and user.phone_verified},
+        {'label': 'Government ID ready', 'done': user.government_id_status == 'verified'},
+        {'label': 'Profile phone available', 'done': bool(user.phone_number)},
+        {'label': 'Arrival still ahead', 'done': booking.check_in_date >= today},
+    ]
+    return {
+        'booking': booking,
+        'checklist': checklist,
+        'ready_count': sum(1 for item in checklist if item['done']),
+        'checklist_total': len(checklist),
+        'countdown_days': max((booking.check_in_date - today).days, 0),
+    }
+
+
+def _build_pdf_response(filename, title, subtitle, sections):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=18 * mm,
+        rightMargin=18 * mm,
+        topMargin=18 * mm,
+        bottomMargin=18 * mm,
+    )
+    palette = {
+        'primary': colors.HexColor('#cf2338'),
+        'primary_dark': colors.HexColor('#7f1022'),
+        'orange': colors.HexColor('#f97316'),
+        'soft': colors.HexColor('#fff4ef'),
+        'line': colors.HexColor('#e2e8f0'),
+        'text': colors.HexColor('#1f2937'),
+        'muted': colors.HexColor('#64748b'),
+        'green': colors.HexColor('#15803d'),
+        'amber': colors.HexColor('#b45309'),
+    }
+    palette_hex = {
+        'green': '#15803d',
+        'amber': '#b45309',
+    }
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='BayTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=23,
+        leading=28,
+        textColor=colors.white,
+        alignment=TA_LEFT,
+    ))
+    styles.add(ParagraphStyle(
+        name='BaySubtitle',
+        parent=styles['BodyText'],
+        fontName='Helvetica',
+        fontSize=10.5,
+        leading=14,
+        textColor=colors.white,
+    ))
+    styles.add(ParagraphStyle(
+        name='BaySection',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=16,
+        textColor=palette['primary_dark'],
+    ))
+    styles.add(ParagraphStyle(
+        name='BayBody',
+        parent=styles['BodyText'],
+        fontName='Helvetica',
+        fontSize=10.2,
+        leading=14.5,
+        textColor=palette['text'],
+    ))
+    styles.add(ParagraphStyle(
+        name='BayMeta',
+        parent=styles['BodyText'],
+        fontName='Helvetica',
+        fontSize=9.4,
+        leading=13,
+        textColor=palette['muted'],
+    ))
+    styles.add(ParagraphStyle(
+        name='BayChecklist',
+        parent=styles['BodyText'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=13.5,
+        textColor=palette['text'],
+    ))
+
+    story = []
+    header = Table([[Paragraph(f'BayStays<br/><font size="10">{title}</font>', styles['BayTitle']), Paragraph(subtitle, styles['BaySubtitle'])]], colWidths=[108 * mm, 58 * mm])
+    header.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), palette['primary']),
+        ('BOX', (0, 0), (-1, -1), 0, palette['primary']),
+        ('LEFTPADDING', (0, 0), (-1, -1), 16),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 16),
+        ('TOPPADDING', (0, 0), (-1, -1), 15),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 16),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(header)
+    story.append(Spacer(1, 10))
+
+    for section in sections:
+        story.append(Paragraph(section['heading'], styles['BaySection']))
+        story.append(Spacer(1, 4))
+        if section.get('intro'):
+            story.append(Paragraph(section['intro'], styles['BayBody']))
+            story.append(Spacer(1, 6))
+        if section.get('rows'):
+            data = []
+            for label, value in section['rows']:
+                data.append([
+                    Paragraph(f'<b>{label}</b>', styles['BayMeta']),
+                    Paragraph(str(value), styles['BayBody']),
+                ])
+            table = Table(data, colWidths=[48 * mm, 118 * mm])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), palette['soft']),
+                ('BOX', (0, 0), (-1, -1), 0.6, palette['line']),
+                ('INNERGRID', (0, 0), (-1, -1), 0.6, palette['line']),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ]))
+            story.append(table)
+            story.append(Spacer(1, 8))
+        if section.get('checklist'):
+            checklist_rows = []
+            for item in section['checklist']:
+                state = 'Ready' if item['done'] else 'Needs action'
+                tone = palette_hex['green'] if item['done'] else palette_hex['amber']
+                checklist_rows.append([
+                    Paragraph(f'<font color="{tone}">{"&#10003;" if item["done"] else "&#9675;"}</font>', styles['BayChecklist']),
+                    Paragraph(item['label'], styles['BayChecklist']),
+                    Paragraph(f'<font color="{tone}">{state}</font>', styles['BayChecklist']),
+                ])
+            checklist_table = Table(checklist_rows, colWidths=[10 * mm, 110 * mm, 46 * mm])
+            checklist_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+                ('BOX', (0, 0), (-1, -1), 0.6, palette['line']),
+                ('INNERGRID', (0, 0), (-1, -1), 0.6, palette['line']),
+                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 7),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(checklist_table)
+            story.append(Spacer(1, 8))
+        if section.get('note'):
+            note = Table([[Paragraph(section['note'], styles['BayBody'])]], colWidths=[166 * mm])
+            note.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fef3c7')),
+                ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#f59e0b')),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            story.append(note)
+            story.append(Spacer(1, 10))
+
+    doc.build(story)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=\"{filename}\"'
+    return response
 
 
 def _guest_live_groups(guest_id, property_id=None, owner_id=None):
@@ -164,6 +348,9 @@ def _guest_payments_center_context(user):
     days_to_next_trip = None
     if next_trip:
         days_to_next_trip = max((next_trip.check_in_date - today).days, 0)
+    unpaid_trip_plans = [_build_guest_plan(booking, user, today) for booking in unpaid_bookings[:6]]
+    travel_timeline_plans = [_build_guest_plan(booking, user, today) for booking in upcoming_bookings[:6]]
+    next_trip_plan = _build_guest_plan(next_trip, user, today) if next_trip else None
 
     return {
         **booking_context,
@@ -174,10 +361,13 @@ def _guest_payments_center_context(user):
             'failed_total': _coalesce_decimal(payment_history.filter(status='failed').aggregate(total=Sum('amount'))['total']),
         },
         'unpaid_bookings': unpaid_bookings[:6],
+        'unpaid_trip_plans': unpaid_trip_plans,
         'payment_history_full': payment_history[:12],
         'next_trip': next_trip,
+        'next_trip_plan': next_trip_plan,
         'days_to_next_trip': days_to_next_trip,
         'travel_timeline': upcoming_bookings[:6],
+        'travel_timeline_plans': travel_timeline_plans,
         'travel_utilities': [
             {
                 'icon': 'fa-mobile-screen-button',
@@ -210,6 +400,10 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         property_obj = get_object_or_404(Property, pk=self.kwargs['property_id'])
         unavailable_ranges = _unavailable_ranges_for_property(property_obj)
+
+        if property_obj.owner_id == self.request.user.id:
+            form.add_error(None, 'Hosts cannot book their own listing from BayStays. Use availability controls or manual guest coordination instead.')
+            return self.form_invalid(form, unavailable_ranges=unavailable_ranges)
 
         overlapping_bookings = _booking_overlap_queryset(
             property_obj,
@@ -405,14 +599,123 @@ def booking_list_live(request):
 
 @login_required
 def guest_payments_center(request):
-    if request.user.role not in ['guest', 'both']:
-        messages.error(request, 'Access denied. This page is for guests only.')
-        return redirect('core:home')
-    if request.user.role == 'both' and request.session.get('active_role') == 'host':
-        messages.info(request, 'Please switch to guest mode to access the guest payments center.')
-        return redirect('hosts:dashboard')
     context = _guest_payments_center_context(request.user)
     return render(request, 'bookings/payments_center.html', context)
+
+
+@login_required
+def download_trip_summary(request, booking_id):
+    booking = get_object_or_404(Booking.objects.select_related('property'), id=booking_id, guest=request.user)
+    today = timezone.localdate()
+    plan = _build_guest_plan(booking, request.user, today)
+    nights = (booking.check_out_date - booking.check_in_date).days
+    return _build_pdf_response(
+        filename=f'baystays-trip-{booking.id}.pdf',
+        title='Trip Summary',
+        subtitle='Lakeside hosting travel brief',
+        sections=[
+            {
+                'heading': 'Stay snapshot',
+                'intro': 'A polished summary of the stay, payment state, and arrival details tied to this BayStays booking.',
+                'rows': [
+                    ('Property', booking.property.name),
+                    ('Location', f'{booking.property.city}, {booking.property.country}'),
+                    ('Check-in', booking.check_in_date),
+                    ('Check-out', booking.check_out_date),
+                    ('Nights', nights),
+                    ('Guests', booking.num_guests),
+                    ('Booking status', booking.get_status_display()),
+                    ('Payment status', booking.get_payment_status_display()),
+                    ('Total price', f'KES {booking.total_price}'),
+                ],
+            },
+            {
+                'heading': 'Pre-arrival checklist',
+                'checklist': plan['checklist'],
+                'note': f"Special requests: {booking.special_requests or 'None recorded.'}",
+            },
+        ],
+    )
+
+
+@login_required
+def download_booking_reminder(request, booking_id):
+    booking = get_object_or_404(Booking.objects.select_related('property'), id=booking_id, guest=request.user)
+    check_in_time = getattr(booking.property, 'check_in_time', None) or time(15, 0)
+    check_out_time = getattr(booking.property, 'check_out_time', None) or time(11, 0)
+    start = datetime.combine(booking.check_in_date, check_in_time)
+    end = datetime.combine(booking.check_out_date, check_out_time)
+    description = (
+        f"BayStays stay at {booking.property.name}\\n"
+        f"Location: {booking.property.city}, {booking.property.country}\\n"
+        f"Payment status: {booking.get_payment_status_display()}\\n"
+        f"Booking status: {booking.get_status_display()}"
+    )
+    ics = "\r\n".join([
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//BayStays//Trip Reminder//EN",
+        "BEGIN:VEVENT",
+        f"UID:baystays-booking-{booking.id}@baystays",
+        f"DTSTAMP:{timezone.now().strftime('%Y%m%dT%H%M%SZ')}",
+        f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}",
+        f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}",
+        f"SUMMARY:BayStays stay - {booking.property.name}",
+        f"DESCRIPTION:{description}",
+        f"LOCATION:{booking.property.city}, {booking.property.country}",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ])
+    response = HttpResponse(ics, content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename=\"baystays-booking-{booking.id}.ics\"'
+    return response
+
+
+@login_required
+def download_payment_receipt(request, payment_id):
+    payment = get_object_or_404(
+        BookingPayment.objects.select_related('booking', 'booking__property', 'guest', 'host'),
+        id=payment_id,
+        guest=request.user,
+    )
+    booking = payment.booking
+    fee_state = 'Settled' if payment.status == 'paid' else 'Awaiting settlement'
+    return _build_pdf_response(
+        filename=f'baystays-receipt-{payment.id}.pdf',
+        title='Payment Receipt',
+        subtitle='BayStays M-Pesa payment confirmation',
+        sections=[
+            {
+                'heading': 'Receipt summary',
+                'intro': 'A downloadable record of the guest-side payment captured against this BayStays booking.',
+                'rows': [
+                    ('Receipt ID', f'BST-{payment.id:05d}'),
+                    ('Property', booking.property.name),
+                    ('Location', f'{booking.property.city}, {booking.property.country}'),
+                    ('Guest', payment.guest.get_display_name()),
+                    ('Host', payment.host.get_display_name()),
+                    ('Payment provider', payment.get_provider_display()),
+                    ('Amount', f'KES {payment.amount}'),
+                    ('Phone number', payment.phone_number or 'Not supplied'),
+                    ('Transaction reference', payment.transaction_reference or payment.checkout_request_id or 'Pending'),
+                    ('Payment state', payment.get_status_display()),
+                    ('Booking state', booking.get_status_display()),
+                    ('Paid at', payment.paid_at or payment.created_at),
+                ],
+            },
+            {
+                'heading': 'Booking coverage',
+                'rows': [
+                    ('Check-in', booking.check_in_date),
+                    ('Check-out', booking.check_out_date),
+                    ('Guests', booking.num_guests),
+                    ('Total booking price', f'KES {booking.total_price}'),
+                    ('Receipt note', fee_state),
+                ],
+                'note': f"Failure note: {payment.failure_reason or 'No failure was recorded for this transaction.'}",
+            },
+        ],
+    )
 
 
 @login_required

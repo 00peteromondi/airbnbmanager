@@ -10,46 +10,77 @@
         <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Browse more stays</a>
     </div>
 </div>
-<div class="grid gap-4 md:grid-cols-3 section-fade">
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Total reservations</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.total }}</p>
+<div class="mt-6 grid gap-4 md:grid-cols-3 section-fade">
+    <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-receipt"></i></div>
+            <p class="text-sm text-slate-100">Total reservations</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ booking_summary.total }}</p>
+            <p class="text-sm text-slate-100/90 mt-2">Every stay request and confirmed trip in your travel history.</p>
+        </div>
     </div>
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Upcoming stays</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.upcoming }}</p>
+    <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-suitcase-rolling"></i></div>
+            <p class="text-sm text-slate-100">Upcoming stays</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ booking_summary.upcoming }}</p>
+            <p class="text-sm text-slate-100/90 mt-2">Trips that still need planning, payment, or check-in readiness.</p>
+        </div>
     </div>
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Manageable right now</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ booking_summary.manageable }}</p>
-    </div>
-</div>
-<div class="grid gap-4 md:grid-cols-4 section-fade">
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Payments settled</p>
-        <p class="font-display text-3xl font-semibold mt-2">KES {{ payment_summary.paid_total|intcomma }}</p>
-    </div>
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Paid transactions</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.paid_count }}</p>
-    </div>
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Pending payment prompts</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.pending_count }}</p>
-    </div>
-    <div class="panel p-5">
-        <p class="text-sm text-slate-500">Failed payments</p>
-        <p class="font-display text-3xl font-semibold mt-2">{{ payment_summary.failed_count }}</p>
+    <div class="panel p-5 stat-visual-card" style="--card-image:url('https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-calendar-check"></i></div>
+            <p class="text-sm text-slate-100">Manageable right now</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ booking_summary.manageable }}</p>
+            <p class="text-sm text-slate-100/90 mt-2">Bookings you can still reschedule, cancel, or settle before arrival.</p>
+        </div>
     </div>
 </div>
-<div class="flex flex-wrap gap-2 section-fade">
+<div class="mt-6 grid gap-4 md:grid-cols-4 section-fade">
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-wallet"></i></div>
+            <p class="text-sm text-slate-100">Payments settled</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">KES {{ payment_summary.paid_total|intcomma }}</p>
+        </div>
+    </div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-file-invoice"></i></div>
+            <p class="text-sm text-slate-100">Paid transactions</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ payment_summary.paid_count }}</p>
+        </div>
+    </div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1521790797524-b2497295b8a0?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-bell"></i></div>
+            <p class="text-sm text-slate-100">Pending payment prompts</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ payment_summary.pending_count }}</p>
+        </div>
+    </div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80');">
+        <div class="stat-visual-card__veil"></div>
+        <div class="stat-visual-card__content">
+            <div class="stat-visual-card__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <p class="text-sm text-slate-100">Failed payments</p>
+            <p class="font-display text-3xl font-semibold mt-2 text-white">{{ payment_summary.failed_count }}</p>
+        </div>
+    </div>
+</div>
+<div class="mt-6 flex flex-wrap gap-2 section-fade">
     <button type="button" class="filter-chip is-active" data-booking-filter="all"><i class="fa-solid fa-layer-group mr-2"></i>All</button>
     <button type="button" class="filter-chip" data-booking-filter="pending"><i class="fa-solid fa-hourglass-half mr-2"></i>Pending</button>
     <button type="button" class="filter-chip" data-booking-filter="confirmed"><i class="fa-solid fa-circle-check mr-2"></i>Confirmed</button>
     <button type="button" class="filter-chip" data-booking-filter="completed"><i class="fa-solid fa-star mr-2"></i>Completed</button>
     <button type="button" class="filter-chip" data-booking-filter="cancelled"><i class="fa-solid fa-ban mr-2"></i>Cancelled</button>
 </div>
-<div class="space-y-4 section-fade">
+<div class="mt-6 space-y-6 section-fade">
     {% for booking in bookings %}
         <div class="panel p-5 lg:p-6 booking-row" data-booking-row data-booking-status="{{ booking.status }}">
             <div class="flex items-start justify-between gap-4 flex-wrap">
@@ -72,7 +103,10 @@
                     <div class="flex items-center justify-between gap-3 flex-wrap">
                         <span><i class="fa-solid fa-receipt text-blue-500 mr-2"></i>Payment tracking</span>
                         {% if latest_payment %}
-                            <span>{% if latest_payment.transaction_reference %}{{ latest_payment.transaction_reference }}{% else %}{{ latest_payment.get_status_display }}{% endif %}</span>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span>{% if latest_payment.transaction_reference %}{{ latest_payment.transaction_reference }}{% else %}{{ latest_payment.get_status_display }}{% endif %}</span>
+                                <a href="{% url 'bookings:download_payment_receipt' latest_payment.id %}" class="btn-bay-ghost btn-sm"><i class="fa-solid fa-download"></i>Receipt</a>
+                            </div>
                         {% else %}
                             <span>No payment yet</span>
                         {% endif %}
@@ -94,6 +128,8 @@
             {% endif %}
             <div class="mt-5 flex flex-wrap gap-3">
                 <a href="{% url 'properties:property_detail' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>View stay</a>
+                <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Trip summary</a>
+                <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
                 {% if booking.payment_status != 'paid' %}
                     <form method="post" action="{% url 'bookings:pay_booking' booking.id %}" data-loading-form="true" class="inline-flex flex-wrap gap-3 items-end rounded-[0.7rem] border border-slate-200 bg-slate-50 px-3 py-3">
                         {% csrf_token %}
@@ -136,7 +172,7 @@
         </div>
     {% endfor %}
 </div>
-<div class="panel p-6 lg:p-8 section-fade">
+<div class="mt-6 panel p-6 lg:p-8 section-fade">
     <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
         <div>
             <span class="badge badge-blue mb-3">Payment history</span>
@@ -153,7 +189,10 @@
                     </div>
                     <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
                 </div>
-                <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                    <span>KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</span>
+                    <a href="{% url 'bookings:download_payment_receipt' payment.id %}" class="btn-bay-ghost btn-sm"><i class="fa-solid fa-file-arrow-down"></i>Receipt</a>
+                </div>
             </div>
         {% empty %}
             <div class="empty-state empty-state--compact rounded-[0.7rem] px-6">

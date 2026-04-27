@@ -18,6 +18,22 @@ from properties.models import Property
 CustomUser = get_user_model()
 
 
+def _build_guest_plan(booking, user, today):
+    checklist = [
+        {'label': 'Payment settled', 'done': booking.payment_status == 'paid'},
+        {'label': 'Email and phone verified', 'done': user.email_verified and user.phone_verified},
+        {'label': 'Government ID ready', 'done': user.government_id_status == 'verified'},
+        {'label': 'Profile phone available', 'done': bool(user.phone_number)},
+        {'label': 'Arrival still ahead', 'done': booking.check_in_date >= today},
+    ]
+    return {
+        'booking': booking,
+        'checklist': checklist,
+        'ready_count': sum(1 for item in checklist if item['done']),
+        'checklist_total': len(checklist),
+        'countdown_days': max((booking.check_in_date - today).days, 0),
+    }
+
 
 class GuestSignUpView(LogoutRequiredMixin, View):
     """Guest registration view - only accessible to logged out users"""
@@ -103,17 +119,6 @@ def guest_logout_view(request):
 @login_required
 def guest_dashboard_view(request):
     """Guest dashboard - only accessible to guests"""
-    # Additional protection beyond middleware
-    if not (request.user.role in ['guest', 'both']):
-        messages.error(request, "Access denied. This page is for guests only.")
-        return redirect('core:home')
-    
-    # If user has both roles but is in host mode, redirect
-    if (request.user.role == 'both' and 
-        request.session.get('active_role') == 'host'):
-        messages.info(request, "Please switch to guest mode to access the guest dashboard.")
-        return redirect('hosts:dashboard')
-    
     today = timezone.localdate()
     bookings = Booking.objects.filter(guest=request.user).select_related('property').prefetch_related('payments').order_by('-created_at')
     active_bookings = bookings.exclude(status='cancelled')
@@ -133,6 +138,9 @@ def guest_dashboard_view(request):
     days_to_next_trip = None
     if next_trip:
         days_to_next_trip = max((next_trip.check_in_date - today).days, 0)
+    upcoming_trip_plans = [_build_guest_plan(booking, request.user, today) for booking in upcoming_bookings[:3]]
+    unpaid_trip_plans = [_build_guest_plan(booking, request.user, today) for booking in unpaid_bookings]
+    travel_timeline_plans = [_build_guest_plan(booking, request.user, today) for booking in upcoming_bookings[:4]]
 
     context = {
         'dashboard_stats': {
@@ -147,8 +155,10 @@ def guest_dashboard_view(request):
             {'label': 'Government ID', 'done': request.user.government_id_status == 'verified', 'detail': 'Speeds up trust checks and support help.'},
         ],
         'upcoming_bookings': upcoming_bookings[:3],
+        'upcoming_trip_plans': upcoming_trip_plans,
         'recent_payments': payment_history[:4],
         'unpaid_bookings': unpaid_bookings,
+        'unpaid_trip_plans': unpaid_trip_plans,
         'recommended_stays': recommended_stays,
         'review_ready_bookings': review_ready_bookings,
         'next_trip': next_trip,
@@ -159,6 +169,7 @@ def guest_dashboard_view(request):
             'outstanding_total': outstanding_total,
         },
         'travel_timeline': upcoming_bookings[:4],
+        'travel_timeline_plans': travel_timeline_plans,
     }
     return render(request, 'guests/guest_dashboard.html', context)
 @login_required(login_url='guests:guest_login')

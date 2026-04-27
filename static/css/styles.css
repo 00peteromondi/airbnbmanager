@@ -106,6 +106,56 @@ h6,
     box-shadow: var(--bay-shadow-soft);
 }
 
+.immersive-panel,
+.stat-visual-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.immersive-panel::before,
+.stat-visual-card::before,
+.auth-side__media::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--card-image);
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.02);
+}
+
+.immersive-panel__veil,
+.stat-visual-card__veil,
+.auth-side__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(140deg, rgba(38, 5, 11, 0.78) 0%, rgba(127, 16, 34, 0.52) 48%, rgba(249, 115, 22, 0.34) 100%);
+}
+
+.immersive-panel__content,
+.stat-visual-card__content {
+    position: relative;
+    z-index: 1;
+}
+
+.stat-visual-card__icon {
+    width: 2.9rem;
+    height: 2.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(16px);
+    margin-bottom: 1rem;
+}
+
+.stat-visual-card--compact .stat-visual-card__icon {
+    margin-bottom: 0.8rem;
+}
+
 .panel {
     background: var(--bay-surface-strong);
     border: 1px solid var(--bay-line);
@@ -481,6 +531,15 @@ label {
     width: 100%;
 }
 
+.profile-account-card,
+.profile-aside-card {
+    min-width: 0;
+}
+
+.profile-account-card__head {
+    min-width: 0;
+}
+
 @media (min-width: 640px) {
     .profile-nav-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -490,6 +549,47 @@ label {
 @media (min-width: 1024px) {
     .profile-nav-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 639px) {
+    .profile-nav-card,
+    .profile-account-card,
+    .profile-aside-card {
+        width: min(100%, 22rem);
+        margin-inline: auto;
+    }
+
+    .profile-nav-grid {
+        max-width: 16.75rem;
+        margin-inline: auto;
+    }
+
+    .profile-account-card {
+        text-align: center;
+    }
+
+    .profile-account-card__head {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .profile-account-card .badge,
+    .profile-account-card .mt-4.flex,
+    .profile-account-card .mt-6.flex {
+        justify-content: center;
+    }
+
+    .profile-account-card p.break-all {
+        word-break: break-word;
+    }
+
+    .profile-aside-card .flex-wrap,
+    .profile-aside-card .space-y-4 .flex,
+    .profile-aside-card .space-y-3 .flex {
+        justify-content: center;
+        text-align: center;
     }
 }
 
@@ -880,10 +980,18 @@ label {
 
 .hero-meter {
     border-radius: 0.7rem;
-    background: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(180deg, rgba(24, 24, 27, 0.34), rgba(255, 255, 255, 0.14));
     backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.24);
     padding: 1rem;
+}
+
+.hero-meter p:first-child {
+    color: #cfe7ff;
+}
+
+.hero-meter p:last-child {
+    color: rgba(255, 248, 220, 0.92);
 }
 
 .hero-progress {
@@ -935,6 +1043,11 @@ label {
     color: #fff;
 }
 
+.auth-side__media {
+    position: absolute;
+    inset: 0;
+}
+
 .auth-side::before {
     content: "";
     position: absolute;
@@ -944,10 +1057,137 @@ label {
         linear-gradient(180deg, rgba(255, 241, 237, 0.08), transparent 60%);
 }
 
+.auth-mini-card {
+    border-radius: 0.78rem;
+    padding: 1rem;
+}
+
+.auth-mini-card__icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 0.75rem;
+}
+
 .auth-grid {
     display: grid;
     gap: 2.5rem;
     grid-template-columns: minmax(0, 1fr);
+}
+
+.auth-side__spotlight {
+    position: relative;
+    min-height: 10.75rem;
+    overflow: hidden;
+}
+
+.auth-spotlight-slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    gap: 0.8rem;
+    opacity: 0;
+    transform: translateY(0.8rem);
+    transition: opacity 320ms ease, transform 320ms ease;
+    pointer-events: none;
+}
+
+.auth-spotlight-slide.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.auth-spotlight-slide__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.auth-spotlight-slide__icon {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+}
+
+.auth-spotlight-slide__eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.66);
+}
+
+.auth-spotlight-slide__title {
+    font-size: 1.55rem;
+    line-height: 1.05;
+}
+
+.auth-spotlight-slide__copy {
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 26rem;
+    font-size: 0.96rem;
+    line-height: 1.55;
+}
+
+.auth-spotlight-progress {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 0.95rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.auth-spotlight-progress span {
+    flex: 1;
+    height: 0.22rem;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.auth-spotlight-progress span::after {
+    content: "";
+    display: block;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 244, 230, 0.88), rgba(254, 215, 170, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.auth-spotlight-progress span.is-active::after {
+    width: 100%;
+    transition: width 4200ms linear;
+}
+
+@media (max-width: 767px) {
+    .auth-side {
+        padding: 2rem 1.4rem;
+    }
+
+    .auth-side__spotlight {
+        min-height: 9.8rem;
+    }
+
+    .auth-spotlight-slide__title {
+        font-size: 1.32rem;
+    }
+
+    .auth-spotlight-slide__copy {
+        font-size: 0.9rem;
+    }
 }
 
 .image-card {
@@ -984,6 +1224,32 @@ label {
 
 .location-autocomplete {
     position: relative;
+}
+
+.form-surface {
+    position: relative;
+    overflow: hidden;
+}
+
+.form-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--card-image);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.22;
+}
+
+.form-surface__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 248, 244, 0.92));
+}
+
+.form-surface__content {
+    position: relative;
+    z-index: 1;
 }
 
 .location-suggestions {
@@ -1751,11 +2017,11 @@ table td {
 
 @media (max-width: 767px) {
     .hero-carousel {
-        min-height: 40rem;
+        min-height: 44rem;
     }
 
     .hero-slide__content {
-        padding: 1.35rem 1.35rem 4.5rem;
+        padding: 1.2rem 1.2rem 4.6rem;
     }
 
     .hero-progress {
@@ -1765,8 +2031,59 @@ table td {
 
     .hero-copy h1,
     .hero-copy h2 {
-        font-size: clamp(1.45rem, 6.2vw, 2.15rem);
-        line-height: 1.05;
+        font-size: clamp(1.32rem, 5.1vw, 1.72rem);
+        line-height: 1.06;
+    }
+
+    .hero-copy p {
+        font-size: 0.98rem;
+        line-height: 1.5;
+        color: #fde68a;
+    }
+
+    .hero-copy .badge {
+        font-size: 0.76rem;
+        padding: 0.42rem 0.72rem;
+        color: #111827;
+    }
+
+    .hero-copy .hero-actions {
+        gap: 0.6rem;
+    }
+
+    .hero-copy .hero-actions .btn-bay,
+    .hero-copy .hero-actions .btn-bay-secondary,
+    .hero-copy .hero-actions .btn-bay-ghost {
+        width: 100%;
+        padding: 0.84rem 1rem;
+    }
+
+    .hero-meters {
+        gap: 0.7rem;
+        margin-top: 0.85rem;
+    }
+
+    .hero-meter {
+        padding: 0.8rem 0.85rem;
+        border-radius: 0.8rem;
+    }
+
+    .hero-meter .font-display {
+        font-size: 2rem;
+    }
+
+    .hero-meter:nth-child(n+3) {
+        display: none;
+    }
+
+    .stat-visual-card .font-display {
+        font-size: 2.2rem;
+    }
+
+    .stat-visual-card__icon {
+        width: 2.55rem;
+        height: 2.55rem;
+        margin-bottom: 0.75rem;
     }
 
     .mobile-stack {

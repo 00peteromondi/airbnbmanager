@@ -17,19 +17,31 @@
         <div class="panel p-6 lg:p-8">
             <span class="badge badge-blue mb-3">Next trip focus</span>
             <h2 class="font-display text-2xl font-semibold mb-5">Arrival planning snapshot</h2>
-            {% if next_trip %}
+            {% if next_trip_plan %}
                 <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
                     <div class="flex items-start justify-between gap-3 flex-wrap">
                         <div>
-                            <p class="font-semibold text-slate-900">{{ next_trip.property.name }}</p>
-                            <p class="text-sm text-slate-500 mt-1">{{ next_trip.property.city }}, {{ next_trip.property.country }}</p>
+                            <p class="font-semibold text-slate-900">{{ next_trip_plan.booking.property.name }}</p>
+                            <p class="text-sm text-slate-500 mt-1">{{ next_trip_plan.booking.property.city }}, {{ next_trip_plan.booking.property.country }}</p>
                         </div>
-                        <span class="badge badge-primary"><i class="fa-solid fa-hourglass-start"></i>{{ days_to_next_trip }} day{{ days_to_next_trip|pluralize }}</span>
+                        <span class="badge badge-primary"><i class="fa-solid fa-hourglass-start"></i>{{ next_trip_plan.countdown_days }} day{{ next_trip_plan.countdown_days|pluralize }}</span>
                     </div>
                     <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
-                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.check_in_date }}</strong>Check-in</div>
-                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.check_out_date }}</strong>Check-out</div>
-                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.get_payment_status_display }}</strong>Payment state</div>
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip_plan.booking.check_in_date }}</strong>Check-in</div>
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip_plan.booking.check_out_date }}</strong>Check-out</div>
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip_plan.booking.get_payment_status_display }}</strong>Payment state</div>
+                    </div>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                        {% for item in next_trip_plan.checklist %}
+                            <div class="rounded-[0.7rem] px-3 py-3 text-sm {% if item.done %}bg-emerald-50 text-emerald-800 border border-emerald-100{% else %}bg-amber-50 text-amber-900 border border-amber-100{% endif %}">
+                                <i class="fa-solid {% if item.done %}fa-circle-check{% else %}fa-circle-notch{% endif %} mr-2"></i>{{ item.label }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <a href="{% url 'bookings:download_trip_summary' next_trip_plan.booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Trip summary</a>
+                        <a href="{% url 'bookings:download_booking_reminder' next_trip_plan.booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Add reminder</a>
+                        {% with latest_payment=next_trip_plan.booking.payments.first %}{% if latest_payment %}<a href="{% url 'bookings:download_payment_receipt' latest_payment.id %}" class="btn-bay-ghost"><i class="fa-solid fa-receipt"></i>Receipt</a>{% endif %}{% endwith %}
                     </div>
                 </div>
             {% else %}
@@ -69,18 +81,29 @@
                 <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open booking list</a>
             </div>
             <div class="space-y-4">
-                {% for booking in unpaid_bookings %}
+                {% for plan in unpaid_trip_plans %}
+                    {% with booking=plan.booking %}
                     <article class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
                         <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div>
                                 <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
                                 <p class="text-sm text-slate-500 mt-1">{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
                             </div>
-                            <span class="badge {% if booking.payment_status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ booking.get_payment_status_display }}</span>
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                <span class="badge {% if booking.payment_status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ booking.get_payment_status_display }}</span>
+                                <span class="badge badge-dark"><i class="fa-solid fa-list-check"></i>{{ plan.ready_count }}/{{ plan.checklist_total }}</span>
+                            </div>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-2 text-sm text-slate-600">
                             <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">KES {{ booking.total_price|intcomma }}</strong>Total due</div>
                             <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ booking.status|title }}</strong>Reservation state</div>
+                        </div>
+                        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                            {% for item in plan.checklist %}
+                                <div class="rounded-[0.7rem] px-3 py-3 text-sm {% if item.done %}bg-emerald-50 text-emerald-800 border border-emerald-100{% else %}bg-amber-50 text-amber-900 border border-amber-100{% endif %}">
+                                    <i class="fa-solid {% if item.done %}fa-circle-check{% else %}fa-circle-notch{% endif %} mr-2"></i>{{ item.label }}
+                                </div>
+                            {% endfor %}
                         </div>
                         <form method="post" action="{% url 'bookings:pay_booking' booking.id %}" data-loading-form="true" class="mt-4 space-y-3 rounded-[0.8rem] border border-slate-200 bg-white px-4 py-4">
                             {% csrf_token %}
@@ -94,7 +117,13 @@
                                 <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Charging</span>
                             </button>
                         </form>
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Summary</a>
+                            <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
+                            {% with latest_payment=booking.payments.first %}{% if latest_payment %}<a href="{% url 'bookings:download_payment_receipt' latest_payment.id %}" class="btn-bay-ghost"><i class="fa-solid fa-receipt"></i>Receipt</a>{% endif %}{% endwith %}
+                        </div>
                     </article>
+                    {% endwith %}
                 {% empty %}
                     <div class="empty-state rounded-[0.8rem] px-6 py-10">
                         <div>
@@ -112,17 +141,27 @@
                 <span class="badge badge-blue mb-3">Travel timeline</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">Upcoming trip sequence</h2>
                 <div class="space-y-3">
-                    {% for booking in travel_timeline %}
+                    {% for plan in travel_timeline_plans %}
+                        {% with booking=plan.booking %}
                         <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
                             <div class="flex items-center justify-between gap-3 flex-wrap">
                                 <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
-                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                                    <span class="badge badge-dark"><i class="fa-solid fa-list-check"></i>{{ plan.ready_count }}/{{ plan.checklist_total }}</span>
+                                </div>
                             </div>
                             <p class="mt-2 text-sm text-slate-500">{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
                             <p class="mt-2 text-sm {% if booking.payment_status == 'paid' %}text-emerald-600{% elif booking.payment_status == 'failed' %}text-red-600{% else %}text-slate-500{% endif %}">
                                 <i class="fa-solid fa-money-bill-wave mr-2"></i>{{ booking.get_payment_status_display }}
                             </p>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Summary</a>
+                                <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
+                                {% with latest_payment=booking.payments.first %}{% if latest_payment %}<a href="{% url 'bookings:download_payment_receipt' latest_payment.id %}" class="btn-bay-ghost"><i class="fa-solid fa-receipt"></i>Receipt</a>{% endif %}{% endwith %}
+                            </div>
                         </div>
+                        {% endwith %}
                     {% empty %}
                         <p class="text-sm text-slate-500">Your next confirmed stays will build a trip timeline here.</p>
                     {% endfor %}
@@ -142,7 +181,10 @@
                                 </div>
                                 <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
                             </div>
-                            <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+                            <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                                <span>KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</span>
+                                <a href="{% url 'bookings:download_payment_receipt' payment.id %}" class="btn-bay-ghost btn-sm"><i class="fa-solid fa-file-arrow-down"></i>Receipt</a>
+                            </div>
                         </div>
                     {% empty %}
                         <div class="empty-state empty-state--compact rounded-[0.8rem] px-6">

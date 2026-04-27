@@ -1,14 +1,17 @@
 {% load static humanize %}
 {% load humanize %}
 <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] section-fade">
-    <div class="panel p-6 lg:p-8 surface-tint">
-        <span class="badge badge-warm mb-3">Hosting hub</span>
-        <h1 class="font-display text-4xl font-semibold">Run your BayStays portfolio like an active business, not just a single listing page.</h1>
-        <p class="mt-3 max-w-3xl text-slate-600">Track listing health, respond to reservation demand, keep properties live or paused when needed, and see what needs attention before guests ever ask about it.</p>
-        <div class="mt-6 flex flex-wrap gap-3">
-            <a href="{% url 'hosts:add_listing' %}" class="btn-bay-secondary"><i class="fa-solid fa-plus"></i>Add a stay</a>
-            <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost"><i class="fa-solid fa-calendar-days"></i>Manage bookings</a>
-            <a href="{% url 'hosts:my_listings' %}" class="btn-bay-ghost"><i class="fa-solid fa-house"></i>Portfolio</a>
+    <div class="panel p-6 lg:p-8 immersive-panel" style="--card-image:url('https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=1400&q=80');">
+        <div class="immersive-panel__veil"></div>
+        <div class="immersive-panel__content">
+            <span class="badge badge-warm mb-3">Hosting hub</span>
+            <h1 class="font-display text-4xl font-semibold text-white">Run your BayStays portfolio like an active business, not just a single listing page.</h1>
+            <p class="mt-3 max-w-3xl text-white/84">Track listing health, respond to reservation demand, keep properties live or paused when needed, and see what needs attention before guests ever ask about it.</p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="{% url 'hosts:add_listing' %}" class="btn-bay-secondary"><i class="fa-solid fa-plus"></i>Add a stay</a>
+                <a href="{% url 'hosts:property_bookings' %}" class="btn-bay-ghost bg-white/12 text-white border-white/20 hover:bg-white/18"><i class="fa-solid fa-calendar-days"></i>Manage bookings</a>
+                <a href="{% url 'hosts:my_listings' %}" class="btn-bay-ghost bg-white/12 text-white border-white/20 hover:bg-white/18"><i class="fa-solid fa-house"></i>Portfolio</a>
+            </div>
         </div>
     </div>
     <div class="panel p-6 lg:p-8">
@@ -39,13 +42,13 @@
 </div>
 
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-7 section-fade">
-    <div class="panel p-5"><p class="text-sm text-slate-500">Total listings</p><p class="font-display text-4xl font-semibold mt-2">{{ total_properties }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Live listings</p><p class="font-display text-4xl font-semibold mt-2">{{ active_properties }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Paused</p><p class="font-display text-4xl font-semibold mt-2">{{ paused_properties }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Pending bookings</p><p class="font-display text-4xl font-semibold mt-2">{{ pending_bookings }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Checked in</p><p class="font-display text-4xl font-semibold mt-2">{{ active_stays }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Completed stays</p><p class="font-display text-4xl font-semibold mt-2">{{ completed_bookings }}</p></div>
-    <div class="panel p-5"><p class="text-sm text-slate-500">Revenue</p><p class="font-display text-4xl font-semibold mt-2">KES {{ revenue|intcomma }}</p></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-layer-group"></i></div><p class="text-sm text-slate-700">Total listings</p><p class="font-display text-4xl font-semibold mt-2">{{ total_properties }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-circle-check"></i></div><p class="text-sm text-slate-700">Live listings</p><p class="font-display text-4xl font-semibold mt-2">{{ active_properties }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-pause"></i></div><p class="text-sm text-slate-700">Paused</p><p class="font-display text-4xl font-semibold mt-2">{{ paused_properties }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-hourglass-half"></i></div><p class="text-sm text-slate-700">Pending bookings</p><p class="font-display text-4xl font-semibold mt-2">{{ pending_bookings }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-key"></i></div><p class="text-sm text-slate-700">Checked in</p><p class="font-display text-4xl font-semibold mt-2">{{ active_stays }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-flag-checkered"></i></div><p class="text-sm text-slate-700">Completed stays</p><p class="font-display text-4xl font-semibold mt-2">{{ completed_bookings }}</p></div></div>
+    <div class="panel p-5 stat-visual-card stat-visual-card--compact" style="--card-image:url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80');"><div class="stat-visual-card__veil"></div><div class="stat-visual-card__content"><div class="stat-visual-card__icon"><i class="fa-solid fa-wallet"></i></div><p class="text-sm text-slate-700">Revenue</p><p class="font-display text-4xl font-semibold mt-2">KES {{ revenue|intcomma }}</p></div></div>
 </div>
 
 <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] section-fade">
