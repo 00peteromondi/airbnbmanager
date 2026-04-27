@@ -68,6 +68,17 @@
                 {% block auth_content %}{% endblock %}
             </div>
         </div>
+        <div class="mt-5 rounded-[0.75rem] border border-white/60 bg-white/68 px-4 py-3 text-xs text-slate-600 backdrop-blur-lg">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p>&copy; {% now "Y" %} BayStays</p>
+                <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <a href="{% url 'core:home' %}" class="hover:text-slate-900">Terms</a>
+                    <button type="button" data-open-modal="support-modal" class="hover:text-slate-900">Help</button>
+                    <button type="button" data-open-modal="support-modal" class="hover:text-slate-900">Support</button>
+                    <a href="{% url 'core:properties_list' %}" class="hover:text-slate-900">Explore stays</a>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

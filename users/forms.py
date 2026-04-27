@@ -56,6 +56,12 @@ class ProfileDetailsForm(forms.ModelForm):
             if isinstance(field.widget, forms.Textarea):
                 css += ' min-h-28'
             field.widget.attrs['class'] = css
+            if name == 'phone_number':
+                field.widget.attrs.update({
+                    'placeholder': '719463611',
+                    'autocomplete': 'tel-national',
+                    'data-phone-input': 'true',
+                })
 
 
 class GovernmentIdForm(forms.ModelForm):
@@ -124,3 +130,9 @@ class HostFinancialDetailsForm(forms.ModelForm):
                 field.widget.attrs['class'] = 'h-4 w-4'
             else:
                 field.widget.attrs['class'] = 'input-shell'
+        if 'mpesa_phone_number' in self.fields:
+            self.fields['mpesa_phone_number'].widget.attrs.update({
+                'placeholder': '719463611',
+                'autocomplete': 'tel-national',
+                'data-phone-input': 'true',
+            })

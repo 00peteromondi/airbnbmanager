@@ -7,6 +7,16 @@ class PropertyForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         required=False
     )
+    stay_details = forms.MultipleChoiceField(
+        choices=Property.STAY_DETAIL_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    policies = forms.MultipleChoiceField(
+        choices=Property.POLICY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
     
     class Meta:
         model = Property
@@ -14,7 +24,7 @@ class PropertyForm(forms.ModelForm):
             'name', 'description', 'property_type', 'address', 'city', 
             'state', 'country', 'latitude', 'longitude', 'price_per_night',
             'max_guests', 'bedrooms', 'beds', 'bathrooms', 'sqft',
-            'amenities', 'check_in_time', 'check_out_time', 'is_active'
+            'amenities', 'stay_details', 'policies', 'check_in_time', 'check_out_time', 'is_active'
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
@@ -29,6 +39,8 @@ class PropertyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.initial['amenities'] = self.instance.amenities
+            self.initial['stay_details'] = self.instance.stay_details
+            self.initial['policies'] = self.instance.policies
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.CheckboxSelectMultiple):
                 continue
@@ -72,6 +84,8 @@ class PropertyForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.amenities = self.cleaned_data.get('amenities', [])
+        instance.stay_details = self.cleaned_data.get('stay_details', [])
+        instance.policies = self.cleaned_data.get('policies', [])
         # Save price_per_night from the form into the instance (keeps price in sync in model.save)
         if 'price_per_night' in self.cleaned_data:
             instance.price_per_night = self.cleaned_data.get('price_per_night')

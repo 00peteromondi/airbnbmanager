@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn airbnb_manager.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT airbnb_manager.asgi:application"
     envVars:
       - key: DEBUG
         value: "False"
@@ -12,3 +12,19 @@ services:
         generateValue: true
       - key: WEB_CONCURRENCY
         value: 4
+      - key: REDIS_URL
+        value: ""
+      - key: DATABASE_URL
+        value: "sqlite:///db.sqlite3"
+      - key: BREVO_SMTP_LOGIN
+        value: ""
+      - key: BREVO_SMTP_KEY
+        value: ""
+      - key: BREVO_SMS_API_KEY
+        value: ""
+      - key: MPESA_CONSUMER_KEY
+        value: ""
+      - key: MPESA_CONSUMER_SECRET
+        value: ""
+      - key: MPESA_CALLBACK_URL
+        value: ""

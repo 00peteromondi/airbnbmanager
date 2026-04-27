@@ -35,6 +35,26 @@ class Property(models.Model):
         ('accessible', 'Wheelchair Accessible'),
     )
 
+    STAY_DETAIL_CHOICES = (
+        ('family_friendly', 'Family friendly'),
+        ('remote_work_ready', 'Remote work ready'),
+        ('long_term_stays', 'Long-term stays welcome'),
+        ('business_travel', 'Business travel friendly'),
+        ('wellness_retreat', 'Wellness retreat'),
+        ('accessible_stay', 'Accessible stay'),
+        ('waterfront_escape', 'Waterfront escape'),
+    )
+
+    POLICY_CHOICES = (
+        ('no_smoking', 'No smoking'),
+        ('no_pets', 'No pets'),
+        ('no_parties', 'No parties'),
+        ('self_check_in', 'Self check-in'),
+        ('children_allowed', 'Children allowed'),
+        ('early_check_in', 'Early check-in available'),
+        ('late_check_out', 'Late check-out available'),
+    )
+
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='properties')
     name = models.CharField(max_length=200)
     description = models.TextField()
@@ -52,6 +72,8 @@ class Property(models.Model):
     bathrooms = models.DecimalField(max_digits=3, decimal_places=1)
     sqft = models.PositiveIntegerField(null=True, blank=True)
     amenities = models.JSONField(default=list)
+    stay_details = models.JSONField(default=list, blank=True)
+    policies = models.JSONField(default=list, blank=True)
     average_rating = models.FloatField(default=0.0)
     check_in_time = models.TimeField(default=time(15, 0))
     check_out_time = models.TimeField(default=time(11, 0))
@@ -66,6 +88,16 @@ class Property(models.Model):
     @property
     def amenities_list(self):
         return [dict(self.AMENITY_CHOICES).get(amenity, amenity) for amenity in self.amenities]
+
+    @property
+    def stay_detail_labels(self):
+        details = self.stay_details or []
+        return [dict(self.STAY_DETAIL_CHOICES).get(detail, detail.replace('_', ' ').title()) for detail in details]
+
+    @property
+    def policy_labels(self):
+        policies = self.policies or []
+        return [dict(self.POLICY_CHOICES).get(policy, policy.replace('_', ' ').title()) for policy in policies]
 
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, related_name='images', on_delete=models.CASCADE)

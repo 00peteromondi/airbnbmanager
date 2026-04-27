@@ -53,6 +53,30 @@
             </div>
 
             <div class="panel p-6 lg:p-8">
+                <span class="badge badge-violet mb-3">Stay details</span>
+                <h2 class="font-display text-2xl font-semibold">Key expectations for guests</h2>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    {% for detail in property.stay_detail_labels %}
+                        <span class="badge badge-violet">{{ detail }}</span>
+                    {% empty %}
+                        <span class="text-sm text-slate-500">No stay details specified.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-slate mb-3">House rules & policies</span>
+                <h2 class="font-display text-2xl font-semibold">Important rules for your stay</h2>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    {% for policy in property.policy_labels %}
+                        <span class="badge badge-slate">{{ policy }}</span>
+                    {% empty %}
+                        <span class="text-sm text-slate-500">No policies specified.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
                 <span class="badge badge-primary mb-3">Recent booking activity</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">Reservations tied to this listing</h2>
                 <div class="space-y-4">

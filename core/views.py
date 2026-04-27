@@ -29,13 +29,37 @@ def hosts_view(request):
     """Enhanced hosts page with real data"""
     superhosts_count = Host.objects.filter(is_superhost=True).count()
     total_hosts = Host.objects.count()
-    avg_host_rating = Host.objects.aggregate(avg_rating=Avg('average_rating'))['avg_rating'] or 0
+    avg_host_rating = Review.objects.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
+    host_review_highlights = list(
+        Review.objects.select_related('property', 'property__owner', 'user')
+        .exclude(comment__exact='')
+        .exclude(property__owner__first_name__exact='')
+        .order_by('-created_at')[:4]
+    )
+    host_ready_count = Host.objects.filter(
+        fully_verified=True,
+        user__properties__is_active=True,
+    ).distinct().count()
     
     context = {
         'superhosts_count': superhosts_count,
         'total_hosts': total_hosts,
         'avg_host_rating': round(avg_host_rating, 1),
+        'host_review_highlights': host_review_highlights,
+        'host_ready_count': host_ready_count,
     }
+
+    if request.user.is_authenticated and request.user.role in ['host', 'both']:
+        host_property_count = Property.objects.filter(owner=request.user).count()
+        active_property_count = Property.objects.filter(owner=request.user, is_active=True).count()
+        host_profile = Host.objects.filter(user=request.user).first()
+        context.update({
+            'is_host_user': True,
+            'host_property_count': host_property_count,
+            'host_active_property_count': active_property_count,
+            'host_profile': host_profile,
+        })
+
     return render(request, 'core/hosts.html', context)
 
 def start_hosting_view(request):
@@ -256,14 +280,15 @@ def home(request):
     ).filter(
         avg_rating__gte=4.5,
         review_count__gte=3
-    ).order_by('-avg_rating')[:6]
+    ).order_by('-avg_rating', '-review_count')[:6]
     
     # Most booked properties
     most_booked_properties = Property.objects.filter(
         is_active=True
     ).annotate(
-        booking_count=Count('bookings')
-    ).order_by('-booking_count')[:6]
+        booking_count=Count('bookings'),
+        avg_rating=Avg('reviews__rating')
+    ).order_by('-booking_count', '-avg_rating')[:6]
     
     # Superhosts with their properties
     superhosts = Host.objects.filter(
@@ -276,12 +301,17 @@ def home(request):
     recently_booked_properties = Property.objects.filter(
         bookings__created_at__gte=thirty_days_ago,
         is_active=True
-    ).distinct().order_by('-bookings__created_at')[:6]
+    ).distinct().annotate(avg_rating=Avg('reviews__rating')).order_by('-bookings__created_at')[:6]
     
     # Properties with special offers (you can add a discount field later)
     special_offer_properties = Property.objects.filter(
         is_active=True
-    ).order_by('?')[:4]  # Random selection for now
+    ).annotate(avg_rating=Avg('reviews__rating')).order_by('?')[:4]  # Random selection for now
+
+    # Popular destinations (by number of active properties)
+    popular_destinations = Property.objects.filter(
+        is_active=True
+    ).exclude(city__exact='').values('city', 'country').annotate(total=Count('id')).order_by('-total')[:6]
     
     # Statistics for the stats section
     stats = {
@@ -314,6 +344,7 @@ def home(request):
         'superhosts': superhosts,
         'recently_booked_properties': recently_booked_properties,
         'special_offer_properties': special_offer_properties,
+        'popular_destinations': popular_destinations,
         'stats': stats,
         'testimonials': testimonials,
         'active_guest_bookings': active_guest_bookings,

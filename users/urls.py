@@ -17,4 +17,5 @@ urlpatterns = [
     path('profile/verify-email-code/', views.verify_email_code, name='verify_email_code'),
     path('profile/send-phone-code/', views.send_phone_verification, name='send_phone_verification'),
     path('profile/verify-phone-code/', views.verify_phone_code, name='verify_phone_code'),
+    path('password-strength/', views.password_strength, name='password_strength'),
 ]

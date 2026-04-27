@@ -2,12 +2,14 @@ import json
 import random
 import urllib.error
 import urllib.request
+import re
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.password_validation import validate_password
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Avg, Sum
 from django.http import JsonResponse
@@ -244,6 +246,13 @@ def profile(request):
             'payments_received': _coalesce_decimal(host_payments.filter(status='paid').aggregate(total=Sum('amount'))['total']),
             'withdrawn_total': _coalesce_decimal(host_withdrawals.filter(status='paid').aggregate(total=Sum('amount'))['total']),
             'pending_withdrawals': _coalesce_decimal(host_withdrawals.filter(status__in=['requested', 'processing']).aggregate(total=Sum('amount'))['total']),
+            'available_balance': _coalesce_decimal(
+                host_payments.filter(status='paid').aggregate(total=Sum('amount'))['total']
+            ) - _coalesce_decimal(
+                host_withdrawals.filter(status='paid').aggregate(total=Sum('amount'))['total']
+            ) - _coalesce_decimal(
+                host_withdrawals.filter(status__in=['requested', 'processing']).aggregate(total=Sum('amount'))['total']
+            ),
         },
         'host_profile': host_profile,
         'recent_guest_bookings': guest_bookings.select_related('property').order_by('-created_at')[:4],
@@ -399,3 +408,56 @@ def switch_role(request, role):
 def get_active_role(request):
     active_role = request.session.get('active_role', 'guest')
     return JsonResponse({'active_role': active_role})
+
+
+def password_strength(request):
+    password = request.GET.get('password', '')
+    confirm = request.GET.get('confirm', '')
+    hints = []
+
+    score = 0
+    if len(password) >= 8:
+        score += 1
+    if len(password) >= 12:
+        score += 1
+    if re.search(r'[a-z]', password) and re.search(r'[A-Z]', password):
+        score += 1
+    if re.search(r'\d', password):
+        score += 1
+    if re.search(r'[^A-Za-z0-9]', password):
+        score += 1
+
+    try:
+        validate_password(password=password, user=None)
+    except Exception as exc:
+        hints.extend(getattr(exc, 'messages', []) or [str(exc)])
+        score = max(score - 1, 0)
+
+    if not password:
+        label = 'No password yet'
+        tone = 'slate'
+    elif score <= 1:
+        label = 'Needs work'
+        tone = 'red'
+    elif score == 2:
+        label = 'Fair'
+        tone = 'orange'
+    elif score == 3:
+        label = 'Good'
+        tone = 'blue'
+    else:
+        label = 'Strong'
+        tone = 'green'
+
+    matches = bool(password and confirm and password == confirm)
+    match_state = 'match' if matches else 'mismatch' if confirm else 'pending'
+
+    return JsonResponse({
+        'score': score,
+        'max_score': 5,
+        'label': label,
+        'tone': tone,
+        'matches': matches,
+        'match_state': match_state,
+        'hints': hints[:2],
+    })

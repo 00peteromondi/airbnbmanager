@@ -6,6 +6,7 @@ app_name = 'bookings'
 urlpatterns = [
     path('', views.UserBookingListView.as_view(), name='booking_list'),
     path('live/', views.booking_list_live, name='booking_list_live'),
+    path('payments/', views.guest_payments_center, name='guest_payments_center'),
     path('payments/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
     path('create/<int:property_id>/', views.BookingCreateView.as_view(), name='create_booking'),
     path('<int:booking_id>/pay/', views.pay_booking, name='pay_booking'),

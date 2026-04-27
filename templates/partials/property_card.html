@@ -11,7 +11,11 @@
         {% endif %}
         <div class="absolute left-4 top-4 flex gap-2">
             <span class="badge badge-primary">{{ property.property_type|title }}</span>
-            {% if property.average_rating %}<span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ property.average_rating|floatformat:1 }}</span>{% endif %}
+            {% if property.avg_rating %}
+                <span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ property.avg_rating|floatformat:1 }}</span>
+            {% elif property.average_rating %}
+                <span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ property.average_rating|floatformat:1 }}</span>
+            {% endif %}
         </div>
     </div>
     <div class="p-5 flex-1 flex flex-col">
@@ -27,8 +31,13 @@
         </div>
         <div class="mt-4 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <span class="rating-meter" style="--rating: {{ property.average_rating|default:0|floatformat:1 }};"></span>
-                <span class="text-sm font-semibold text-slate-700">{{ property.average_rating|default:0|floatformat:1 }}</span>
+                {% if property.avg_rating %}
+                    <span class="rating-meter" style="--rating: {{ property.avg_rating|floatformat:1 }};"></span>
+                    <span class="text-sm font-semibold text-slate-700">{{ property.avg_rating|floatformat:1 }}</span>
+                {% else %}
+                    <span class="rating-meter" style="--rating: {{ property.average_rating|default:0|floatformat:1 }};"></span>
+                    <span class="text-sm font-semibold text-slate-700">{{ property.average_rating|default:0|floatformat:1 }}</span>
+                {% endif %}
             </div>
             <span class="text-xs uppercase tracking-[0.18em] text-slate-400">BayStays pick</span>
         </div>

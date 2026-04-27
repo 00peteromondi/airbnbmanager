@@ -1,0 +1,6 @@
+# Extra runtime packages required for WebSocket/ASGI deployments
+daphne>=4.0,<5
+channels>=4.0,<5
+channels_redis>=4.0,<5
+
+# Recommended: Add these entries to your primary `requirements.txt` for pinned production installs.

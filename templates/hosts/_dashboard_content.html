@@ -175,13 +175,19 @@
                 <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Pending payout</p><p class="font-display text-2xl font-semibold mt-2">KES {{ finance_snapshot.pending_payout_total|intcomma }}</p></div>
                 <div class="bg-slate-50 rounded-[0.7rem] px-4 py-4"><p class="text-sm text-slate-500">Paid transactions</p><p class="font-display text-2xl font-semibold mt-2">{{ finance_snapshot.paid_payment_count }}</p></div>
             </div>
-            <form method="post" action="{% url 'hosts:request_withdrawal' %}" class="mt-5 grid gap-4 md:grid-cols-3" data-loading-form="true">
+            <form method="post" action="{% url 'hosts:request_withdrawal' %}" class="mt-5 space-y-4" data-loading-form="true">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'hosts:dashboard' %}">
-                <div><label for="{{ withdrawal_form.amount.id_for_label }}">Amount</label>{{ withdrawal_form.amount }}</div>
-                <div><label for="{{ withdrawal_form.mpesa_phone_number.id_for_label }}">M-Pesa number</label>{{ withdrawal_form.mpesa_phone_number }}</div>
-                <div><label for="{{ withdrawal_form.notes.id_for_label }}">Notes</label>{{ withdrawal_form.notes }}</div>
-                <div class="md:col-span-3">
+                <div class="finance-form-grid finance-form-grid--compact">
+                    <div><label for="{{ withdrawal_form.amount.id_for_label }}">Amount</label>{{ withdrawal_form.amount }}</div>
+                    <div><label for="{{ withdrawal_form.mpesa_phone_number.id_for_label }}">M-Pesa number</label>{{ withdrawal_form.mpesa_phone_number }}</div>
+                    <div class="finance-note-row"><label for="{{ withdrawal_form.notes.id_for_label }}">Notes</label>{{ withdrawal_form.notes }}</div>
+                </div>
+                <div class="rounded-[0.7rem] border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800 finance-note-row">
+                    <p><i class="fa-solid fa-percent mr-2"></i><strong>Withdrawal charge:</strong> 8% is deducted from each payout request before transfer.</p>
+                    <p class="mt-2"><i class="fa-solid fa-clock mr-2"></i><strong>Processing window:</strong> Approved withdrawals are processed on Thursdays and remain visible here until payout completes.</p>
+                </div>
+                <div>
                     <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-money-bill-transfer"></i>Request withdrawal</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Submitting</span></button>
                 </div>
             </form>

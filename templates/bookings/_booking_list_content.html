@@ -5,7 +5,10 @@
         <h1 class="font-display text-4xl font-semibold">Your BayStays plans</h1>
         <p class="mt-2 text-slate-600">Track, adjust, and cancel reservations with clearer stay context, stronger status cues, and better trip self-service.</p>
     </div>
-    <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Browse more stays</a>
+    <div class="flex flex-wrap gap-3">
+        <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-secondary"><i class="fa-solid fa-wallet"></i>Payments center</a>
+        <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Browse more stays</a>
+    </div>
 </div>
 <div class="grid gap-4 md:grid-cols-3 section-fade">
     <div class="panel p-5">

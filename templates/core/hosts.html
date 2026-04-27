@@ -1,42 +1,136 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block title %}Host with BayStays{% endblock %}
 
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
-    <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-stretch section-fade">
-        <div class="relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#410912] via-[#8f1427] to-[#f97316] text-white p-8 lg:p-12">
-            <div class="absolute inset-0 bg-[linear-gradient(120deg,_rgba(255,255,255,0.08),_transparent_36%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.22),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(191,219,254,0.18),_transparent_28%)]"></div>
-            <div class="relative z-10">
-                <span class="badge badge-warm mb-5">Host on BayStays</span>
-                <h1 class="font-display text-4xl sm:text-5xl font-semibold leading-tight">Turn beautiful spaces into calm, high-trust stays.</h1>
-                <p class="mt-5 text-lg text-slate-300 max-w-2xl">We’ve reworked the host experience around clarity: listing creation, verification, booking updates, and revenue snapshots now live in one polished workspace.</p>
-                <div class="mt-8 flex flex-wrap gap-3">
-                    <a href="{% url 'hosts:register' %}" class="btn-bay">Start hosting</a>
-                    <a href="{% url 'hosts:dashboard' %}" class="btn-bay-ghost text-white border-white/15 bg-white/10">Open host workspace</a>
+    {% if is_host_user %}
+        <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-stretch section-fade">
+            <div class="relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#410912] via-[#8f1427] to-[#f97316] text-white p-8 lg:p-12">
+                <div class="absolute inset-0 bg-[linear-gradient(120deg,_rgba(255,255,255,0.08),_transparent_36%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.22),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(191,219,254,0.18),_transparent_28%)]"></div>
+                <div class="relative z-10">
+                    <span class="badge badge-warm mb-5">Welcome back, {{ user.get_display_name }}</span>
+                    <h1 class="font-display text-4xl sm:text-5xl font-semibold leading-tight">Your hosting dashboard awaits.</h1>
+                    <p class="mt-5 text-lg text-slate-300 max-w-2xl">Manage your {{ host_property_count }} listing{{ host_property_count|pluralize }}, track bookings, and optimize your hosting performance.</p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="{% url 'hosts:dashboard' %}" class="btn-bay">Open host workspace</a>
+                        {% if host_active_property_count == 0 %}
+                            <a href="{% url 'hosts:add_listing' %}" class="btn-bay-ghost text-white border-white/15 bg-white/10">Add your first listing</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel p-6 lg:p-8 section-fade">
+                <span class="badge badge-primary mb-3">Your hosting stats</span>
+                <h2 class="font-display text-3xl font-semibold mb-6">Quick overview</h2>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-[0.95rem] bg-red-50 p-5"><p class="text-sm text-red-700 uppercase tracking-[0.24em]">Your listings</p><p class="font-display text-4xl font-semibold mt-2">{{ host_property_count }}</p></div>
+                    <div class="rounded-3xl bg-sky-50 p-5"><p class="text-sm text-sky-700 uppercase tracking-[0.24em]">Active</p><p class="font-display text-4xl font-semibold mt-2">{{ host_active_property_count }}</p></div>
+                    {% if host_profile %}
+                        <div class="rounded-3xl bg-amber-50 p-5"><p class="text-sm text-amber-700 uppercase tracking-[0.24em]">Your rating</p><p class="font-display text-4xl font-semibold mt-2">{{ host_profile.average_rating|floatformat:1 }}</p></div>
+                        <div class="rounded-3xl bg-green-50 p-5"><p class="text-sm text-green-700 uppercase tracking-[0.24em]">Earnings</p><p class="font-display text-4xl font-semibold mt-2">KES {{ host_profile.total_earnings|intcomma }}</p></div>
+                    {% endif %}
+                </div>
+                <div class="mt-6 space-y-3 text-sm text-slate-600">
+                    <div class="panel px-4 py-4">Access your complete dashboard with booking management and analytics.</div>
+                    <div class="panel px-4 py-4">Update listing details, pricing, and availability in real-time.</div>
+                    <div class="panel px-4 py-4">Track guest communications and manage your hosting reputation.</div>
                 </div>
             </div>
         </div>
-        <div class="panel p-6 lg:p-8 section-fade">
-            <span class="badge badge-primary mb-3">Host highlights</span>
-            <h2 class="font-display text-3xl font-semibold mb-6">A modern hosting cockpit</h2>
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="rounded-[0.95rem] bg-red-50 p-5"><p class="text-sm text-red-700 uppercase tracking-[0.24em]">Superhosts</p><p class="font-display text-4xl font-semibold mt-2">{{ superhosts_count }}</p></div>
-                <div class="rounded-3xl bg-sky-50 p-5"><p class="text-sm text-sky-700 uppercase tracking-[0.24em]">Host network</p><p class="font-display text-4xl font-semibold mt-2">{{ total_hosts }}</p></div>
-                <div class="rounded-3xl bg-amber-50 p-5 sm:col-span-2"><p class="text-sm text-amber-700 uppercase tracking-[0.24em]">Average host rating</p><p class="font-display text-4xl font-semibold mt-2">{{ avg_host_rating }}</p></div>
+    {% else %}
+        <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-stretch section-fade">
+            <div class="relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#410912] via-[#8f1427] to-[#f97316] text-white p-8 lg:p-12">
+                <div class="absolute inset-0 bg-[linear-gradient(120deg,_rgba(255,255,255,0.08),_transparent_36%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.22),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(191,219,254,0.18),_transparent_28%)]"></div>
+                <div class="relative z-10">
+                    <span class="badge badge-warm mb-5">Host on BayStays</span>
+                    <h1 class="font-display text-4xl sm:text-5xl font-semibold leading-tight">Turn beautiful spaces into calm, high-trust stays.</h1>
+                    <p class="mt-5 text-lg text-slate-300 max-w-2xl">BayStays gives hosts a more complete operating surface: guided listing setup, payout readiness, booking timing controls, guest payments, withdrawals, and trust-first hosting signals that help homes convert.</p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="{% url 'hosts:register' %}" class="btn-bay">Start hosting</a>
+                        <a href="{% url 'hosts:login' %}" class="btn-bay-ghost text-white border-white/15 bg-white/10">Open host sign in</a>
+                    </div>
+                </div>
             </div>
-            <div class="mt-6 space-y-3 text-sm text-slate-600">
-                <div class="panel px-4 py-4">Verification cues are integrated across profile and host surfaces.</div>
-                <div class="panel px-4 py-4">Booking management uses clear status chips, notes, and quick approval actions.</div>
-                <div class="panel px-4 py-4">Listing creation now feels more like a guided studio than a raw form.</div>
+            <div class="panel p-6 lg:p-8 section-fade">
+                <span class="badge badge-primary mb-3">Host highlights</span>
+                <h2 class="font-display text-3xl font-semibold mb-6">A modern hosting cockpit</h2>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-[0.95rem] bg-red-50 p-5"><p class="text-sm text-red-700 uppercase tracking-[0.24em]">Superhosts</p><p class="font-display text-4xl font-semibold mt-2">{{ superhosts_count }}</p></div>
+                    <div class="rounded-3xl bg-sky-50 p-5"><p class="text-sm text-sky-700 uppercase tracking-[0.24em]">Host network</p><p class="font-display text-4xl font-semibold mt-2">{{ total_hosts }}</p></div>
+                    <div class="rounded-3xl bg-amber-50 p-5"><p class="text-sm text-amber-700 uppercase tracking-[0.24em]">Average host rating</p><p class="font-display text-4xl font-semibold mt-2">{{ avg_host_rating }}</p></div>
+                    <div class="rounded-3xl bg-emerald-50 p-5"><p class="text-sm text-emerald-700 uppercase tracking-[0.24em]">Ready hosts</p><p class="font-display text-4xl font-semibold mt-2">{{ host_ready_count }}</p></div>
+                </div>
+                <div class="mt-6 space-y-3 text-sm text-slate-600">
+                    <div class="panel px-4 py-4">Verification cues, government ID, tax setup, and payout controls all live in the same host-ready account center.</div>
+                    <div class="panel px-4 py-4">Booking management uses timing-aware check-in and check-out actions so hosts do the right thing at the right time.</div>
+                    <div class="panel px-4 py-4">Guests can pay through M-Pesa and hosts can manage withdrawal readiness from the hosting hub.</div>
+                </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 
     <section class="grid gap-5 md:grid-cols-3 section-fade">
         <div class="panel p-6"><i class="fa-solid fa-house-circle-check text-2xl text-red-600"></i><h3 class="font-semibold text-xl mt-4">Guided listing setup</h3><p class="mt-2 text-sm text-slate-600">Structured sections, stronger hierarchy, and polished upload areas help hosts publish faster.</p></div>
         <div class="panel p-6"><i class="fa-solid fa-id-card text-2xl text-sky-700"></i><h3 class="font-semibold text-xl mt-4">Trust-ready profiles</h3><p class="mt-2 text-sm text-slate-600">BayStays foregrounds email and phone verification so guests understand credibility immediately.</p></div>
         <div class="panel p-6"><i class="fa-solid fa-chart-line text-2xl text-amber-700"></i><h3 class="font-semibold text-xl mt-4">Operations visibility</h3><p class="mt-2 text-sm text-slate-600">Bookings, revenue, performance, and listing health all sit inside a single modern workspace.</p></div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] section-fade">
+        <div class="panel p-6 lg:p-8">
+            <span class="badge badge-blue mb-3">Host voices</span>
+            <h2 class="font-display text-3xl font-semibold mb-5">How hosted stays are being received</h2>
+            <div class="space-y-4">
+                {% for review in host_review_highlights %}
+                    <article class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
+                        <div class="flex items-center justify-between gap-3 flex-wrap">
+                            <div>
+                                <p class="font-semibold text-slate-900">{{ review.property.owner.get_display_name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ review.property.name }} · {{ review.user.get_display_name }}</p>
+                            </div>
+                            <span class="badge badge-warm"><i class="fa-solid fa-star"></i>{{ review.rating|floatformat:1 }}</span>
+                        </div>
+                        <p class="mt-3 text-sm leading-6 text-slate-600">“{{ review.comment }}”</p>
+                    </article>
+                {% empty %}
+                    <div class="empty-state rounded-[0.8rem] px-6 py-10">
+                        <div>
+                            <i class="fa-solid fa-comments text-2xl text-red-500"></i>
+                            <p class="mt-3 font-semibold text-slate-800">Host review highlights will appear here</p>
+                            <p class="text-sm text-slate-500 mt-1">As guests complete stays and leave reviews, BayStays will surface the best host feedback here.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="panel p-6 lg:p-8">
+            <span class="badge badge-warm mb-3">Hosting estimator</span>
+            <h2 class="font-display text-3xl font-semibold mb-5">Model what your month could look like</h2>
+            <p class="text-sm text-slate-500">A quick, no-signup estimate for unauthenticated visitors who want to understand potential nights and gross earnings before opening a host account.</p>
+            <div class="mt-5 grid gap-4" data-host-estimator>
+                <div>
+                    <label for="host-rate">Nightly rate</label>
+                    <input id="host-rate" type="number" class="input-shell" value="6500" min="1000" step="100" data-host-rate>
+                </div>
+                <div>
+                    <label for="host-nights">Booked nights per month</label>
+                    <input id="host-nights" type="range" min="2" max="28" value="12" class="w-full accent-red-600" data-host-nights>
+                    <div class="mt-2 flex items-center justify-between text-sm text-slate-500">
+                        <span>Flexible season</span>
+                        <strong class="text-slate-900" data-host-nights-label>12 nights</strong>
+                    </div>
+                </div>
+                <div class="rounded-[0.8rem] bg-slate-50 border border-slate-100 px-5 py-5">
+                    <p class="text-sm uppercase tracking-[0.22em] text-slate-500">Estimated monthly gross</p>
+                    <p class="mt-3 font-display text-4xl font-semibold" data-host-gross>KES 78,000</p>
+                    <p class="mt-2 text-sm text-slate-500">This is a simple planning tool. BayStays performance still depends on listing quality, response time, ratings, and seasonality.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'hosts:register' %}" class="btn-bay-secondary"><i class="fa-solid fa-house-circle-check"></i>Create a host account</a>
+                    <a href="{% url 'hosts:login' %}" class="btn-bay-ghost"><i class="fa-solid fa-key"></i>Already hosting</a>
+                </div>
+            </div>
+        </div>
     </section>
 </section>
 {% endblock %}

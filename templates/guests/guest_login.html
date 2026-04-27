@@ -13,14 +13,17 @@
         </div>
         <div>
             <label for="id_password">Password</label>
-            <input id="id_password" name="password" type="password" required class="input-shell" placeholder="Enter your password">
+            <div class="password-shell">
+                <input id="id_password" name="password" type="password" required class="input-shell" placeholder="Enter your password" data-password-toggle="true">
+                <button type="button" class="password-toggle" data-password-toggle-button aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+            </div>
         </div>
         {% if form.errors %}<div class="rounded-[0.7rem] bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">Those guest account details did not match. Check them and try again.</div>{% endif %}
         <button type="submit" class="btn-bay w-full"><span data-submit-text><i class="fa-solid fa-right-to-bracket"></i>Sign in</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Signing in</span></button>
     </form>
     <div class="mt-6 space-y-3 text-sm text-slate-600">
         <p><i class="fa-solid fa-user-plus mr-2 text-red-500"></i>Need a guest account? <a href="{% url 'guests:guest_signup' %}" class="text-red-700 font-semibold">Create one and start browsing</a></p>
-        <p><i class="fa-solid fa-house-circle-check mr-2 text-blue-600"></i>Coming in as a host? <a href="{% url 'hosts:register' %}" class="text-blue-700 font-semibold">Open a host account instead</a></p>
+        <p><i class="fa-solid fa-house-circle-check mr-2 text-blue-600"></i>Coming in as a host? <a href="{% url 'hosts:login' %}" class="text-blue-700 font-semibold">Switch to host sign in</a></p>
     </div>
 </div>
 {% endblock %}

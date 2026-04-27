@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Guest payments center | BayStays{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <div class="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div class="panel p-6 lg:p-8 surface-tint">
+            <span class="badge badge-warm mb-3">Guest payments center</span>
+            <h1 class="font-display text-4xl font-semibold">Manage trip payments, travel timing, and the stays still waiting on action.</h1>
+            <p class="mt-3 max-w-3xl text-slate-600">This is your BayStays money and planning desk for M-Pesa payments, outstanding stays, and the next arrival that needs your attention.</p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="{% url 'bookings:booking_list' %}" class="btn-bay"><i class="fa-solid fa-calendar-days"></i>Open bookings</a>
+                <a href="{% url 'guests:guest_dashboard' %}" class="btn-bay-ghost"><i class="fa-solid fa-house-user"></i>Guest dashboard</a>
+                <a href="{% url 'core:properties_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-compass"></i>Explore stays</a>
+            </div>
+        </div>
+        <div class="panel p-6 lg:p-8">
+            <span class="badge badge-blue mb-3">Next trip focus</span>
+            <h2 class="font-display text-2xl font-semibold mb-5">Arrival planning snapshot</h2>
+            {% if next_trip %}
+                <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
+                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ next_trip.property.name }}</p>
+                            <p class="text-sm text-slate-500 mt-1">{{ next_trip.property.city }}, {{ next_trip.property.country }}</p>
+                        </div>
+                        <span class="badge badge-primary"><i class="fa-solid fa-hourglass-start"></i>{{ days_to_next_trip }} day{{ days_to_next_trip|pluralize }}</span>
+                    </div>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.check_in_date }}</strong>Check-in</div>
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.check_out_date }}</strong>Check-out</div>
+                        <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ next_trip.get_payment_status_display }}</strong>Payment state</div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state empty-state--compact rounded-[0.8rem] px-6">
+                    <div>
+                        <i class="fa-solid fa-suitcase-rolling text-2xl text-red-500"></i>
+                        <p class="mt-3 font-semibold text-slate-800">No trip is lined up yet</p>
+                        <p class="text-sm text-slate-500 mt-1">Once you confirm a stay, this panel will track the next arrival and payment readiness together.</p>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="mt-5 space-y-3">
+                {% for item in travel_utilities %}
+                    <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
+                        <p class="font-semibold text-slate-900"><i class="fa-solid {{ item.icon }} text-red-500 mr-2"></i>{{ item.title }}</p>
+                        <p class="mt-2 text-sm text-slate-500">{{ item.detail }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="panel p-5"><p class="text-sm text-slate-500">Upcoming spend</p><p class="font-display text-3xl font-semibold mt-2">KES {{ payment_center_summary.upcoming_spend|intcomma }}</p></div>
+        <div class="panel p-5"><p class="text-sm text-slate-500">Settled via M-Pesa</p><p class="font-display text-3xl font-semibold mt-2">KES {{ payment_center_summary.settled_total|intcomma }}</p></div>
+        <div class="panel p-5"><p class="text-sm text-slate-500">Outstanding stays</p><p class="font-display text-3xl font-semibold mt-2">KES {{ payment_center_summary.outstanding_total|intcomma }}</p></div>
+        <div class="panel p-5"><p class="text-sm text-slate-500">Failed charges</p><p class="font-display text-3xl font-semibold mt-2">KES {{ payment_center_summary.failed_total|intcomma }}</p></div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div class="panel p-6 lg:p-8">
+            <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+                <div>
+                    <span class="badge badge-primary mb-3">Outstanding actions</span>
+                    <h2 class="font-display text-2xl font-semibold">Bookings that still need payment attention</h2>
+                </div>
+                <a href="{% url 'bookings:booking_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open booking list</a>
+            </div>
+            <div class="space-y-4">
+                {% for booking in unpaid_bookings %}
+                    <article class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-5 py-5">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div>
+                                <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
+                                <p class="text-sm text-slate-500 mt-1">{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
+                            </div>
+                            <span class="badge {% if booking.payment_status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ booking.get_payment_status_display }}</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2 text-sm text-slate-600">
+                            <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">KES {{ booking.total_price|intcomma }}</strong>Total due</div>
+                            <div class="rounded-[0.7rem] bg-white px-3 py-3"><strong class="block text-slate-900">{{ booking.status|title }}</strong>Reservation state</div>
+                        </div>
+                        <form method="post" action="{% url 'bookings:pay_booking' booking.id %}" data-loading-form="true" class="mt-4 space-y-3 rounded-[0.8rem] border border-slate-200 bg-white px-4 py-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'bookings:guest_payments_center' %}">
+                            <div>
+                                <label class="text-sm">M-Pesa number</label>
+                                <input type="text" name="mpesa_phone_number" value="{{ user.phone_number|default:'' }}" class="input-shell mt-2" data-phone-input="true">
+                            </div>
+                            <button type="submit" class="btn-bay-secondary">
+                                <span data-submit-text><i class="fa-solid fa-mobile-screen-button"></i>Pay for this stay</span>
+                                <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Charging</span>
+                            </button>
+                        </form>
+                    </article>
+                {% empty %}
+                    <div class="empty-state rounded-[0.8rem] px-6 py-10">
+                        <div>
+                            <i class="fa-solid fa-circle-check text-3xl text-emerald-500"></i>
+                            <p class="mt-4 font-semibold text-slate-800">All visible stays are settled</p>
+                            <p class="text-sm text-slate-500 mt-2">When a booking still needs payment or a retry, it will show up here with a direct action path.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-blue mb-3">Travel timeline</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Upcoming trip sequence</h2>
+                <div class="space-y-3">
+                    {% for booking in travel_timeline %}
+                        <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <p class="font-semibold text-slate-900">{{ booking.property.name }}</p>
+                                <span class="status-pill {{ booking.status }}"><i class="fa-solid fa-circle"></i>{{ booking.status|title }}</span>
+                            </div>
+                            <p class="mt-2 text-sm text-slate-500">{{ booking.check_in_date }} to {{ booking.check_out_date }}</p>
+                            <p class="mt-2 text-sm {% if booking.payment_status == 'paid' %}text-emerald-600{% elif booking.payment_status == 'failed' %}text-red-600{% else %}text-slate-500{% endif %}">
+                                <i class="fa-solid fa-money-bill-wave mr-2"></i>{{ booking.get_payment_status_display }}
+                            </p>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-slate-500">Your next confirmed stays will build a trip timeline here.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-6 lg:p-8">
+                <span class="badge badge-warm mb-3">Payment history</span>
+                <h2 class="font-display text-2xl font-semibold mb-5">Recent transaction activity</h2>
+                <div class="space-y-3">
+                    {% for payment in payment_history_full %}
+                        <div class="rounded-[0.8rem] border border-slate-100 bg-slate-50 px-4 py-4">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <p class="font-semibold text-slate-900">{{ payment.booking.property.name }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ payment.created_at|date:"M d, Y" }} · {{ payment.phone_number|default:"M-Pesa" }}</p>
+                                </div>
+                                <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ payment.get_status_display }}</span>
+                            </div>
+                            <p class="mt-3 text-sm text-slate-600">KES {{ payment.amount|intcomma }}{% if payment.transaction_reference %} · Ref {{ payment.transaction_reference }}{% endif %}</p>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state empty-state--compact rounded-[0.8rem] px-6">
+                            <div>
+                                <i class="fa-solid fa-receipt text-2xl text-blue-500"></i>
+                                <p class="mt-3 font-semibold text-slate-800">No payment history yet</p>
+                                <p class="text-sm text-slate-500 mt-1">Once you pay for a stay, the transaction trail will appear here for easy reference.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

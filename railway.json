@@ -1,0 +1,15 @@
+{
+  "name": "airbnbmanager",
+  "start": "daphne -b 0.0.0.0 -p $PORT airbnb_manager.asgi:application",
+  "build": "./build.sh",
+  "env": {
+    "DEBUG": "false",
+    "SECRET_KEY": {
+      "generate": true
+    },
+    "REDIS_URL": "",
+    "BREVO_SMTP_LOGIN": "",
+    "BREVO_SMTP_KEY": "",
+    "MPESA_CALLBACK_URL": ""
+  }
+}

@@ -8,10 +8,19 @@
     <form method="post" class="mt-6 space-y-5" data-loading-form="true">
         {% csrf_token %}
         <div><label for="id_username">Username</label><input id="id_username" name="username" type="text" required class="input-shell" value="{{ form.username.value|default:'' }}"></div>
-        <div><label for="id_password">Password</label><input id="id_password" name="password" type="password" required class="input-shell"></div>
+        <div>
+            <label for="id_password">Password</label>
+            <div class="password-shell">
+                <input id="id_password" name="password" type="password" required class="input-shell" data-password-toggle="true">
+                <button type="button" class="password-toggle" data-password-toggle-button aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+        </div>
         {% if form.errors %}<div class="rounded-[0.7rem] bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">Those host details did not open the workspace. Check them and try again.</div>{% endif %}
         <button type="submit" class="btn-bay-secondary w-full"><span data-submit-text><i class="fa-solid fa-key"></i>Access host studio</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Opening</span></button>
     </form>
-    <p class="mt-6 text-sm text-slate-600"><i class="fa-solid fa-house-circle-check mr-2 text-red-500"></i>New to hosting on BayStays? <a href="{% url 'hosts:register' %}" class="font-semibold text-red-700">Create your host account</a></p>
+    <div class="mt-6 space-y-2 text-sm text-slate-600">
+        <p><i class="fa-solid fa-house-circle-check mr-2 text-red-500"></i>New to hosting on BayStays? <a href="{% url 'hosts:register' %}" class="font-semibold text-red-700">Create your host account</a></p>
+        <p><i class="fa-solid fa-person-walking-luggage mr-2 text-blue-500"></i>Booking as a guest? <a href="{% url 'guests:guest_login' %}" class="font-semibold text-blue-700">Switch to guest sign in</a></p>
+    </div>
 </div>
 {% endblock %}

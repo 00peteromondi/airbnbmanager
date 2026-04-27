@@ -2,8 +2,12 @@
 # Exit on error
 set -o errexit
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (including extras for ASGI/Channels)
+if [ -f requirements-extra.txt ]; then
+	pip install -r requirements.txt -r requirements-extra.txt
+else
+	pip install -r requirements.txt
+fi
 
 # Collect static files
 python manage.py collectstatic --no-input

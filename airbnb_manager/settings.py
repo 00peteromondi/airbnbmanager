@@ -43,12 +43,15 @@ CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
 USE_CLOUDINARY = os.environ.get('USE_CLOUDINARY', 'false' if DEBUG else 'true').lower() == 'true'
 CLOUDINARY_CONFIGURED = all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
-if USE_CLOUDINARY and CLOUDINARY_CONFIGURED:
+# Configure cloudinary client whenever credentials are present so
+# `CloudinaryField.url` and template tags can build URLs even when
+# `USE_CLOUDINARY` is disabled for local development.
+if CLOUDINARY_CONFIGURED:
     cloudinary.config(
         cloud_name=CLOUDINARY_CLOUD_NAME,
         api_key=CLOUDINARY_API_KEY,
         api_secret=CLOUDINARY_API_SECRET,
-        secure=True
+        secure=True,
     )
 
 # Application definition

@@ -152,6 +152,52 @@ def _guest_bookings_context(user):
     }
 
 
+def _guest_payments_center_context(user):
+    booking_context = _guest_bookings_context(user)
+    bookings = booking_context['bookings']
+    payment_history = BookingPayment.objects.filter(guest=user).select_related('booking', 'booking__property', 'host')
+    today = timezone.localdate()
+    active_bookings = bookings.exclude(status='cancelled')
+    upcoming_bookings = active_bookings.filter(check_out_date__gte=today).order_by('check_in_date')
+    unpaid_bookings = active_bookings.filter(payment_status__in=['pending', 'initiated', 'failed']).order_by('check_in_date')
+    next_trip = upcoming_bookings.first()
+    days_to_next_trip = None
+    if next_trip:
+        days_to_next_trip = max((next_trip.check_in_date - today).days, 0)
+
+    return {
+        **booking_context,
+        'payment_center_summary': {
+            'upcoming_spend': _coalesce_decimal(upcoming_bookings.aggregate(total=Sum('total_price'))['total']),
+            'settled_total': _coalesce_decimal(payment_history.filter(status='paid').aggregate(total=Sum('amount'))['total']),
+            'outstanding_total': _coalesce_decimal(unpaid_bookings.aggregate(total=Sum('total_price'))['total']),
+            'failed_total': _coalesce_decimal(payment_history.filter(status='failed').aggregate(total=Sum('amount'))['total']),
+        },
+        'unpaid_bookings': unpaid_bookings[:6],
+        'payment_history_full': payment_history[:12],
+        'next_trip': next_trip,
+        'days_to_next_trip': days_to_next_trip,
+        'travel_timeline': upcoming_bookings[:6],
+        'travel_utilities': [
+            {
+                'icon': 'fa-mobile-screen-button',
+                'title': 'Keep M-Pesa ready',
+                'detail': 'Outstanding stays can be settled from this page with your saved or preferred phone number.',
+            },
+            {
+                'icon': 'fa-id-card',
+                'title': 'Verify before you travel',
+                'detail': 'Verified email, phone, and ID keep support and host coordination smoother around arrival.',
+            },
+            {
+                'icon': 'fa-route',
+                'title': 'Plan the next arrival',
+                'detail': 'Use your next confirmed stay and payment state together so nothing is left until check-in day.',
+            },
+        ],
+    }
+
+
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Booking
     form_class = BookingForm
@@ -355,6 +401,18 @@ def booking_list_live(request):
         'html': render_to_string('bookings/_booking_list_content.html', context, request=request),
         'version': context['live_version'],
     })
+
+
+@login_required
+def guest_payments_center(request):
+    if request.user.role not in ['guest', 'both']:
+        messages.error(request, 'Access denied. This page is for guests only.')
+        return redirect('core:home')
+    if request.user.role == 'both' and request.session.get('active_role') == 'host':
+        messages.info(request, 'Please switch to guest mode to access the guest payments center.')
+        return redirect('hosts:dashboard')
+    context = _guest_payments_center_context(request.user)
+    return render(request, 'bookings/payments_center.html', context)
 
 
 @login_required

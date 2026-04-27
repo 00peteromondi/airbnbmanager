@@ -24,6 +24,12 @@ class BookingForm(forms.ModelForm):
                 if isinstance(field.widget, forms.Textarea):
                     css += ' min-h-28'
                 field.widget.attrs['class'] = css
+            if name == 'mpesa_phone_number':
+                field.widget.attrs.update({
+                    'placeholder': '719463611',
+                    'autocomplete': 'tel-national',
+                    'data-phone-input': 'true',
+                })
 
 
 class WithdrawalRequestForm(forms.ModelForm):
@@ -36,8 +42,14 @@ class WithdrawalRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
+        for name, field in self.fields.items():
             css = 'input-shell'
             if isinstance(field.widget, forms.Textarea):
                 css += ' min-h-24'
             field.widget.attrs['class'] = css
+            if name == 'mpesa_phone_number':
+                field.widget.attrs.update({
+                    'placeholder': '719463611',
+                    'autocomplete': 'tel-national',
+                    'data-phone-input': 'true',
+                })

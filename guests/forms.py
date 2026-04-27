@@ -19,8 +19,18 @@ class GuestSignUpForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
+        for name, field in self.fields.items():
             field.widget.attrs['class'] = 'input-shell'
+            if name == 'phone_number':
+                field.widget.attrs.update({
+                    'placeholder': '719463611',
+                    'autocomplete': 'tel-national',
+                    'data-phone-input': 'true',
+                })
+            if name in ['password1', 'password2']:
+                field.widget.attrs.update({
+                    'data-password-toggle': 'true',
+                })
     
     def save(self, commit=True):
         user = super().save(commit=False)

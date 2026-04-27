@@ -5,19 +5,43 @@
     <span class="badge badge-warm mb-4">Host application</span>
     <h2 class="font-display text-3xl font-semibold">Create your BayStays host account</h2>
     <p class="mt-2 text-slate-600">Open a host account to publish homes, manage guest requests, and present your stay with stronger detail and availability control.</p>
-    <form method="post" class="mt-6 grid gap-4 md:grid-cols-2" data-loading-form="true">
+    <form method="post" class="mt-6 grid gap-4 md:grid-cols-2" data-loading-form="true" data-password-meter data-password-strength-url="{% url 'users:password_strength' %}">
         {% csrf_token %}
         <div><label for="id_username">Username</label>{{ form.username }}</div>
         <div><label for="id_email">Email</label>{{ form.email }}</div>
         <div><label for="id_first_name">First name</label>{{ form.first_name }}</div>
         <div><label for="id_last_name">Last name</label>{{ form.last_name }}</div>
         <div class="md:col-span-2"><label for="id_phone_number">Phone number</label>{{ form.phone_number }}</div>
-        <div><label for="id_password1">Password</label>{{ form.password1 }}</div>
-        <div><label for="id_password2">Confirm password</label>{{ form.password2 }}</div>
+        <div>
+            <label for="id_password1">Password</label>
+            <div class="password-shell">
+                {{ form.password1 }}
+                <button type="button" class="password-toggle" data-password-toggle-button aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+        </div>
+        <div>
+            <label for="id_password2">Confirm password</label>
+            <div class="password-shell">
+                {{ form.password2 }}
+                <button type="button" class="password-toggle" data-password-toggle-button aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+        </div>
+        <div class="md:col-span-2 rounded-[0.7rem] border border-slate-200 bg-slate-50 px-4 py-4 password-meter-shell">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+                <p class="text-sm font-semibold text-slate-700">Password quality</p>
+                <span class="badge badge-dark" data-password-strength-label>No password yet</span>
+            </div>
+            <div class="mt-3 password-meter-track"><span class="password-meter-fill" data-password-strength-fill></span></div>
+            <div class="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
+                <span class="text-slate-500" data-password-strength-hints>Use at least 8 characters, numbers, and a symbol.</span>
+                <span class="badge badge-dark" data-password-match-label>Waiting for confirmation</span>
+            </div>
+        </div>
         {% if form.errors %}<div class="md:col-span-2 rounded-[0.7rem] bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">Some host details still need attention before the account can be created.</div>{% endif %}
         <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-house-circle-check"></i>Create host account</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Creating</span></button>
             <a href="{% url 'hosts:login' %}" class="btn-bay-ghost">I already host here</a>
+            <a href="{% url 'guests:guest_signup' %}" class="btn-bay-ghost"><i class="fa-solid fa-person-walking-luggage"></i>Register as guest instead</a>
         </div>
     </form>
 </div>

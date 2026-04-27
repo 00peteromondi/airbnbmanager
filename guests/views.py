@@ -8,7 +8,9 @@ from .forms import GuestSignUpForm
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from bookings.models import Booking
+from bookings.models import BookingPayment
 from django.utils import timezone
+from django.db.models import Sum
 from core.mixins import LogoutRequiredMixin
 from django.views import View
 from properties.models import Property
@@ -112,7 +114,53 @@ def guest_dashboard_view(request):
         messages.info(request, "Please switch to guest mode to access the guest dashboard.")
         return redirect('hosts:dashboard')
     
-    return render(request, 'guests/guest_dashboard.html')
+    today = timezone.localdate()
+    bookings = Booking.objects.filter(guest=request.user).select_related('property').prefetch_related('payments').order_by('-created_at')
+    active_bookings = bookings.exclude(status='cancelled')
+    upcoming_bookings = active_bookings.filter(check_out_date__gte=today)
+    payment_history = BookingPayment.objects.filter(guest=request.user).select_related('booking', 'booking__property').order_by('-created_at')
+    recommended_stays = Property.objects.filter(is_active=True).exclude(
+        id__in=bookings.values_list('property_id', flat=True)
+    ).order_by('-average_rating', 'price_per_night')[:4]
+    review_ready_bookings = bookings.filter(
+        status__in=['checked_out', 'completed']
+    ).order_by('-check_out_date')[:3]
+    next_trip = upcoming_bookings.order_by('check_in_date').first()
+    unpaid_bookings = active_bookings.filter(payment_status__in=['pending', 'initiated', 'failed'])[:3]
+    upcoming_spend = upcoming_bookings.aggregate(total=Sum('total_price'))['total'] or 0
+    settled_total = payment_history.filter(status='paid').aggregate(total=Sum('amount'))['total'] or 0
+    outstanding_total = active_bookings.filter(payment_status__in=['pending', 'initiated', 'failed']).aggregate(total=Sum('total_price'))['total'] or 0
+    days_to_next_trip = None
+    if next_trip:
+        days_to_next_trip = max((next_trip.check_in_date - today).days, 0)
+
+    context = {
+        'dashboard_stats': {
+            'upcoming': upcoming_bookings.count(),
+            'active': active_bookings.filter(status='checked_in').count(),
+            'completed': bookings.filter(status__in=['checked_out', 'completed']).count(),
+            'payments_paid': payment_history.filter(status='paid').count(),
+        },
+        'travel_readiness': [
+            {'label': 'Email verification', 'done': request.user.email_verified, 'detail': 'Needed for booking and payment notices.'},
+            {'label': 'Phone verification', 'done': request.user.phone_verified, 'detail': 'Useful for host arrival coordination and M-Pesa prompts.'},
+            {'label': 'Government ID', 'done': request.user.government_id_status == 'verified', 'detail': 'Speeds up trust checks and support help.'},
+        ],
+        'upcoming_bookings': upcoming_bookings[:3],
+        'recent_payments': payment_history[:4],
+        'unpaid_bookings': unpaid_bookings,
+        'recommended_stays': recommended_stays,
+        'review_ready_bookings': review_ready_bookings,
+        'next_trip': next_trip,
+        'days_to_next_trip': days_to_next_trip,
+        'travel_budget': {
+            'upcoming_spend': upcoming_spend,
+            'settled_total': settled_total,
+            'outstanding_total': outstanding_total,
+        },
+        'travel_timeline': upcoming_bookings[:4],
+    }
+    return render(request, 'guests/guest_dashboard.html', context)
 @login_required(login_url='guests:guest_login')
 def guest_properties_view(request):
     """

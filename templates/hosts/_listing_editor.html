@@ -100,7 +100,59 @@
                     </div>
                     <div class="badge badge-primary"><i class="fa-solid fa-sliders"></i>Filter-ready metadata</div>
                 </div>
-                <div class="check-grid amenity-row">{{ form.amenities }}</div>
+                {% load property_extras %}
+                <div class="check-grid amenity-row">
+                    {% if form.amenities.errors %}
+                        <div class="text-sm text-red-600">{{ form.amenities.errors }}</div>
+                    {% endif %}
+                    {% for value, label in form.fields.amenities.choices %}
+                        <label class="amenity-chip" tabindex="0">
+                            <input type="checkbox" name="{{ form.amenities.name }}" value="{{ value }}" id="id_amenities_{{ forloop.counter0 }}" {% if value in form.amenities.value %}checked{% endif %} />
+                            <span class="chip-icon"><i class="{{ value|amenity_icon }}"></i></span>
+                            <span class="chip-label">{{ value|amenity_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-violet-50 text-violet-600 flex items-center justify-center"><i class="fa-solid fa-suitcase-rolling"></i></div>
+                        <div><h2 class="font-display text-2xl font-semibold">Stay details</h2><p class="text-sm text-slate-500">Set the key expectations guests will see before they book.</p></div>
+                    </div>
+                </div>
+                <div class="check-grid amenity-row">
+                    {% if form.stay_details.errors %}
+                        <div class="text-sm text-red-600">{{ form.stay_details.errors }}</div>
+                    {% endif %}
+                    {% for value, label in form.fields.stay_details.choices %}
+                        <label class="amenity-chip" tabindex="0">
+                            <input type="checkbox" name="{{ form.stay_details.name }}" value="{{ value }}" id="id_stay_details_{{ forloop.counter0 }}" {% if value in form.stay_details.value %}checked{% endif %} />
+                            <span class="chip-label">{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel p-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="h-11 w-11 rounded-[0.95rem] bg-slate-100 text-slate-700 flex items-center justify-center"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div><h2 class="font-display text-2xl font-semibold">Policies</h2><p class="text-sm text-slate-500">Choose the rules guests need to know before they submit a request.</p></div>
+                    </div>
+                </div>
+                <div class="check-grid amenity-row">
+                    {% if form.policies.errors %}
+                        <div class="text-sm text-red-600">{{ form.policies.errors }}</div>
+                    {% endif %}
+                    {% for value, label in form.fields.policies.choices %}
+                        <label class="amenity-chip" tabindex="0">
+                            <input type="checkbox" name="{{ form.policies.name }}" value="{{ value }}" id="id_policies_{{ forloop.counter0 }}" {% if value in form.policies.value %}checked{% endif %} />
+                            <span class="chip-label">{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
             </div>
 
             <div class="panel p-5">
