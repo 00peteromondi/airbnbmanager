@@ -56,7 +56,7 @@ def _get_access_token():
         return None, str(exc)
 
 
-def initiate_mpesa_payment(*, booking, phone_number, amount):
+def initiate_mpesa_checkout(*, reference, phone_number, amount, description, callback_url=''):
     simulate = _mpesa_setting('MPESA_SIMULATE', 'true' if settings.DEBUG else 'false').lower() == 'true'
     if simulate:
         return {
@@ -75,7 +75,7 @@ def initiate_mpesa_payment(*, booking, phone_number, amount):
 
     shortcode = _mpesa_setting('MPESA_SHORTCODE')
     passkey = _mpesa_setting('MPESA_PASSKEY')
-    callback_url = _mpesa_setting('MPESA_CALLBACK_URL', 'https://example.com/mpesa/callback/')
+    callback_url = callback_url or _mpesa_setting('MPESA_CALLBACK_URL', 'https://example.com/mpesa/callback/')
     if not shortcode or not passkey:
         return {'ok': False, 'status': 'failed', 'message': 'Missing M-Pesa shortcode or passkey.'}
 
@@ -91,8 +91,8 @@ def initiate_mpesa_payment(*, booking, phone_number, amount):
         'PartyB': shortcode,
         'PhoneNumber': phone_number,
         'CallBackURL': callback_url,
-        'AccountReference': str(booking.id),
-        'TransactionDesc': f'BayStays booking #{booking.id}',
+        'AccountReference': str(reference),
+        'TransactionDesc': description,
     }
     stk_request = request.Request(
         f'{_mpesa_base_url()}/mpesa/stkpush/v1/processrequest',
@@ -128,6 +128,15 @@ def initiate_mpesa_payment(*, booking, phone_number, amount):
             'status': 'failed',
             'message': str(exc),
         }
+
+
+def initiate_mpesa_payment(*, booking, phone_number, amount):
+    return initiate_mpesa_checkout(
+        reference=booking.id,
+        phone_number=phone_number,
+        amount=amount,
+        description=f'BayStays booking #{booking.id}',
+    )
 
 
 def simulate_withdrawal_payout():

@@ -6,6 +6,8 @@
         <p class="mt-2 text-slate-600">Track, adjust, and cancel reservations with clearer stay context, stronger status cues, and better trip self-service.</p>
     </div>
     <div class="flex flex-wrap gap-3">
+        <a href="{% url 'users:inbox' %}" class="btn-bay-ghost"><i class="fa-solid fa-comments"></i>Inbox</a>
+        <a href="{% url 'users:notifications' %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Notifications</a>
         <a href="{% url 'bookings:guest_payments_center' %}" class="btn-bay-secondary"><i class="fa-solid fa-wallet"></i>Payments center</a>
         <a href="{% url 'core:properties_list' %}" class="btn-bay"><i class="fa-solid fa-compass"></i>Browse more stays</a>
     </div>
@@ -128,6 +130,7 @@
             {% endif %}
             <div class="mt-5 flex flex-wrap gap-3">
                 <a href="{% url 'properties:property_detail' booking.property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>View stay</a>
+                <a href="{% url 'users:start_booking_conversation' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-comments"></i>Message host</a>
                 <a href="{% url 'bookings:download_trip_summary' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-file-arrow-down"></i>Trip summary</a>
                 <a href="{% url 'bookings:download_booking_reminder' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-bell"></i>Reminder</a>
                 {% if booking.payment_status != 'paid' %}

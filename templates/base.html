@@ -25,50 +25,70 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.0/build/css/intlTelInput.css">
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/platform_tools.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="antialiased {% block body_class %}{% endblock %}">
     <div data-loader class="loader-overlay hidden" aria-hidden="true"></div>
     <div class="app-shell">
         {% block site_chrome %}
+        {% url 'users:assistant_hub' as assistant_hub_url %}
         <header class="site-header border-b border-white/60 bg-white/82 backdrop-blur-xl">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between gap-4 py-4">
+                <div class="flex items-center justify-between gap-4 py-3 lg:flex-nowrap lg:gap-6 lg:py-4">
                     <a href="{% url 'core:home' %}" class="flex items-center gap-3">
                         <div class="h-11 w-11 rounded-[0.95rem] bg-gradient-to-br from-red-600 via-red-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-red-200/40">
                             <i class="fa-solid fa-water"></i>
                         </div>
                         <div>
                             <p class="font-display text-lg font-semibold tracking-tight text-slate-900">BayStays</p>
-                            <p class="text-xs uppercase tracking-[0.28em] text-slate-500">Lakeside Hosting</p>
+                            <p class="hidden xl:block text-xs uppercase tracking-[0.28em] text-slate-500">Lakeside Hosting</p>
                         </div>
                     </a>
 
-                    <nav class="hidden lg:flex items-center gap-2">
+                    <nav class="desktop-header-nav hidden lg:flex items-center gap-1 flex-1 min-w-0 justify-center">
                         <a href="{% url 'core:home' %}" class="nav-chip"><i class="fa-solid fa-house mr-2"></i>Home</a>
-                        <a href="{% url 'core:properties_list' %}" class="nav-chip"><i class="fa-solid fa-compass mr-2"></i>Explore stays</a>
+                        <a href="{% url 'core:properties_list' %}" class="nav-chip"><i class="fa-solid fa-compass mr-2"></i>Explore</a>
                         {% if not user.is_authenticated or user.role == 'guest' %}
-                            <a href="{% url 'core:hosts' %}" class="nav-chip"><i class="fa-solid fa-store mr-2"></i>Host with us</a>
+                            <a href="{% url 'core:hosts' %}" class="nav-chip"><i class="fa-solid fa-store mr-2"></i>Host</a>
                         {% endif %}
                         {% if user.is_authenticated and user.role == 'guest' or user.is_authenticated and user.role == 'both' %}
                             <a href="{% url 'bookings:booking_list' %}" class="nav-chip"><i class="fa-solid fa-calendar-days mr-2"></i>Bookings</a>
                         {% endif %}
                         {% if user.is_authenticated and user.role == 'host' or user.is_authenticated and user.role == 'both' %}
-                            <a href="{% url 'hosts:dashboard' %}" class="nav-chip"><i class="fa-solid fa-chart-line mr-2"></i>Hosting hub</a>
+                            <a href="{% url 'hosts:dashboard' %}" class="nav-chip"><i class="fa-solid fa-chart-line mr-2"></i>Hosting</a>
                         {% endif %}
                     </nav>
 
-                    <div class="hidden lg:flex items-center gap-3">
+                    <div class="desktop-header-actions hidden lg:flex items-center gap-2 shrink-0">
                         {% if user.is_authenticated %}
+                            <a href="{% url 'users:notifications' %}" class="utility-icon-btn utility-icon-btn--alert attention-badge" aria-label="Open alerts" title="Open alerts">
+                                <i class="fa-solid fa-bell"></i>
+                                <span class="sr-only">Alerts</span>
+                                {% if unread_notification_count %}
+                                    <span class="attention-badge__count">{{ unread_notification_count }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="{% url 'users:inbox' %}" class="utility-icon-btn utility-icon-btn--message attention-badge" aria-label="Open messages" title="Open messages">
+                                <i class="fa-solid fa-comments"></i>
+                                <span class="sr-only">Messages</span>
+                                {% if unread_message_count %}
+                                    <span class="attention-badge__count">{{ unread_message_count }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="{{ assistant_hub_url }}" class="utility-icon-btn utility-icon-btn--ai" data-assistant-widget-toggle aria-label="Open BayStays AI assistant" title="Open BayStays AI assistant">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span class="sr-only">BayStays AI</span>
+                            </a>
                             {% if user.role == 'both' %}
                                 <div class="badge badge-primary">
                                     <i class="fa-solid fa-arrows-rotate"></i>
                                     {{ request.session.active_role|default:'guest'|title }} mode
                                 </div>
                             {% endif %}
-                            <a href="{% url 'users:profile' %}" class="btn-bay-ghost">
+                            <a href="{% url 'users:profile' %}" class="btn-bay-ghost desktop-profile-btn">
                                 <i class="fa-regular fa-circle-user"></i>
-                                {{ user.get_display_name }}
+                                <span class="truncate">{{ user.get_display_name }}</span>
                             </a>
                             <form method="post" action="{% url 'users:logout' %}">
                                 {% csrf_token %}
@@ -123,6 +143,9 @@
                             {% if user.role == 'host' or user.role == 'both' %}
                                 <a href="{% url 'hosts:dashboard' %}" class="block panel px-4 py-3"><i class="fa-solid fa-chart-line mr-2 text-red-500"></i>Hosting hub</a>
                             {% endif %}
+                            <a href="{% url 'users:inbox' %}" class="block panel px-4 py-3"><i class="fa-solid fa-comments mr-2 text-blue-500"></i>Inbox</a>
+                            <a href="{% url 'users:notifications' %}" class="block panel px-4 py-3"><i class="fa-solid fa-bell mr-2 text-yellow-500"></i>Notifications</a>
+                            <a href="{% url 'users:assistant_hub' %}" class="block panel px-4 py-3"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-orange-500"></i>BayStays AI</a>
                         {% else %}
                             <a href="{% url 'guests:guest_login' %}" class="block panel px-4 py-3"><i class="fa-solid fa-right-to-bracket mr-2 text-red-500"></i>Log in</a>
                             <a href="{% url 'guests:guest_signup' %}" class="block panel px-4 py-3"><i class="fa-solid fa-user-plus mr-2 text-blue-500"></i>Create guest account</a>
@@ -144,6 +167,31 @@
             </div>
         </aside>
         {% endblock %}
+
+        {% if user.is_authenticated %}
+            <a
+                href="{% if request.path == assistant_hub_url %}#assistant-composer{% else %}{{ assistant_hub_url }}{% endif %}"
+                class="floating-ai-button"
+                data-assistant-widget-toggle
+                aria-controls="assistant-widget-panel"
+                aria-expanded="false"
+                aria-label="{% if request.path == assistant_hub_url %}Jump to assistant composer{% else %}Open BayStays AI assistant{% endif %}"
+                title="{% if request.path == assistant_hub_url %}Jump to assistant composer{% else %}Open BayStays AI assistant{% endif %}"
+            >
+                <span class="floating-ai-button__glyph" aria-hidden="true">
+                    <span class="floating-ai-button__line floating-ai-button__line--top"></span>
+                    <span class="floating-ai-button__line floating-ai-button__line--middle"></span>
+                    <span class="floating-ai-button__line floating-ai-button__line--bottom"></span>
+                </span>
+                <span class="sr-only">BayStays AI assistant</span>
+            </a>
+            <div class="assistant-widget-shell hidden" data-assistant-widget-shell data-widget-url="{% url 'users:assistant_widget' %}" aria-hidden="true">
+                <div class="assistant-widget-backdrop" data-assistant-widget-close></div>
+                <div class="assistant-widget-panel" id="assistant-widget-panel">
+                    <div data-assistant-widget-content></div>
+                </div>
+            </div>
+        {% endif %}
 
         {% if messages %}
             <div class="fixed right-4 top-24 z-[80] w-[min(24rem,calc(100vw-2rem))] space-y-3">
@@ -242,6 +290,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.0/build/js/intlTelInput.min.js"></script>
     <script src="{% static 'core/js/core.js' %}"></script>
+    <script src="{% static 'core/js/platform_tools.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,98 @@
+{% load humanize %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-8">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+            <span class="badge badge-primary mb-3">Host subscription plans</span>
+            <h1 class="font-display text-4xl font-semibold">Choose the BayStays hosting operating layer that fits your portfolio</h1>
+            <p class="mt-2 text-slate-600">Plans shape assistant capacity, listing scale, and the workflow headroom you have while managing guests, reports, and live operations.</p>
+        </div>
+        <div class="subscription-current-card rounded-[1rem] px-5 py-5">
+            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Current plan</p>
+            <p class="font-display text-2xl font-semibold mt-2 text-slate-900">{{ subscription.get_plan_display }}</p>
+            <p class="text-sm text-slate-600 mt-2">{{ subscription.get_status_display }}{% if subscription.trial_ends_at %} · Trial ends {{ subscription.trial_ends_at|date:"M d, Y" }}{% endif %}</p>
+        </div>
+    </div>
+    <div class="metric-strip">
+        <div class="metric-chip"><span class="text-sm text-slate-500">Assistant prompts left</span><strong>{{ subscription.ai_messages_remaining }}</strong></div>
+        <div class="metric-chip"><span class="text-sm text-slate-500">Listing limit</span><strong>{{ subscription.listing_limit }}</strong></div>
+        <div class="metric-chip"><span class="text-sm text-slate-500">Monthly price</span><strong>KES {{ subscription.monthly_price|intcomma }}</strong></div>
+    </div>
+    <div class="panel p-6 lg:p-8">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div>
+                <span class="badge badge-blue mb-3">Subscription workspace</span>
+                <h2 class="font-display text-2xl font-semibold">Switch plans without leaving the page</h2>
+            </div>
+            <span class="badge {% if subscription.is_active %}badge-success{% else %}badge-warning{% endif %}">{{ subscription.get_status_display }}</span>
+        </div>
+        <form method="post" class="space-y-6" data-subscription-form>
+            {% csrf_token %}
+            <div class="plan-grid">
+                {% for plan in plan_cards %}
+                    <label class="plan-card {% if subscription.plan == plan.key %}is-current{% endif %}">
+                        <input type="radio" name="plan" value="{{ plan.key }}" class="sr-only" {% if subscription.plan == plan.key %}checked{% endif %}>
+                        <div class="plan-card__header flex items-start justify-between gap-3">
+                            <div class="plan-card__summary">
+                                <p class="plan-card__eyebrow">{{ plan.badge }}</p>
+                                <h3 class="font-display text-3xl font-semibold mt-2 text-slate-950">{{ plan.name }}</h3>
+                                <p class="plan-card__price">
+                                    {% if plan.price %}
+                                        KES {{ plan.price|intcomma }}
+                                        <span>/ month</span>
+                                    {% else %}
+                                        Free
+                                        <span>to get started</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <span class="plan-card__state {% if subscription.plan == plan.key %}is-current{% endif %}">
+                                {% if subscription.plan == plan.key %}Current{% else %}Select{% endif %}
+                            </span>
+                        </div>
+                        <p class="mt-4 text-slate-700">{{ plan.description }}</p>
+                        <div class="metric-strip plan-card__metrics mt-5">
+                            <div class="metric-chip"><span class="text-sm text-slate-500">Listings</span><strong>{{ plan.listing_limit }}</strong></div>
+                            <div class="metric-chip"><span class="text-sm text-slate-500">AI prompts</span><strong>{{ plan.ai_messages }}</strong></div>
+                        </div>
+                        <div class="notice-list plan-card__features mt-5">
+                            {% for feature in plan.features %}
+                                <div class="notice-row py-3">
+                                    <p class="text-sm text-slate-700"><i class="fa-solid fa-circle-check text-emerald-500 mr-2"></i>{{ feature }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </label>
+                {% endfor %}
+            </div>
+            <div class="subscription-form-grid grid gap-4 lg:grid-cols-[1fr_auto] items-end">
+                <div class="subscription-field-card">
+                    <label for="mpesa_phone_number">M-Pesa number for plan charges</label>
+                    <input id="mpesa_phone_number" type="text" name="mpesa_phone_number" value="{{ subscription.mpesa_phone_number|default:request.user.phone_number|default:'' }}" class="input-shell mt-2" placeholder="719463611">
+                    <p class="mt-2 text-sm text-slate-500">Paid plans trigger an M-Pesa STK push on this number. Essential switches instantly without a charge.</p>
+                </div>
+                <button type="submit" class="btn-bay-secondary subscription-submit"><i class="fa-solid fa-arrow-up-right-dots"></i>Update plan</button>
+            </div>
+            <p class="text-sm hidden" data-subscription-feedback></p>
+            <p class="text-sm text-slate-500">Your plan state, prompt balance, and charge history refresh in place as soon as BayStays receives the latest update.</p>
+        </form>
+    </div>
+    <div class="panel p-6 lg:p-8">
+        <span class="badge badge-blue mb-3">Recent plan charges</span>
+        <h2 class="font-display text-2xl font-semibold mb-5">Latest subscription billing activity</h2>
+        <div class="notice-list">
+            {% for charge in recent_charges %}
+                <div class="notice-row">
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ charge.get_plan_display }} plan</p>
+                            <p class="mt-2 text-slate-600">KES {{ charge.amount|intcomma }}{% if charge.transaction_reference %} · Ref {{ charge.transaction_reference }}{% endif %}</p>
+                        </div>
+                        <span class="badge {% if charge.status == 'paid' %}badge-success{% elif charge.status == 'failed' %}badge-warning{% else %}badge-blue{% endif %}">{{ charge.get_status_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-sm text-slate-500">No subscription charges yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Host subscription | BayStays{% endblock %}
+{% block content %}
+<div class="live-panel subscription-shell" data-live-region data-live-url="{% url 'hosts:subscription_manage_live' %}" data-live-version="{{ live_version }}" data-live-poll-interval="9000">
+    <div data-live-content>
+        {% include 'hosts/_subscription_manage_content.html' %}
+    </div>
+</div>
+{% endblock %}

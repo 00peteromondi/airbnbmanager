@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Notifications | BayStays{% endblock %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-8">
+    <div class="live-panel notification-shell" data-live-region data-live-url="{% url 'users:notifications_live' %}" data-live-version="{{ live_version }}" data-live-poll-interval="9000" data-live-group="user-alerts-{{ request.user.id }}">
+        <div data-live-content>
+            {% include 'users/_notifications_content.html' %}
+        </div>
+    </div>
+</section>
+{% endblock %}

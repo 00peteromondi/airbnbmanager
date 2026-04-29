@@ -1,0 +1,5 @@
+Hi {{ user.get_display_name }},
+
+{{ body }}
+
+Open BayStays: {{ action_url }}

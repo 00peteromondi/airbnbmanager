@@ -20,8 +20,11 @@ from bookings.services import simulate_withdrawal_payout
 from core.mixins import HostRequiredMixin, LoginRequiredMixin, LogoutRequiredMixin, UserPassesTestMixin
 from core.realtime import announce_live_update
 from hosts.models import Host
+from hosts.services import ensure_host_subscription
 from properties.forms import PropertyForm, PropertyImageFormSet
 from properties.models import Property
+from users.models import Conversation, Notification
+from users.notifications import notify_withdrawal_update
 
 from .forms import HostRegistrationForm
 
@@ -164,6 +167,7 @@ def _base_host_finance_context(user):
 
 def _host_dashboard_context(user):
     host_profile = _get_host_profile(user)
+    subscription = ensure_host_subscription(user)
     properties = Property.objects.filter(owner=user).prefetch_related('images').order_by('-created_at')
     bookings = Booking.objects.filter(property__owner=user).select_related('property', 'guest')
     host_profile = _refresh_host_rollups(host_profile, properties, bookings)
@@ -242,15 +246,23 @@ def _host_dashboard_context(user):
 
     property_latest = properties.order_by('-updated_at').values_list('updated_at', flat=True).first()
     booking_latest = bookings.order_by('-updated_at').values_list('updated_at', flat=True).first()
+    notification_latest = Notification.objects.filter(user=user).order_by('-updated_at').values_list('updated_at', flat=True).first()
     latest_update = max(
-        [stamp for stamp in [property_latest, booking_latest] if stamp is not None],
+        [stamp for stamp in [property_latest, booking_latest, notification_latest] if stamp is not None],
         default=None,
     )
+    recent_conversations = list(Conversation.objects.filter(Q(host=user) | Q(guest=user)).select_related(
+        'booking', 'property', 'host', 'guest'
+    ).order_by('-last_message_at')[:4])
+    for conversation in recent_conversations:
+        conversation.peer = conversation.other_participant(user)
+    unread_notifications = Notification.objects.filter(user=user, is_read=False)[:4]
 
     context = {
         'properties': properties,
         'property_summaries': property_summaries[:4],
         'top_properties': top_properties,
+        'subscription': subscription,
         'host_profile': host_profile,
         'readiness_checks': readiness_checks,
         'attention_items': attention_items[:7],
@@ -270,6 +282,8 @@ def _host_dashboard_context(user):
         'upcoming_arrivals': upcoming_arrivals,
         'check_ins_today': check_ins_today,
         'check_outs_today': check_outs_today,
+        'recent_conversations': recent_conversations,
+        'recent_notifications': unread_notifications,
         'now': now,
         'live_version': f"{properties.count()}:{total_bookings}:{latest_update.isoformat() if latest_update else 'none'}",
     }
@@ -370,6 +384,14 @@ def add_listing(request):
     host_gate = _ensure_host_mode(request)
     if host_gate:
         return host_gate
+    subscription = ensure_host_subscription(request.user)
+    current_listing_count = Property.objects.filter(owner=request.user).count()
+    if current_listing_count >= subscription.listing_limit:
+        messages.error(
+            request,
+            f"Your {subscription.get_plan_display()} plan supports up to {subscription.listing_limit} active BayStays listings. Upgrade your plan to add more properties.",
+        )
+        return redirect('hosts:subscription_manage')
     if request.method == 'POST':
         form = PropertyForm(request.POST)
         if form.is_valid():
@@ -663,11 +685,23 @@ def request_withdrawal(request):
         withdrawal.notes = (withdrawal.notes or '').strip()
         withdrawal.processed_at = result.get('processed_at', timezone.localtime())
         withdrawal.save(update_fields=['status', 'reference', 'notes', 'processed_at', 'updated_at'])
+        notify_withdrawal_update(
+            withdrawal,
+            'Withdrawal queued successfully',
+            f'Your BayStays payout request for KES {withdrawal.amount:,.0f} is queued to M-Pesa.',
+            level='success',
+        )
         messages.success(request, f'Withdrawal of KES {withdrawal.amount:,.0f} has been queued to M-Pesa.')
     else:
         withdrawal.status = 'failed'
         withdrawal.notes = result.get('message', 'Payout simulation failed.')
         withdrawal.save(update_fields=['status', 'notes', 'updated_at'])
+        notify_withdrawal_update(
+            withdrawal,
+            'Withdrawal request needs attention',
+            withdrawal.notes or 'We could not queue this payout right now.',
+            level='urgent',
+        )
         messages.error(request, 'We could not queue that withdrawal right now. Please try again shortly.')
 
     _announce_host_update(request.user, extra_groups=[f'guest-bookings-{request.user.id}'], message='finance-updated')

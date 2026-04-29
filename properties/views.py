@@ -212,66 +212,105 @@ from django.db.models import Q
 from datetime import datetime
 
 def property_search(request):
-    properties = Property.objects.filter(is_active=True)
+    properties = Property.objects.filter(is_active=True).select_related('owner').prefetch_related('images', 'reviews')
 
     # Search query
-    query = request.GET.get('q')
+    query = request.GET.get('q', '').strip()
     if query:
         properties = properties.filter(
             Q(name__icontains=query) |
             Q(description__icontains=query) |
             Q(address__icontains=query) |
-            Q(amenities__icontains=query)
+            Q(city__icontains=query) |
+            Q(country__icontains=query)
         )
 
     # Property type filter
-    property_type = request.GET.get('property_type')
+    property_type = request.GET.get('property_type', '').strip()
     if property_type:
         properties = properties.filter(property_type=property_type)
 
     # Price range
-    min_price = request.GET.get('min_price')
+    min_price = request.GET.get('min_price', '').strip()
     if min_price:
-        properties = properties.filter(price_per_night__gte=min_price)
+        try:
+            properties = properties.filter(price_per_night__gte=float(min_price))
+        except (ValueError, TypeError):
+            pass
 
-    max_price = request.GET.get('max_price')
+    max_price = request.GET.get('max_price', '').strip()
     if max_price:
-        properties = properties.filter(price_per_night__lte=max_price)
+        try:
+            properties = properties.filter(price_per_night__lte=float(max_price))
+        except (ValueError, TypeError):
+            pass
 
     # Guests
-    guests = request.GET.get('guests')
+    guests = request.GET.get('guests', '').strip()
     if guests:
-        properties = properties.filter(max_guests__gte=guests)
+        try:
+            properties = properties.filter(max_guests__gte=int(guests))
+        except (ValueError, TypeError):
+            pass
 
     # Dates availability
-    check_in = request.GET.get('check_in')
-    check_out = request.GET.get('check_out')
+    check_in = request.GET.get('check_in', '').strip()
+    check_out = request.GET.get('check_out', '').strip()
 
     if check_in and check_out:
         try:
             check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
             check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date()
 
-            # Find properties that have conflicting bookings
-            booked_properties = Booking.objects.filter(
-                check_in_date__lt=check_out_date,
-                check_out_date__gt=check_in_date,
-                status__in=['confirmed', 'pending']
-            ).values_list('property_id', flat=True)
+            # Validate dates
+            if check_in_date < check_out_date:
+                # Find properties that have conflicting bookings
+                booked_properties = Booking.objects.filter(
+                    check_in_date__lt=check_out_date,
+                    check_out_date__gt=check_in_date,
+                    status__in=['confirmed', 'pending', 'checked_in']
+                ).values_list('property_id', flat=True)
 
-            properties = properties.exclude(id__in=booked_properties)
+                properties = properties.exclude(id__in=booked_properties)
         except ValueError:
             pass
 
+    # Sorting
+    sort_by = request.GET.get('sort', 'recommended')
+    if sort_by == 'price_low':
+        properties = properties.order_by('price_per_night')
+    elif sort_by == 'price_high':
+        properties = properties.order_by('-price_per_night')
+    elif sort_by == 'rating':
+        properties = properties.order_by('-average_rating', '-id')
+    else:  # recommended (default)
+        properties = properties.order_by('-average_rating', '-id')
+
+    # Get user's booked properties for status display
+    user_booked_property_ids = []
+    if request.user.is_authenticated and (request.user.role == 'guest' or request.user.role == 'both'):
+        user_booked_property_ids = list(
+            Booking.objects.filter(
+                guest=request.user,
+                status__in=['confirmed', 'checked_in', 'completed']
+            ).values_list('property_id', flat=True).distinct()
+        )
+
+    # Get property types for filter dropdown
+    property_types = dict(Property.PROPERTY_TYPES)
+
     context = {
         'properties': properties,
-        'search_query': query or '',
-        'selected_type': property_type or '',
-        'min_price': min_price or '',
-        'max_price': max_price or '',
-        'guests': guests or '',
-        'check_in': check_in or '',
-        'check_out': check_out or '',
+        'search_query': query,
+        'selected_type': property_type,
+        'min_price': min_price,
+        'max_price': max_price,
+        'guests': guests,
+        'check_in': check_in,
+        'check_out': check_out,
+        'property_types': property_types,
+        'user_booked_property_ids': user_booked_property_ids,
+        'user_role': request.user.role if request.user.is_authenticated else 'anonymous',
     }
 
     return render(request, 'properties/property_list.html', context)

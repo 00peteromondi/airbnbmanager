@@ -171,6 +171,131 @@ class VerificationCode(models.Model):
     def expiry_time(cls):
         return timezone.now() + timedelta(minutes=15)
 
+
+class Notification(models.Model):
+    KIND_CHOICES = (
+        ('system', 'System'),
+        ('booking', 'Booking'),
+        ('payment', 'Payment'),
+        ('message', 'Message'),
+        ('subscription', 'Subscription'),
+        ('report', 'Report'),
+    )
+
+    LEVEL_CHOICES = (
+        ('info', 'Info'),
+        ('success', 'Success'),
+        ('warning', 'Warning'),
+        ('urgent', 'Urgent'),
+    )
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default='system')
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='info')
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    action_url = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(blank=True, null=True)
+    emailed_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.get_display_name()} - {self.title}"
+
+    def mark_read(self):
+        if self.is_read:
+            return
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save(update_fields=['is_read', 'read_at', 'updated_at'])
+
+
+class Conversation(models.Model):
+    booking = models.OneToOneField(
+        'bookings.Booking',
+        on_delete=models.CASCADE,
+        related_name='conversation',
+    )
+    property = models.ForeignKey(
+        'properties.Property',
+        on_delete=models.CASCADE,
+        related_name='conversations',
+    )
+    host = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='host_conversations',
+    )
+    guest = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='guest_conversations',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_message_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ['-last_message_at', '-updated_at']
+
+    def __str__(self):
+        return f"Conversation #{self.id} for booking {self.booking_id}"
+
+    def other_participant(self, user):
+        if user.id == self.host_id:
+            return self.guest
+        return self.host
+
+    def unread_count_for(self, user):
+        return self.messages.exclude(sender=user).filter(is_read=False).count()
+
+    def mark_read_for(self, user):
+        unread = self.messages.exclude(sender=user).filter(is_read=False)
+        now = timezone.now()
+        unread.update(is_read=True, read_at=now)
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sent_conversation_messages')
+    body = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.sender.get_display_name()}: {self.body[:40]}"
+
+
+class AssistantChat(models.Model):
+    ROLE_CHOICES = (
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+        ('system', 'System'),
+    )
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='assistant_chats')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    content = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.get_display_name()} [{self.role}]"
+
 # Signal to create user profile automatically
 from django.db.models.signals import post_save
 from django.dispatch import receiver

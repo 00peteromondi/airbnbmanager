@@ -1,26 +1,143 @@
 {% extends 'base.html' %}
-{% block title %}Search BayStays{% endblock %}
+{% block title %}Explore Stays - Find Your Perfect Stay | BayStays{% endblock %}
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+    <!-- Header Section -->
     <div class="panel p-6 lg:p-8 section-fade">
-        <span class="badge badge-primary mb-3">Property search</span>
-        <h1 class="font-display text-4xl font-semibold">Refine by place, dates, and stay style.</h1>
-        <form method="get" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6" data-loading-form="true">
-            <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name, vibe, or area" class="input-shell xl:col-span-2">
-            <select name="property_type" class="input-shell">
-                <option value="">Any type</option>
-                {% for key, label in property_types.items %}<option value="{{ key }}" {% if selected_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
-            </select>
-            <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min price" class="input-shell">
-            <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max price" class="input-shell">
-            <input type="number" name="guests" value="{{ guests }}" placeholder="Guests" class="input-shell">
-            <input type="date" name="check_in" value="{{ check_in }}" class="input-shell">
-            <input type="date" name="check_out" value="{{ check_out }}" class="input-shell">
-            <button type="submit" class="btn-bay xl:col-span-2"><span data-submit-text><i class="fa-solid fa-sliders"></i>Apply filters</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Filtering</span></button>
+        <span class="badge badge-primary mb-3">✨ Property discovery</span>
+        <h1 class="font-display text-3xl sm:text-4xl font-semibold">Discover your next lakeside retreat</h1>
+        <p class="mt-2 text-slate-600">Filter by location, dates, price, and amenities to find the perfect stay for you.</p>
+        
+        <!-- Advanced Search Form -->
+        <form method="get" class="mt-6 space-y-4" data-loading-form="true">
+            <!-- Row 1: Search, Type, Guests -->
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Location or vibe</label>
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="City, area, or property name" class="input-shell w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Property type</label>
+                    <select name="property_type" class="input-shell w-full">
+                        <option value="">All types</option>
+                        {% for key, label in property_types.items %}<option value="{{ key }}" {% if selected_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Guests</label>
+                    <input type="number" name="guests" value="{{ guests }}" placeholder="How many?" min="1" max="20" class="input-shell w-full">
+                </div>
+                <div class="flex gap-2 pt-6">
+                    <button type="button" id="toggle-more-filters" class="btn-bay-ghost flex-1">More filters</button>
+                </div>
+            </div>
+
+            <!-- Row 2: Price Range (Always Visible) -->
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Min price (KES)</label>
+                    <input type="number" name="min_price" value="{{ min_price }}" placeholder="0" min="0" class="input-shell w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Max price (KES)</label>
+                    <input type="number" name="max_price" value="{{ max_price }}" placeholder="50000" min="0" class="input-shell w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Check-in date</label>
+                    <input type="date" name="check_in" value="{{ check_in }}" class="input-shell w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Check-out date</label>
+                    <input type="date" name="check_out" value="{{ check_out }}" class="input-shell w-full">
+                </div>
+            </div>
+
+            <!-- Button Row -->
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="btn-bay flex items-center gap-2">
+                    <span data-submit-text><i class="fa-solid fa-sliders"></i>Search stays</span>
+                    <span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Searching</span>
+                </button>
+                {% if search_query or selected_type or min_price or max_price or guests or check_in or check_out %}
+                    <a href="{% url 'properties:property_search' %}" class="btn-bay-ghost"><i class="fa-solid fa-redo"></i>Clear filters</a>
+                {% endif %}
+            </div>
         </form>
     </div>
-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 section-fade">
-        {% for property in properties %}{% include 'partials/property_card.html' with property=property %}{% empty %}<div class="panel p-10 text-center text-slate-500 md:col-span-2 xl:col-span-3">No matching stays found yet.</div>{% endfor %}
+
+    <!-- Results Summary -->
+    <div class="flex items-center justify-between px-2">
+        <div>
+            {% if search_query or selected_type or min_price or max_price or guests or check_in or check_out %}
+                <p class="text-sm text-slate-600">
+                    Found <span class="font-semibold">{{ properties.count }}</span> matching stays
+                    {% if search_query %}<br><span class="text-xs">🔍 Search: "{{ search_query }}"</span>{% endif %}
+                </p>
+            {% else %}
+                <p class="text-sm text-slate-600">Browse <span class="font-semibold">{{ properties.count }}</span> available stays</p>
+            {% endif %}
+        </div>
+        <div class="flex gap-2">
+            <select id="sort-by" class="input-shell text-sm" onchange="updateSort(this.value)">
+                <option value="recommended">Recommended</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+            </select>
+        </div>
     </div>
+
+    <!-- Properties Grid -->
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 section-fade">
+        {% for property in properties %}
+            {% include 'partials/property_card.html' with property=property %}
+        {% empty %}
+            <div class="panel p-12 text-center text-slate-500 md:col-span-2 xl:col-span-3 col-span-full">
+                <div class="mb-4">
+                    <i class="fa-solid fa-inbox text-4xl opacity-40"></i>
+                </div>
+                <p class="text-lg font-semibold mb-2">No stays found</p>
+                <p class="text-sm mb-6">Try adjusting your search filters or check back later for new listings.</p>
+                <a href="{% url 'properties:property_search' %}" class="btn-bay inline-block"><i class="fa-solid fa-redo"></i>Clear filters and try again</a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- CTA Section for Unauthenticated Users -->
+    {% if not user.is_authenticated %}
+        <div class="panel p-8 bg-gradient-to-r from-red-50 to-orange-50 text-center section-fade mt-8">
+            <h2 class="font-display text-2xl font-semibold mb-3">Ready to book your stay?</h2>
+            <p class="text-slate-600 mb-6">Sign in or create an account to book any of these amazing properties.</p>
+            <div class="flex gap-3 justify-center flex-wrap">
+                <a href="{% url 'guests:guest_login' %}" class="btn-bay"><i class="fa-solid fa-right-to-bracket"></i>Sign in</a>
+                <a href="{% url 'guests:guest_signup' %}" class="btn-bay-ghost"><i class="fa-solid fa-user-plus"></i>Create account</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Host CTA for Non-Hosts -->
+    {% if user.is_authenticated and user.role == 'guest' %}
+        <div class="panel p-8 bg-gradient-to-r from-blue-50 to-cyan-50 text-center section-fade mt-8">
+            <h2 class="font-display text-2xl font-semibold mb-3">Want to earn by hosting?</h2>
+            <p class="text-slate-600 mb-6">List your property on BayStays and start earning money from tourists visiting your area.</p>
+            <a href="{% url 'core:hosts' %}" class="btn-bay inline-block"><i class="fa-solid fa-house-flag"></i>Become a host</a>
+        </div>
+    {% endif %}
+
 </section>
+
+<script>
+    // More filters toggle functionality
+    document.getElementById('toggle-more-filters')?.addEventListener('click', function() {
+        // This could be enhanced with animated show/hide of additional filter options
+        console.log('More filters clicked');
+    });
+
+    // Sort functionality
+    function updateSort(sortValue) {
+        const url = new URL(window.location);
+        url.searchParams.set('sort', sortValue);
+        window.location = url.toString();
+    }
+</script>
 {% endblock %}

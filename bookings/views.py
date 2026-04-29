@@ -26,6 +26,9 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from core.realtime import announce_live_update
 from hosts.models import Host
 from properties.models import Property
+from hosts.models import HostSubscriptionCharge
+from hosts.services import apply_subscription_plan
+from users.notifications import notify_booking_rescheduled, notify_payment_update, notify_subscription_update
 
 from .forms import BookingForm
 from .models import Booking, BookingPayment
@@ -771,6 +774,7 @@ def reschedule_booking(request, booking_id):
                 rescheduled.total_price = nights * booking.property.price_per_night
                 rescheduled.save()
                 _announce_booking_update(rescheduled, message='booking-rescheduled')
+                notify_booking_rescheduled(rescheduled)
                 messages.success(request, f'{booking.property.name} was rescheduled successfully.')
                 return redirect('bookings:booking_list')
         else:
@@ -805,6 +809,7 @@ def pay_booking(request, booking_id):
 
     payment, result = _run_mpesa_charge(booking, phone_number)
     _announce_booking_update(booking, message='payment-updated')
+    notify_payment_update(payment)
     if payment.status == 'paid':
         messages.success(request, f'Payment for {booking.property.name} was received successfully.')
     elif payment.status == 'initiated':
@@ -830,7 +835,8 @@ def mpesa_callback(request):
         return JsonResponse({'ResultCode': 0, 'ResultDesc': 'No checkout request id supplied.'})
 
     payment = BookingPayment.objects.filter(checkout_request_id=checkout_request_id).select_related('booking', 'booking__property').first()
-    if not payment:
+    subscription_charge = HostSubscriptionCharge.objects.filter(checkout_request_id=checkout_request_id).select_related('subscription', 'subscription__host').first()
+    if not payment and not subscription_charge:
         return JsonResponse({'ResultCode': 0, 'ResultDesc': 'Payment record not found.'})
 
     items = callback.get('CallbackMetadata', {}).get('Item', []) or []
@@ -840,7 +846,7 @@ def mpesa_callback(request):
         if name:
             metadata[name] = item.get('Value')
 
-    if callback.get('ResultCode') == 0:
+    if payment and callback.get('ResultCode') == 0:
         payment.status = 'paid'
         payment.transaction_reference = str(metadata.get('MpesaReceiptNumber') or payment.transaction_reference or '')
         payment.phone_number = str(metadata.get('PhoneNumber') or payment.phone_number or '')
@@ -854,12 +860,44 @@ def mpesa_callback(request):
         else:
             payment.booking.save(update_fields=['payment_status', 'updated_at'])
         _announce_booking_update(payment.booking, message='payment-updated')
-    else:
+        notify_payment_update(payment)
+    elif payment:
         payment.status = 'failed'
         payment.failure_reason = callback.get('ResultDesc', 'M-Pesa payment failed.')
         payment.save(update_fields=['status', 'failure_reason', 'updated_at'])
         payment.booking.payment_status = 'failed'
         payment.booking.save(update_fields=['payment_status', 'updated_at'])
         _announce_booking_update(payment.booking, message='payment-updated')
+        notify_payment_update(payment)
+
+    if subscription_charge and callback.get('ResultCode') == 0:
+        subscription_charge.status = 'paid'
+        subscription_charge.transaction_reference = str(metadata.get('MpesaReceiptNumber') or subscription_charge.transaction_reference or '')
+        subscription_charge.phone_number = str(metadata.get('PhoneNumber') or subscription_charge.phone_number or '')
+        subscription_charge.paid_at = timezone.localtime()
+        subscription_charge.failure_reason = ''
+        subscription_charge.save(update_fields=['status', 'transaction_reference', 'phone_number', 'paid_at', 'failure_reason', 'updated_at'])
+        apply_subscription_plan(
+            subscription_charge.subscription,
+            subscription_charge.plan,
+            status='active',
+            mpesa_phone_number=subscription_charge.phone_number,
+        )
+        notify_subscription_update(
+            subscription_charge.subscription,
+            'Host subscription activated',
+            f"Your BayStays {subscription_charge.get_plan_display()} plan is now active.",
+            level='success',
+        )
+    elif subscription_charge:
+        subscription_charge.status = 'failed'
+        subscription_charge.failure_reason = callback.get('ResultDesc', 'M-Pesa payment failed.')
+        subscription_charge.save(update_fields=['status', 'failure_reason', 'updated_at'])
+        notify_subscription_update(
+            subscription_charge.subscription,
+            'Host subscription payment failed',
+            subscription_charge.failure_reason or 'We could not activate the selected host plan.',
+            level='urgent',
+        )
 
     return JsonResponse({'ResultCode': 0, 'ResultDesc': 'Accepted'})

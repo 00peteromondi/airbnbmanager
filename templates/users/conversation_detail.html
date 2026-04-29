@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Conversation | BayStays{% endblock %}
+{% block extra_scripts %}<script src="{% static 'core/js/platform_tools.js' %}"></script>{% endblock %}
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-8">
+    <div class="panel p-6 lg:p-8">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div>
+                <span class="badge badge-primary mb-3">Stay conversation</span>
+                <h1 class="font-display text-4xl font-semibold">{{ conversation.property.name }}</h1>
+                <p class="mt-2 text-slate-600">{{ conversation.booking.check_in_date }} to {{ conversation.booking.check_out_date }} · {{ peer.get_display_name }}</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'users:inbox' %}" class="btn-bay-ghost"><i class="fa-solid fa-arrow-left"></i>Back to inbox</a>
+                <a href="{% url 'bookings:booking_list' %}" class="btn-bay"><i class="fa-solid fa-calendar-days"></i>Open bookings</a>
+            </div>
+        </div>
+        <div class="conversation-thread" data-conversation-thread data-thread-url="{% url 'users:conversation_thread' conversation.id %}" data-thread-version="{{ message_version }}" data-ws-url="ws{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/ws/conversations/{{ conversation.id }}/">
+            {% include 'users/_conversation_messages.html' %}
+        </div>
+        <form method="post" action="{% url 'users:conversation_detail' conversation.id %}" class="mt-6" data-conversation-form>
+            {% csrf_token %}
+            <label for="conversation-body" class="text-sm text-slate-600">Reply inside BayStays</label>
+            <textarea id="conversation-body" name="body" rows="4" class="input-shell mt-2" placeholder="Share check-in guidance, answer guest questions, or confirm next steps."></textarea>
+            <p class="mt-3 text-sm text-rose-600 hidden" data-conversation-error></p>
+            <div class="mt-4 flex justify-end">
+                <button type="submit" class="btn-bay"><i class="fa-solid fa-paper-plane"></i>Send message</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

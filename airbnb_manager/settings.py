@@ -115,6 +115,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.global_data',  # We'll create this
                 'core.context_processors.active_role',
+                'users.context_processors.communication_hub',
             ],
         },
     },
@@ -221,6 +222,10 @@ EMAIL_HOST_USER = os.environ.get('BREVO_SMTP_LOGIN', os.environ.get('EMAIL_HOST_
 EMAIL_HOST_PASSWORD = os.environ.get('BREVO_SMTP_KEY', os.environ.get('EMAIL_HOST_PASSWORD', ''))
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BayStays <noreply@baystays.app>')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+SITE_URL = os.environ.get(
+    'SITE_URL',
+    f"https://{RENDER_EXTERNAL_HOSTNAME}" if RENDER_EXTERNAL_HOSTNAME else 'http://127.0.0.1:8000',
+)
 BREVO_SMS_API_KEY = os.environ.get('BREVO_SMS_API_KEY', '')
 BREVO_SMS_SENDER = os.environ.get('BREVO_SMS_SENDER', 'BayStays')
 MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')

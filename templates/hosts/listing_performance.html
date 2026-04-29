@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ property.name }} performance | BayStays{% endblock %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-8">
+    <div class="panel p-6 lg:p-8">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+                <span class="badge badge-primary mb-3">Listing performance</span>
+                <h1 class="font-display text-4xl font-semibold">{{ property.name }}</h1>
+                <p class="mt-2 text-slate-600">{{ property.city }}, {{ property.country }} · Performance coverage for bookings, occupancy, revenue, and listing quality.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'hosts:download_listing_performance_pdf' property.id %}" class="btn-bay-secondary"><i class="fa-solid fa-file-arrow-down"></i>Download PDF</a>
+                <a href="{% url 'hosts:view_listing' property.id %}" class="btn-bay-ghost"><i class="fa-solid fa-eye"></i>Open listing</a>
+            </div>
+        </div>
+    </div>
+    <div class="metric-strip">
+        <div class="metric-chip"><span class="text-sm text-slate-500">Bookings</span><strong>{{ report.metrics.total_bookings }}</strong></div>
+        <div class="metric-chip"><span class="text-sm text-slate-500">Paid revenue</span><strong>KES {{ report.metrics.paid_revenue|intcomma }}</strong></div>
+        <div class="metric-chip"><span class="text-sm text-slate-500">Occupancy</span><strong>{{ report.metrics.occupancy_rate }}%</strong></div>
+        <div class="metric-chip"><span class="text-sm text-slate-500">Avg stay</span><strong>{{ report.metrics.average_stay_length }}</strong></div>
+    </div>
+    <div class="grid gap-8 xl:grid-cols-[1fr_0.95fr]">
+        <div class="panel p-6 lg:p-8">
+            <span class="badge badge-blue mb-3">Six-month trend</span>
+            <h2 class="font-display text-2xl font-semibold mb-5">Demand movement for this stay</h2>
+            <div class="trend-bars">
+                {% for item in report.trend %}
+                    <div class="trend-bar">
+                        <div class="flex items-center justify-between text-sm text-slate-600">
+                            <span>{{ item.label }}</span>
+                            <span>{{ item.count }} bookings · KES {{ item.revenue|floatformat:0|intcomma }}</span>
+                        </div>
+                        <div class="trend-bar__track"><div class="trend-bar__fill" style="width: {{ item.revenue_percent }}%"></div></div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="panel p-6 lg:p-8">
+            <span class="badge badge-orange mb-3">Recommendations</span>
+            <h2 class="font-display text-2xl font-semibold mb-5">What this listing needs next</h2>
+            <div class="notice-list">
+                {% for item in report.recommendations %}
+                    <div class="notice-row"><p class="text-slate-700"><i class="fa-solid fa-circle-exclamation text-orange-500 mr-2"></i>{{ item }}</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="panel p-6 lg:p-8">
+        <span class="badge badge-primary mb-3">Recent reservation movement</span>
+        <h2 class="font-display text-2xl font-semibold mb-5">Latest guest demand on this listing</h2>
+        <div class="notice-list">
+            {% for booking in report.recent_bookings %}
+                <div class="notice-row">
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ booking.guest.get_display_name }}</p>
+                            <p class="mt-2 text-slate-600">{{ booking.check_in_date }} to {{ booking.check_out_date }} · {{ booking.status|title }}</p>
+                        </div>
+                        <a href="{% url 'users:start_booking_conversation' booking.id %}" class="btn-bay-ghost"><i class="fa-solid fa-comments"></i>Message thread</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-sm text-slate-500">No bookings recorded yet for this listing.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import workspace_views
 from django.contrib.auth.views import LoginView
 
 app_name = 'hosts'
@@ -26,6 +27,12 @@ urlpatterns = [
     path('bookings/live/', views.property_bookings_live, name='property_bookings_live'),
     path('bookings/<int:booking_id>/<str:status>/', views.update_booking_status, name='update_booking_status'),
     path('finance/withdrawals/request/', views.request_withdrawal, name='request_withdrawal'),
+    path('subscription/', workspace_views.subscription_manage, name='subscription_manage'),
+    path('subscription/live/', workspace_views.subscription_manage_live, name='subscription_manage_live'),
+    path('performance/', workspace_views.host_performance, name='host_performance'),
+    path('performance/pdf/', workspace_views.download_host_performance_pdf, name='download_host_performance_pdf'),
+    path('properties/<int:property_id>/performance/', workspace_views.listing_performance, name='listing_performance'),
+    path('properties/<int:property_id>/performance/pdf/', workspace_views.download_listing_performance_pdf, name='download_listing_performance_pdf'),
 
     # Default root URL
     path('', views.dashboard, name='home'),

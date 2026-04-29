@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from .models import Booking
+from users.notifications import notify_booking_created, notify_booking_status
 
 
 @receiver(pre_save, sender=Booking)
@@ -21,10 +22,12 @@ def handle_booking_notifications(sender, instance, created, **kwargs):
     """Single handler for booking notifications (creation and status updates)."""
     if created:
         send_booking_request_email(instance)
+        notify_booking_created(instance, send_email=False)
     else:
         old_status = getattr(instance, '_old_status', None)
         if old_status and old_status != instance.status:
             send_booking_status_update(instance)
+            notify_booking_status(instance, old_status, send_email=False)
 
 
 def send_booking_request_email(booking):

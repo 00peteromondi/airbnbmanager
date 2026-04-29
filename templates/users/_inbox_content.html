@@ -1,0 +1,40 @@
+{% load humanize %}
+
+<div class="flex items-center justify-between gap-4 flex-wrap">
+    <div>
+        <span class="badge badge-blue mb-3">BayStays inbox</span>
+        <h1 class="font-display text-4xl font-semibold">Host and guest conversations tied to the actual stay</h1>
+        <p class="mt-2 text-slate-600">Keep booking context, dates, and guest identity visible while you coordinate arrivals, approvals, and follow-up.</p>
+    </div>
+    <div class="badge badge-primary"><i class="fa-solid fa-comments"></i>{{ unread_total }} unread messages</div>
+</div>
+<div class="mt-6 panel p-6 lg:p-8">
+    <div class="notice-list">
+        {% for conversation in conversations %}
+            <a href="{% url 'users:conversation_detail' conversation.id %}" class="notice-row block">
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="badge badge-primary">{{ conversation.property.name }}</span>
+                            {% if conversation.unread_count %}
+                                <span class="badge badge-warning">{{ conversation.unread_count }} unread</span>
+                            {% endif %}
+                        </div>
+                        <h2 class="font-display text-2xl font-semibold mt-3">{{ conversation.peer.get_display_name }}</h2>
+                        <p class="mt-2 text-slate-600">{{ conversation.latest_message.body|default:"Start coordinating the stay."|truncatechars:140 }}</p>
+                        <p class="mt-3 text-sm text-slate-500">{{ conversation.booking.check_in_date }} to {{ conversation.booking.check_out_date }}{% if conversation.latest_message %} · {{ conversation.latest_message.created_at|timesince }} ago{% endif %}</p>
+                    </div>
+                    <span class="btn-bay-ghost"><i class="fa-solid fa-arrow-right"></i>Open thread</span>
+                </div>
+            </a>
+        {% empty %}
+            <div class="empty-state rounded-[1rem] px-6 py-10">
+                <div>
+                    <i class="fa-solid fa-comments text-3xl text-blue-500"></i>
+                    <p class="mt-4 font-semibold text-slate-800">No conversation threads yet</p>
+                    <p class="text-sm text-slate-500 mt-2">Message threads appear once a booking exists and a host or guest opens the BayStays inbox for that stay.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
