@@ -1,29 +1,35 @@
 {% load humanize %}
 <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-8">
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div>
+    <div class="subscription-hero">
+        <div class="subscription-hero__copy">
             <span class="badge badge-primary mb-3">Host subscription plans</span>
             <h1 class="font-display text-4xl font-semibold">Choose the BayStays hosting operating layer that fits your portfolio</h1>
             <p class="mt-2 text-slate-600">Plans shape assistant capacity, listing scale, and the workflow headroom you have while managing guests, reports, and live operations.</p>
         </div>
-        <div class="subscription-current-card rounded-[1rem] px-5 py-5">
-            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Current plan</p>
-            <p class="font-display text-2xl font-semibold mt-2 text-slate-900">{{ subscription.get_plan_display }}</p>
-            <p class="text-sm text-slate-600 mt-2">{{ subscription.get_status_display }}{% if subscription.trial_ends_at %} · Trial ends {{ subscription.trial_ends_at|date:"M d, Y" }}{% endif %}</p>
+        <div class="subscription-current-card subscription-current-card--hero rounded-[1rem] px-5 py-5">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Current plan</p>
+                    <p class="font-display text-2xl font-semibold mt-2 text-slate-900">{{ subscription.get_plan_display }}</p>
+                    <p class="text-sm text-slate-600 mt-2">{{ subscription.get_status_display }}{% if subscription.trial_ends_at %} · Trial ends {{ subscription.trial_ends_at|date:"M d, Y" }}{% endif %}</p>
+                </div>
+                <span class="badge {% if subscription.is_active %}badge-success{% else %}badge-warning{% endif %}">{{ subscription.get_status_display }}</span>
+            </div>
+            <p class="mt-4 text-sm text-slate-600">Use the plan cards below to compare capacity, assistant usage, and readiness features before switching.</p>
         </div>
     </div>
-    <div class="metric-strip">
+    <div class="metric-strip subscription-overview-metrics">
         <div class="metric-chip"><span class="text-sm text-slate-500">Assistant prompts left</span><strong>{{ subscription.ai_messages_remaining }}</strong></div>
         <div class="metric-chip"><span class="text-sm text-slate-500">Listing limit</span><strong>{{ subscription.listing_limit }}</strong></div>
         <div class="metric-chip"><span class="text-sm text-slate-500">Monthly price</span><strong>KES {{ subscription.monthly_price|intcomma }}</strong></div>
     </div>
-    <div class="panel p-6 lg:p-8">
-        <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
-            <div>
+    <div class="panel p-6 lg:p-8 subscription-workspace-panel">
+        <div class="subscription-section-head">
+            <div class="subscription-section-head__copy">
                 <span class="badge badge-blue mb-3">Subscription workspace</span>
                 <h2 class="font-display text-2xl font-semibold">Switch plans without leaving the page</h2>
+                <p class="mt-2 text-sm text-slate-600">Compare every plan in one place, then confirm the M-Pesa number BayStays should use for paid upgrades.</p>
             </div>
-            <span class="badge {% if subscription.is_active %}badge-success{% else %}badge-warning{% endif %}">{{ subscription.get_status_display }}</span>
         </div>
         <form method="post" class="space-y-6" data-subscription-form>
             {% csrf_token %}
@@ -56,7 +62,7 @@
                         </div>
                         <div class="notice-list plan-card__features mt-5">
                             {% for feature in plan.features %}
-                                <div class="notice-row py-3">
+                                <div class="notice-row plan-card__feature py-3">
                                     <p class="text-sm text-slate-700"><i class="fa-solid fa-circle-check text-emerald-500 mr-2"></i>{{ feature }}</p>
                                 </div>
                             {% endfor %}
@@ -73,13 +79,13 @@
                 <button type="submit" class="btn-bay-secondary subscription-submit"><i class="fa-solid fa-arrow-up-right-dots"></i>Update plan</button>
             </div>
             <p class="text-sm hidden" data-subscription-feedback></p>
-            <p class="text-sm text-slate-500">Your plan state, prompt balance, and charge history refresh in place as soon as BayStays receives the latest update.</p>
+            <p class="text-sm text-slate-500 subscription-actions-note">Your plan state, prompt balance, and charge history refresh in place as soon as BayStays receives the latest update.</p>
         </form>
     </div>
     <div class="panel p-6 lg:p-8">
         <span class="badge badge-blue mb-3">Recent plan charges</span>
         <h2 class="font-display text-2xl font-semibold mb-5">Latest subscription billing activity</h2>
-        <div class="notice-list">
+        <div class="notice-list charge-history-list">
             {% for charge in recent_charges %}
                 <div class="notice-row">
                     <div class="flex items-center justify-between gap-4 flex-wrap">
