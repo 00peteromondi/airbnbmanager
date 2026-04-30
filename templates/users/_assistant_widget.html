@@ -1,8 +1,8 @@
 {% load humanize %}
 
 <div class="assistant-widget-card panel p-5 lg:p-6 assistant-shell" data-assistant-shell>
-    <div class="assistant-widget-card__header flex items-start justify-between gap-3 mb-4">
-        <div>
+    <div class="assistant-widget-card__header flex items-start justify-between gap-3">
+        <div class="assistant-widget-card__intro">
             <span class="badge badge-primary mb-3">BayStays AI</span>
             <h2 class="font-display text-2xl font-semibold">Host ops copilot</h2>
             <p class="mt-2 text-sm text-slate-600">Ask for priorities, guest replies, performance direction, or next steps across your host workflow.</p>
@@ -12,7 +12,7 @@
         </button>
     </div>
     {% if subscription %}
-        <div class="metric-strip mb-4">
+        <div class="metric-strip assistant-widget-metrics">
             <div class="metric-chip"><span class="text-sm text-slate-500">Plan</span><strong>{{ subscription.get_plan_display }}</strong></div>
             <div class="metric-chip"><span class="text-sm text-slate-500">Prompts left</span><strong>{{ subscription.ai_messages_remaining }}</strong></div>
         </div>
