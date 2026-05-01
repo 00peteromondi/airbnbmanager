@@ -25,22 +25,64 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_flag(name, default='false'):
+    return os.environ.get(name, default).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name, default=''):
+    raw = os.environ.get(name, default)
+    return [item.strip() for item in raw.split(',') if item.strip()]
+
+
+def extend_unique(target, values):
+    for value in values:
+        if value and value not in target:
+            target.append(value)
+
+
+def origin_for_host(host):
+    value = (host or '').strip()
+    if not value:
+        return ''
+    if value.startswith('http://') or value.startswith('https://'):
+        return value.rstrip('/')
+    if value.startswith('.'):
+        return f'https://*{value}'.rstrip('/')
+    return f'https://{value}'.rstrip('/')
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = env_flag('DEBUG', 'False')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS')
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-ALLOWED_HOSTS.extend(['localhost', '127.0.0.1', '.onrender.com'])
+    extend_unique(ALLOWED_HOSTS, [RENDER_EXTERNAL_HOSTNAME])
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '').strip()
+if RAILWAY_PUBLIC_DOMAIN:
+    extend_unique(ALLOWED_HOSTS, [RAILWAY_PUBLIC_DOMAIN])
+extend_unique(ALLOWED_HOSTS, ['localhost', '127.0.0.1', '.onrender.com', '.up.railway.app'])
+
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
+extend_unique(
+    CSRF_TRUSTED_ORIGINS,
+    [
+        origin
+        for origin in (
+            origin_for_host(RENDER_EXTERNAL_HOSTNAME),
+            origin_for_host(RAILWAY_PUBLIC_DOMAIN),
+        )
+        if origin
+    ],
+)
 
 CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip()
 CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY', '').strip()
 CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
-USE_CLOUDINARY = os.environ.get('USE_CLOUDINARY', 'false' if DEBUG else 'true').lower() == 'true'
+USE_CLOUDINARY = env_flag('USE_CLOUDINARY', 'false' if DEBUG else 'true')
 CLOUDINARY_CONFIGURED = all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
 # Configure cloudinary client whenever credentials are present so
@@ -217,7 +259,7 @@ LOGOUT_REDIRECT_URL = 'core:home'
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_TLS = env_flag('EMAIL_USE_TLS', 'True')
 EMAIL_HOST_USER = os.environ.get('BREVO_SMTP_LOGIN', os.environ.get('EMAIL_HOST_USER', ''))
 EMAIL_HOST_PASSWORD = os.environ.get('BREVO_SMTP_KEY', os.environ.get('EMAIL_HOST_PASSWORD', ''))
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BayStays <noreply@baystays.app>')
@@ -249,5 +291,10 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_flag('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'true')
+    SECURE_HSTS_PRELOAD = env_flag('SECURE_HSTS_PRELOAD', 'true')
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = os.environ.get('SECURE_REFERRER_POLICY', 'same-origin')

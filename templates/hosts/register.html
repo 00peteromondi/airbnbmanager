@@ -41,7 +41,7 @@
         <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn-bay-secondary"><span data-submit-text><i class="fa-solid fa-house-circle-check"></i>Create host account</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Creating</span></button>
             <a href="{% url 'hosts:login' %}" class="btn-bay-ghost">I already host here</a>
-            <a href="{% url 'guests:guest_signup' %}" class="btn-bay-ghost"><i class="fa-solid fa-person-walking-luggage"></i>Register as guest instead</a>
+            <a href="{% url 'core:hosts' %}" class="btn-bay-ghost"><i class="fa-solid fa-circle-info"></i>Hosting overview</a>
         </div>
     </form>
 </div>

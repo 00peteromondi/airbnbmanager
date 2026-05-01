@@ -15,6 +15,14 @@
         node.classList.toggle('hidden', !message);
     };
 
+    const autoResizeTextarea = (textarea) => {
+        if (!textarea) {
+            return;
+        }
+        textarea.style.height = 'auto';
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;
+    };
+
     const createAssistantHighlights = (highlights = []) => {
         const values = (Array.isArray(highlights) ? highlights : []).filter(Boolean);
         if (!values.length) {
@@ -87,9 +95,11 @@
         if (!form || !transcript) {
             return;
         }
+        const input = form.querySelector('textarea[name="prompt"]');
+        autoResizeTextarea(input);
+        input?.addEventListener('input', () => autoResizeTextarea(input));
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const input = form.querySelector('textarea[name="prompt"]');
             const button = form.querySelector('button[type="submit"]');
             const prompt = input?.value.trim();
             if (!prompt) {
@@ -123,7 +133,9 @@
                     suggestions: payload.response?.suggestions || [],
                 }));
                 input.value = '';
+                autoResizeTextarea(input);
                 scrollToBottom(transcript);
+                input?.focus({ preventScroll: true });
             } catch (error) {
                 setError(errorNode, 'BayStays AI is unavailable right now. Please try again shortly.');
             } finally {
@@ -239,11 +251,13 @@
         }
         shell.dataset.bound = 'true';
         const content = shell.querySelector('[data-assistant-widget-content]');
+        const panel = shell.querySelector('.assistant-widget-panel');
         const widgetUrl = shell.dataset.widgetUrl;
         const backdrop = shell.querySelector('.assistant-widget-backdrop');
         const triggers = Array.from(document.querySelectorAll('[data-assistant-widget-toggle]'));
         let hasLoaded = false;
         let activeTrigger = null;
+        const focusableSelector = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
         const syncTriggers = (isOpen) => {
             triggers.forEach((trigger) => {
@@ -261,8 +275,33 @@
         };
 
         const focusComposer = () => {
-            content.querySelector('textarea[name="prompt"]')?.focus({ preventScroll: true });
+            const composer = content.querySelector('textarea[name="prompt"]');
+            composer?.focus({ preventScroll: true });
             scrollToBottom(content.querySelector('[data-assistant-transcript]'));
+        };
+
+        const getFocusableNodes = () => Array.from(shell.querySelectorAll(focusableSelector)).filter((node) => !node.hasAttribute('hidden') && node.offsetParent !== null);
+
+        const renderLoadingState = () => {
+            content.innerHTML = `
+                <div class="assistant-widget-card panel p-5 lg:p-6 assistant-shell" data-assistant-shell>
+                    <div class="assistant-widget-card__header flex items-start justify-between gap-3">
+                        <div class="assistant-widget-card__intro">
+                            <span class="badge badge-primary mb-3">BayStays AI</span>
+                            <h2 class="font-display text-2xl font-semibold">Opening assistant</h2>
+                            <p class="mt-2 text-sm text-slate-600">Loading your latest context and actions.</p>
+                        </div>
+                    </div>
+                    <div class="assistant-widget-card__body">
+                        <div class="assistant-transcript assistant-transcript--widget">
+                            <div class="assistant-bubble assistant-bubble--assistant">
+                                <p class="text-xs uppercase tracking-[0.24em] text-red-500">BayStays AI</p>
+                                <p class="mt-2 text-slate-700">One moment while I set up your assistant workspace.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         };
 
         const closeWidget = () => {
@@ -280,6 +319,7 @@
             shell.classList.add('is-open');
             shell.setAttribute('aria-hidden', 'false');
             syncTriggers(true);
+            panel?.focus({ preventScroll: true });
             if (hasLoaded) {
                 syncWidgetFields();
                 focusComposer();
@@ -289,6 +329,7 @@
                 return;
             }
             try {
+                renderLoadingState();
                 const url = new URL(widgetUrl, window.location.origin);
                 url.searchParams.set('path', window.location.pathname);
                 const response = await fetch(url.toString(), {
@@ -340,8 +381,33 @@
         });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && shell.classList.contains('is-open')) {
+            if (!shell.classList.contains('is-open')) {
+                return;
+            }
+            if (event.key === 'Escape') {
                 closeWidget();
+                return;
+            }
+            if (event.key !== 'Tab') {
+                return;
+            }
+            const focusableNodes = getFocusableNodes();
+            if (!focusableNodes.length) {
+                event.preventDefault();
+                panel?.focus({ preventScroll: true });
+                return;
+            }
+            const first = focusableNodes[0];
+            const last = focusableNodes[focusableNodes.length - 1];
+            const active = document.activeElement;
+            if (event.shiftKey && active === first) {
+                event.preventDefault();
+                last.focus();
+                return;
+            }
+            if (!event.shiftKey && active === last) {
+                event.preventDefault();
+                first.focus();
             }
         });
     };

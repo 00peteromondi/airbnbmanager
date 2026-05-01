@@ -50,6 +50,8 @@ Render specific
 
 Railway specific
 - Railway respects `Procfile` and will use the `start` command from `railway.json` if present. A sample `railway.json` is included. Add environment variables in the Railway project settings for the same keys as above. Railway provides managed Postgres/Redis add-ons you can attach and then set `DATABASE_URL`/`REDIS_URL` to the provided values.
+- For public web access, make sure either `RAILWAY_PUBLIC_DOMAIN` is present or `ALLOWED_HOSTS` includes your Railway/custom hostname. If you attach a custom domain, also set `CSRF_TRUSTED_ORIGINS=https://yourdomain.com`.
+- Production deploys should run with `DEBUG=False`, a real `SECRET_KEY`, and HTTPS proxy headers enabled. `airbnb_manager/settings.py` now derives the secure proxy + HSTS settings automatically when `DEBUG` is false.
 
 Files added/changed
 - `procfile` — switched to Daphne: [procfile](procfile)

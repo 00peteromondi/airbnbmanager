@@ -41,7 +41,7 @@
         <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn-bay"><span data-submit-text><i class="fa-solid fa-user-plus"></i>Create guest account</span><span data-submit-busy class="hidden items-center gap-2"><span class="spinner"></span>Creating</span></button>
             <a href="{% url 'guests:guest_login' %}" class="btn-bay-ghost">I already have an account</a>
-            <a href="{% url 'hosts:register' %}" class="btn-bay-ghost"><i class="fa-solid fa-house-circle-check"></i>Register as host instead</a>
+            <a href="{% url 'core:properties_list' %}" class="btn-bay-ghost"><i class="fa-solid fa-compass"></i>Browse stays</a>
         </div>
     </form>
 </div>

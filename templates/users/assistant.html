@@ -74,10 +74,18 @@
                 <span class="badge badge-orange mb-3">Linked actions</span>
                 <h2 class="font-display text-2xl font-semibold mb-5">Turn advice into action</h2>
                 <div class="workspace-link-grid">
-                    <a href="{% url 'hosts:host_performance' %}" class="notice-row block"><p class="font-semibold text-slate-900">Host performance</p><p class="mt-2 text-slate-600">Open the portfolio report view.</p></a>
+                    {% if subscription %}
+                        <a href="{% url 'hosts:host_performance' %}" class="notice-row block"><p class="font-semibold text-slate-900">Host performance</p><p class="mt-2 text-slate-600">Open the portfolio report view.</p></a>
+                    {% else %}
+                        <a href="{% url 'bookings:booking_list' %}" class="notice-row block"><p class="font-semibold text-slate-900">My bookings</p><p class="mt-2 text-slate-600">Track upcoming stays and payment status.</p></a>
+                    {% endif %}
                     <a href="{% url 'users:inbox' %}" class="notice-row block"><p class="font-semibold text-slate-900">Inbox</p><p class="mt-2 text-slate-600">Jump into live host-guest conversations.</p></a>
                     <a href="{% url 'users:notifications' %}" class="notice-row block"><p class="font-semibold text-slate-900">Notification center</p><p class="mt-2 text-slate-600">Clear urgent BayStays updates quickly.</p></a>
-                    <a href="{% url 'hosts:subscription_manage' %}" class="notice-row block"><p class="font-semibold text-slate-900">Subscription plans</p><p class="mt-2 text-slate-600">Manage plan status and AI capacity.</p></a>
+                    {% if subscription %}
+                        <a href="{% url 'hosts:subscription_manage' %}" class="notice-row block"><p class="font-semibold text-slate-900">Subscription plans</p><p class="mt-2 text-slate-600">Manage plan status and AI capacity.</p></a>
+                    {% else %}
+                        <a href="{% url 'core:properties_list' %}" class="notice-row block"><p class="font-semibold text-slate-900">Explore stays</p><p class="mt-2 text-slate-600">Browse places that fit your next trip.</p></a>
+                    {% endif %}
                 </div>
             </div>
         </div>

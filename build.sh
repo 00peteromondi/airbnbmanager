@@ -9,6 +9,9 @@ else
 	pip install -r requirements.txt
 fi
 
+# Fail fast if production-critical Django settings are missing or unsafe.
+python manage.py check --deploy --fail-level WARNING
+
 # Collect static files
 python manage.py collectstatic --no-input
 

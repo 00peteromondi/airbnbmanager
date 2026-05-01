@@ -170,13 +170,13 @@
 
         {% if user.is_authenticated %}
             <a
-                href="{% if request.path == assistant_hub_url %}#assistant-composer{% else %}{{ assistant_hub_url }}{% endif %}"
+                href="{{ assistant_hub_url }}"
                 class="floating-ai-button"
                 data-assistant-widget-toggle
                 aria-controls="assistant-widget-panel"
                 aria-expanded="false"
-                aria-label="{% if request.path == assistant_hub_url %}Jump to assistant composer{% else %}Open BayStays AI assistant{% endif %}"
-                title="{% if request.path == assistant_hub_url %}Jump to assistant composer{% else %}Open BayStays AI assistant{% endif %}"
+                aria-label="Open BayStays AI assistant"
+                title="Open BayStays AI assistant"
             >
                 <span class="floating-ai-button__glyph" aria-hidden="true">
                     <span class="floating-ai-button__line floating-ai-button__line--top"></span>
@@ -187,7 +187,7 @@
             </a>
             <div class="assistant-widget-shell hidden" data-assistant-widget-shell data-widget-url="{% url 'users:assistant_widget' %}" aria-hidden="true">
                 <div class="assistant-widget-backdrop" data-assistant-widget-close></div>
-                <div class="assistant-widget-panel" id="assistant-widget-panel">
+                <div class="assistant-widget-panel" id="assistant-widget-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-widget-title" tabindex="-1">
                     <div data-assistant-widget-content></div>
                 </div>
             </div>

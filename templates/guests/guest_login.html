@@ -23,7 +23,7 @@
     </form>
     <div class="mt-6 space-y-3 text-sm text-slate-600">
         <p><i class="fa-solid fa-user-plus mr-2 text-red-500"></i>Need a guest account? <a href="{% url 'guests:guest_signup' %}" class="text-red-700 font-semibold">Create one and start browsing</a></p>
-        <p><i class="fa-solid fa-house-circle-check mr-2 text-blue-600"></i>Coming in as a host? <a href="{% url 'hosts:login' %}" class="text-blue-700 font-semibold">Switch to host sign in</a></p>
+        <p><i class="fa-solid fa-compass mr-2 text-blue-600"></i>Want to look around first? <a href="{% url 'core:properties_list' %}" class="text-blue-700 font-semibold">Explore available stays</a></p>
     </div>
 </div>
 {% endblock %}
