@@ -1,17 +1,11 @@
 {
-  "name": "airbnbmanager",
-  "start": "daphne -b 0.0.0.0 -p $PORT airbnb_manager.asgi:application",
-  "build": "./build.sh",
-  "env": {
-    "DEBUG": "false",
-    "SECRET_KEY": {
-      "generate": true
-    },
-    "ALLOWED_HOSTS": "",
-    "CSRF_TRUSTED_ORIGINS": "",
-    "REDIS_URL": "",
-    "BREVO_SMTP_LOGIN": "",
-    "BREVO_SMTP_KEY": "",
-    "MPESA_CALLBACK_URL": ""
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "bash build.sh"
+  },
+  "deploy": {
+    "startCommand": "daphne -b 0.0.0.0 -p $PORT airbnb_manager.asgi:application",
+    "preDeployCommand": "python manage.py migrate --no-input"
   }
 }
